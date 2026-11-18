@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +21,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
@@ -26,6 +30,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
+import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
 import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
@@ -59,14 +67,18 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
 import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DeveloperScreen(
     protocolLogs: List<ProtocolLogEntry>,
     otaState: OtaCheckState,
+    currentLanguage: AppLanguage,
+    onSelectLanguage: (AppLanguage) -> Unit,
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit,
     onClearLogs: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val changelogList = when (otaState) {
         is OtaCheckState.UpToDate -> otaState.releases
         is OtaCheckState.UpdateAvailable -> otaState.releases
@@ -90,7 +102,7 @@ fun DeveloperScreen(
                             .fillMaxWidth()
                             .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         BmwRoundelLogo(size = 76.dp)
                         Spacer(Modifier.height(4.dp))
@@ -101,18 +113,75 @@ fun DeveloperScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "Lead Architect & BMW Diagnostics Developer",
+                            text = "Lead Architect",
                             color = BmwBlueBright,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
                         )
                         Text(
-                            text = "BMW Expert PRO v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • ${BuildConfig.APPLICATION_ID}",
+                            text = "BMW Diagnostics Developer",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                        Row(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(BimmerCardElevated)
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                tint = BmwBlueBright,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = "cwghost@hotmail.com",
+                                color = TextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = "BMW Expert PRO v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
                             color = TextSecondary,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                     MSportAccentStrip()
+                }
+            }
+        }
+
+        // Language Selection Card
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                border = BorderStroke(1.dp, BimmerOutline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.Language, contentDescription = null, tint = BmwBlueBright, modifier = Modifier.size(18.dp))
+                        Text(strings.languageTitle, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    }
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        AppLanguage.entries.forEach { lang ->
+                            FilterChip(
+                                selected = currentLanguage == lang,
+                                onClick = { onSelectLanguage(lang) },
+                                label = { Text("${lang.flagCode} • ${lang.nativeName}", fontSize = 12.sp) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -129,7 +198,7 @@ fun DeveloperScreen(
         // Changelog Section
         item {
             Text(
-                text = "Sürüm Geçmişi (Changelog)",
+                text = strings.changelogTitle,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -164,20 +233,40 @@ fun DeveloperScreen(
             }
         }
 
+        // Supported BMW Architecture (Stacked vertical layout - clean & readable)
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                border = BorderStroke(1.dp, BimmerOutline)
+                border = BorderStroke(1.dp, BimmerOutline),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Desteklenen BMW Mimarisi & Protokol Yığını", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    BmwChassis.entries.forEach { chassis ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("${chassis.code} • ${chassis.modelRange}", color = TextPrimary, fontSize = 12.sp)
-                            Text(chassis.family.protocolStack, color = BmwBlueBright, fontSize = 11.sp)
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(strings.supportedArchTitle, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    BmwChassis.entries.forEachIndexed { idx, chassis ->
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(BmwBlue.copy(alpha = 0.25f))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(chassis.code, color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+                                Text(chassis.modelRange, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Text(
+                                text = chassis.family.protocolStack,
+                                color = TextSecondary,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 2.dp)
+                            )
+                        }
+                        if (idx < BmwChassis.entries.lastIndex) {
+                            HorizontalDivider(color = BimmerOutline.copy(alpha = 0.5f))
                         }
                     }
                 }
@@ -190,13 +279,13 @@ fun DeveloperScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text("Canlı HSFZ / UDS Paket İnceleyici", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("Gerçek zamanlı TX / RX hex çerçeveleri", color = TextSecondary, fontSize = 11.sp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(strings.packetInspectorTitle, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(strings.packetInspectorSub, color = TextSecondary, fontSize = 11.sp)
                 }
                 if (protocolLogs.isNotEmpty()) {
                     TextButton(onClick = onClearLogs) {
-                        Text("Temizle", color = BmwBlueBright)
+                        Text(strings.clearBtn, color = BmwBlueBright, maxLines = 1, softWrap = false)
                     }
                 }
             }
@@ -209,7 +298,7 @@ fun DeveloperScreen(
                     border = BorderStroke(1.dp, BimmerOutline)
                 ) {
                     Text(
-                        text = "Henüz paket trafiği yok. Garaj sekmesinden bir araç simülasyonu veya ENET bağlantısı başlatın.",
+                        text = "Henüz paket trafiği yok. Garaj sekmesinden bir araç simülasyonu veya vLinker / ENET bağlantısı başlatın.",
                         modifier = Modifier.padding(14.dp),
                         color = TextSecondary,
                         fontSize = 12.sp
@@ -262,52 +351,35 @@ private fun OtaUpdateCard(
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Card(
         colors = CardDefaults.cardColors(containerColor = BimmerCard),
         border = BorderStroke(1.dp, BimmerOutline),
         shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Versiyon Takibi & OTA Güncelleme", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text(
-                        text = "Repo: github.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}",
-                        color = TextSecondary,
-                        fontSize = 11.sp
-                    )
-                }
-                OutlinedButton(
-                    onClick = onCheckOta,
-                    enabled = otaState !is OtaCheckState.Checking && otaState !is OtaCheckState.Downloading
-                ) {
-                    if (otaState is OtaCheckState.Checking) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                    }
-                    Spacer(Modifier.width(6.dp))
-                    Text("Kontrol Et", fontSize = 12.sp)
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(strings.otaTitle, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(
+                    text = "Repo: github.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}",
+                    color = TextSecondary,
+                    fontSize = 11.sp
+                )
             }
 
             when (otaState) {
                 OtaCheckState.Idle -> {
                     Text(
-                        text = "Mevcut sürüm: v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                        text = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
                         color = TextSecondary,
                         fontSize = 12.sp
                     )
                 }
                 OtaCheckState.Checking -> {
-                    Text("GitHub Releases üzerinden yeni sürüm kontrol ediliyor...", color = BmwBlueBright, fontSize = 12.sp)
+                    Text("GitHub Releases...", color = BmwBlueBright, fontSize = 12.sp)
                 }
                 is OtaCheckState.UpToDate -> {
-                    Text("Güncelsiniz: v${otaState.currentVersion} en son yayınlanan sürümdür.", color = StatusGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text("v${otaState.currentVersion} OK", color = StatusGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
                 is OtaCheckState.UpdateAvailable -> {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -315,7 +387,7 @@ private fun OtaUpdateCard(
                             Icon(Icons.Default.NewReleases, contentDescription = null, tint = StatusGreen, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = "Yeni Sürüm Mevcut: ${otaState.latest.tagName}",
+                                text = "${otaState.latest.tagName} Ready",
                                 color = StatusGreen,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
@@ -324,26 +396,41 @@ private fun OtaUpdateCard(
                         Button(
                             onClick = { onDownloadOta(otaState.latest) },
                             colors = ButtonDefaults.buttonColors(containerColor = BmwBlue),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().height(44.dp)
                         ) {
                             Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("OTA İndir & Yükle (${otaState.latest.tagName})", color = Color.White)
+                            Text("OTA (${otaState.latest.tagName})", color = Color.White, maxLines = 1, softWrap = false)
                         }
                     }
                 }
                 is OtaCheckState.Downloading -> {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("v${otaState.version} indiriliyor: ${(otaState.progress * 100).toInt()}%", color = BmwBlueBright, fontSize = 12.sp)
+                        Text("v${otaState.version}: ${(otaState.progress * 100).toInt()}%", color = BmwBlueBright, fontSize = 12.sp)
                         LinearProgressIndicator(progress = { otaState.progress }, modifier = Modifier.fillMaxWidth(), color = BmwBlueBright)
                     }
                 }
                 is OtaCheckState.ReadyToInstall -> {
-                    Text("v${otaState.version} indirildi ve yükleme ekranı açıldı.", color = StatusGreen, fontSize = 12.sp)
+                    Text("v${otaState.version} ready to install.", color = StatusGreen, fontSize = 12.sp)
                 }
                 is OtaCheckState.Error -> {
                     Text(otaState.message, color = StatusRed, fontSize = 12.sp)
                 }
+            }
+
+            OutlinedButton(
+                onClick = onCheckOta,
+                enabled = otaState !is OtaCheckState.Checking && otaState !is OtaCheckState.Downloading,
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                if (otaState is OtaCheckState.Checking) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(strings.checkUpdatesBtn, fontSize = 13.sp, maxLines = 1, softWrap = false)
             }
         }
     }

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
@@ -94,6 +96,7 @@ fun GarageScreen(
     var vlinkerHost by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST) }
     var vlinkerPort by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT.toString()) }
     var enetHost by remember { mutableStateOf(TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) }
+    val strings = LocalAppStrings.current
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -188,22 +191,22 @@ fun GarageScreen(
                         ) {
                             QuickActionTile(
                                 icon = Icons.Default.Memory,
-                                title = "Diagnostik",
+                                title = strings.quickDiagnostics,
                                 badge = "${session.dtcs.size} DTC",
                                 modifier = Modifier.weight(1f),
                                 onClick = { onNavigateToTab(1) }
                             )
                             QuickActionTile(
                                 icon = Icons.Default.Build,
-                                title = "Kodlama",
+                                title = strings.quickCoding,
                                 badge = "${session.presets.size} Preset",
                                 modifier = Modifier.weight(1f),
                                 onClick = { onNavigateToTab(2) }
                             )
                             QuickActionTile(
                                 icon = Icons.Default.Speed,
-                                title = "Canlı & Servis",
-                                badge = "${session.liveChannels.size} Sensör",
+                                title = strings.quickLiveService,
+                                badge = "${session.liveChannels.size} PID",
                                 modifier = Modifier.weight(1f),
                                 onClick = { onNavigateToTab(3) }
                             )
@@ -211,13 +214,14 @@ fun GarageScreen(
 
                         OutlinedButton(
                             onClick = onDisconnect,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(46.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusRed),
                             border = BorderStroke(1.dp, StatusRed.copy(alpha = 0.5f))
                         ) {
                             Icon(Icons.Default.LinkOff, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Araç Bağlantısını Kes")
+                            Text(strings.disconnectBtn, maxLines = 1, softWrap = false)
                         }
                     }
                 }
@@ -232,21 +236,12 @@ fun GarageScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "OBD / ENET Bağlantı Merkezi",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        OutlinedButton(onClick = onScanHardware) {
-                            Text("Donanım Tara", fontSize = 11.sp, color = BmwBlueBright)
-                        }
-                    }
+                    Text(
+                        text = strings.connectionHubTitle,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
 
                     ExposedDropdownMenuBox(
                         expanded = dropdownExpanded,
@@ -256,7 +251,7 @@ fun GarageScreen(
                             value = selectedAdapter.displayName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Bağlantı Adaptörü / Simülatör Seçin") },
+                            label = { Text(strings.adapterDropdownLabel) },
                             supportingText = { Text(selectedAdapter.protocolSummary, color = BmwBlueBright, fontSize = 11.sp) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                             leadingIcon = {
@@ -357,7 +352,7 @@ fun GarageScreen(
                                 .padding(10.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("Bulunan Fiziksel Aygıtlar", color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(strings.discoveredDevicesTitle, color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             session.discoveredGateways.forEach { gw ->
                                 Text(
                                     text = "• ENET Gateway: ${gw.ipAddress} ${gw.vin?.let { "($it)" } ?: ""}",
@@ -407,6 +402,26 @@ fun GarageScreen(
                         }
                     }
 
+                    OutlinedButton(
+                        onClick = onScanHardware,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, BmwBlueBright.copy(alpha = 0.6f))
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, tint = BmwBlueBright, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = strings.scanHardwareBtn,
+                            fontSize = 13.sp,
+                            color = BmwBlueBright,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+
                     val isConnecting = session.connectionState is ConnectionState.Connecting
                     Button(
                         onClick = {
@@ -428,6 +443,7 @@ fun GarageScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
                     ) {
                         if (isConnecting) {
@@ -437,17 +453,19 @@ fun GarageScreen(
                                 color = Color.White
                             )
                             Spacer(Modifier.width(10.dp))
-                            Text("Bağlanıyor & VIN Okunuyor...")
+                            Text(strings.connectingText, maxLines = 1, softWrap = false)
                         } else {
                             Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 text = if (session.connectionState is ConnectionState.Connected) {
-                                    "Seçili Adaptörle Yeniden Bağlan"
+                                    strings.reconnectBtn
                                 } else {
-                                    "Araca Bağlan (${selectedAdapter.displayName.substringBefore(" ")})"
+                                    "${strings.connectVehicleBtn} (${selectedAdapter.displayName.substringBefore(" ")})"
                                 },
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -459,6 +477,7 @@ fun GarageScreen(
 
 @Composable
 private fun GarageHeroHeader(connectionState: ConnectionState) {
+    val strings = LocalAppStrings.current
     Card(
         colors = CardDefaults.cardColors(containerColor = BimmerCard),
         border = BorderStroke(1.dp, BimmerOutline),
@@ -481,16 +500,16 @@ private fun GarageHeroHeader(connectionState: ConnectionState) {
                         color = TextPrimary
                     )
                     Text(
-                        text = "Full BMW Kodlama, Diagnostik & Ekspertiz",
+                        text = strings.heroSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
                     Spacer(Modifier.height(6.dp))
                     val (statusText, statusColor) = when (connectionState) {
-                        is ConnectionState.Connected -> "Bağlı: ${connectionState.endpoint}" to StatusGreen
-                        is ConnectionState.Connecting -> "Bağlanıyor..." to StatusAmber
-                        is ConnectionState.Error -> "Bağlantı Hatası" to StatusRed
-                        ConnectionState.Disconnected -> "Bağlı Değil — Dropdown'dan adaptör seçin" to TextSecondary
+                        is ConnectionState.Connected -> "${connectionState.endpoint}" to StatusGreen
+                        is ConnectionState.Connecting -> strings.connectingText to StatusAmber
+                        is ConnectionState.Error -> "Error" to StatusRed
+                        ConnectionState.Disconnected -> strings.disconnectedHint to TextSecondary
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(

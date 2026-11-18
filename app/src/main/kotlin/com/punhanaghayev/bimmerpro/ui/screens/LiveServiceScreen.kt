@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
+import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.components.TelemetrySparkline
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
@@ -85,6 +86,7 @@ fun LiveServiceScreen(
 
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    val strings = LocalAppStrings.current
 
     if (showHistoryDialog) {
         var dealerCode by remember { mutableStateOf("Punhan Garage (08801)") }
@@ -187,14 +189,14 @@ fun LiveServiceScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Canlı Sensör Telemetrisi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("Gerçek zamanlı UDS 0x22 DID akışı", color = TextSecondary, fontSize = 12.sp)
+                    Text(strings.liveTelemetryTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("UDS 0x22 DID", color = TextSecondary, fontSize = 12.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     OutlinedButton(onClick = onExportCsv) {
                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("CSV", fontSize = 11.sp)
+                        Text("CSV", fontSize = 11.sp, maxLines = 1, softWrap = false)
                     }
                     Button(
                         onClick = onToggleLiveStream,
@@ -208,7 +210,7 @@ fun LiveServiceScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text(if (isLiveStreamRunning) "Durdur" else "Başlat", fontSize = 12.sp)
+                        Text(if (isLiveStreamRunning) strings.stopBtn else strings.startBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
                     }
                 }
             }

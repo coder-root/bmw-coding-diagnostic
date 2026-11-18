@@ -81,6 +81,20 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.3.0",
+            versionName = "1.3.0",
+            title = "BMW Expert PRO v1.3.0 — Çok Dilli Destek & UI Yenilemesi",
+            changelog = """
+                • Çok dilli destek eklendi: Azərbaycan, Türkçe, English, Русский
+                • Bağlantı ve tarama butonları tek satır ikonlu tasarımla yenilendi
+                • Desteklenen BMW Mimarisi kartı alt alta okunaklı formata geçirildi
+                • Developer kartında Punhan Aghayev, Lead Architect / BMW Diagnostics Developer & cwghost@hotmail.com güncellendi
+            """.trimIndent(),
+            publishedDate = "2026-11-18",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.2.0",
             versionName = "1.2.0",
             title = "BMW Expert PRO v1.2.0 — Vgate vLinker BM Wi-Fi & Yeni Bağlantı",

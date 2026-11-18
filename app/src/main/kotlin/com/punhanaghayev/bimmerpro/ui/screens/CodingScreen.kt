@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
+import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
@@ -90,6 +91,7 @@ fun CodingScreen(
     var newVoDesc by remember { mutableStateOf("") }
 
     val voltageSafe = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE
+    val strings = LocalAppStrings.current
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Safety Banner
@@ -109,9 +111,9 @@ fun CodingScreen(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = if (voltageSafe) {
-                    "Akü %.1f V (Güvenli) • Her kodlama öncesi otomatik CAFD yedeği alınır.".format(profile.batteryVoltage)
+                    strings.batterySafeBanner.format(profile.batteryVoltage)
                 } else {
-                    "KODLAMA KİLİTLİ: Akü %.1f V (< 12.2 V)! Şarj cihazı bağlayın veya motoru çalıştırın.".format(profile.batteryVoltage)
+                    strings.batteryLockedBanner.format(profile.batteryVoltage)
                 },
                 color = if (voltageSafe) StatusGreen else StatusRed,
                 fontSize = 11.sp,
@@ -124,9 +126,9 @@ fun CodingScreen(
             containerColor = BimmerCard,
             contentColor = BmwBlueBright
         ) {
-            Tab(selected = selectedMode == 0, onClick = { selectedMode = 0 }, text = { Text("Easy Mode", fontSize = 12.sp) })
-            Tab(selected = selectedMode == 1, onClick = { selectedMode = 1 }, text = { Text("Expert CAFD", fontSize = 12.sp) })
-            Tab(selected = selectedMode == 2, onClick = { selectedMode = 2 }, text = { Text("FA/VO & Yedek", fontSize = 12.sp) })
+            Tab(selected = selectedMode == 0, onClick = { selectedMode = 0 }, text = { Text(strings.codingEasyMode, fontSize = 12.sp, maxLines = 1) })
+            Tab(selected = selectedMode == 1, onClick = { selectedMode = 1 }, text = { Text(strings.codingExpertCafd, fontSize = 12.sp, maxLines = 1) })
+            Tab(selected = selectedMode == 2, onClick = { selectedMode = 2 }, text = { Text(strings.codingFaVoBackup, fontSize = 12.sp, maxLines = 1) })
         }
 
         LazyColumn(

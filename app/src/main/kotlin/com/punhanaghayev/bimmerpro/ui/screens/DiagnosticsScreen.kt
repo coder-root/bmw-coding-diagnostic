@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
+import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerCardElevated
@@ -85,6 +86,7 @@ fun DiagnosticsScreen(
 
     var filterMode by remember { mutableStateOf(DtcFilterMode.ALL) }
     var showClearDialog by remember { mutableStateOf(false) }
+    val strings = LocalAppStrings.current
 
     val filteredDtcs = remember(session.dtcs, filterMode) {
         when (filterMode) {
@@ -126,21 +128,21 @@ fun DiagnosticsScreen(
                 Button(
                     onClick = onRunScan,
                     enabled = !session.isScanning,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).height(44.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
                 ) {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(if (session.isScanning) "Taranıyor..." else "Tüm ECU Tara")
+                    Text(if (session.isScanning) strings.scanningText else strings.scanAllEcusBtn, maxLines = 1, softWrap = false, fontSize = 12.sp)
                 }
                 OutlinedButton(
                     onClick = onExportPdf,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).height(44.dp),
                     border = BorderStroke(1.dp, BmwBlueBright.copy(alpha = 0.7f))
                 ) {
                     Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BmwBlueBright, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Ekspertiz PDF", color = BmwBlueBright)
+                    Text(strings.expertisePdfBtn, color = BmwBlueBright, maxLines = 1, softWrap = false, fontSize = 12.sp)
                 }
             }
         }

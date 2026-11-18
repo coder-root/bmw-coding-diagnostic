@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
+import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
+import com.punhanaghayev.bimmerpro.core.i18n.AppLocalization
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
@@ -46,6 +48,9 @@ class BimmerViewModel(
 
     private val _otaState = MutableStateFlow<OtaCheckState>(OtaCheckState.Idle)
     val otaState: StateFlow<OtaCheckState> = _otaState.asStateFlow()
+
+    private val _appLanguage = MutableStateFlow(AppLocalization.loadSavedLanguage(application))
+    val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
@@ -200,6 +205,11 @@ class BimmerViewModel(
 
     fun selectBleDevice(address: String) {
         repository.selectBleDevice(address)
+    }
+
+    fun setAppLanguage(language: AppLanguage) {
+        AppLocalization.saveLanguage(getApplication(), language)
+        _appLanguage.value = language
     }
 
     fun exportTelemetryCsv(context: Context) {
