@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.4.0",
+            versionName = "1.4.0",
+            title = "BMW Expert PRO v1.4.0 — Fiziksel Araç VIN & DTC Çözümleyici",
+            changelog = """
+                • PhysicalUdsParser: Gerçek araçlardan (vLinker BM Wi-Fi / ENET) VIN (0xF190) ve DTC (0x19 0x02) çözümleme
+                • Şasi otomatik algılama (F10/F30/G30/G20/E90/E60) ve fiziksel ECU tarama desteği
+                • GitHub Actions Android CI/CD otomatik derleme ve test iş akışı
+            """.trimIndent(),
+            publishedDate = "2026-11-18",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.3.0",
             versionName = "1.3.0",
             title = "BMW Expert PRO v1.3.0 — Çok Dilli Destek & UI Yenilemesi",

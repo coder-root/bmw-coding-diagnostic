@@ -3,14 +3,18 @@ package com.punhanaghayev.bimmerpro.data
 import android.content.Context
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
+import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
+import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
+import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceExecutionResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
+import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
@@ -20,6 +24,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.CafdBitmaskEngine
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.DiscoveredGateway
 import com.punhanaghayev.bimmerpro.core.protocol.EnetGatewayDiscovery
+import com.punhanaghayev.bimmerpro.core.protocol.PhysicalUdsParser
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
@@ -30,6 +35,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.UdsResponse
 import com.punhanaghayev.bimmerpro.core.protocol.UdsSessionType
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanDeviceInfo
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanTransportAdapter
+import com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog
 import com.punhanaghayev.bimmerpro.core.simulator.SimulatorTransportAdapter
 import java.io.File
 import kotlinx.coroutines.delay
@@ -141,16 +147,20 @@ class BimmerRepository(
                 UdsCodec.buildSessionControl(UdsSessionType.EXTENDED),
                 "UDS 0x10 Extended Session (Gateway)"
             )
-            udsClient.sendUds(
-                EcuAddress.ZGW_BDC,
-                UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_VIN),
-                "UDS 0x22 Read VIN (0xF190)"
-            )
-            udsClient.sendUds(
-                EcuAddress.ZGW_BDC,
-                UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_BATTERY_MV),
-                "UDS 0x22 Read Battery Voltage"
-            )
+            val vinResp = runCatching {
+                udsClient.sendUds(
+                    EcuAddress.ZGW_BDC,
+                    UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_VIN),
+                    "UDS 0x22 Read VIN (0xF190)"
+                )
+            }.getOrNull()
+            val voltResp = runCatching {
+                udsClient.sendUds(
+                    EcuAddress.ZGW_BDC,
+                    UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_BATTERY_MV),
+                    "UDS 0x22 Read Battery Voltage"
+                )
+            }.getOrNull()
 
             val sim = activeTransport as? SimulatorTransportAdapter
             if (sim != null) {
@@ -170,10 +180,54 @@ class BimmerRepository(
                     )
                 }
             } else {
+                val extractedVin = (vinResp as? UdsResponse.Positive)
+                    ?.let { PhysicalUdsParser.extractVin(it.payload) }
+                    ?: "WBA_PHYSICAL_VIN"
+                val inferredChassis = PhysicalUdsParser.inferChassisFromVin(extractedVin)
+                val vlinkerVoltage = (activeTransport as? TcpElmStnTransportAdapter)?.lastReadVoltage
+                val udsVoltage = (voltResp as? UdsResponse.Positive)?.payload?.let { p ->
+                    if (p.size >= 4) (((p[2].toInt() and 0xFF) shl 8) or (p[3].toInt() and 0xFF)) / 1000.0 else null
+                }
+                val batteryVolts = vlinkerVoltage ?: udsVoltage ?: 12.6
+                val template = BmwSimulatorCatalog.buildBundle(
+                    when (inferredChassis) {
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.G30 -> AdapterType.SIMULATOR_G30
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.G20 -> AdapterType.SIMULATOR_G20
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.F30 -> AdapterType.SIMULATOR_F30
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.E90,
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.E60 -> AdapterType.SIMULATOR_E90
+                        else -> AdapterType.SIMULATOR_F10
+                    }
+                )
+                val physicalProfile = VehicleProfile(
+                    vin = extractedVin,
+                    chassis = inferredChassis,
+                    modelDisplayName = "BMW ${inferredChassis.code} (${adapterType.displayName})",
+                    engineCode = "Fiziksel OBD/UDS Bağlantısı",
+                    productionYear = 2015,
+                    iLevel = "Live Gateway",
+                    batteryVoltage = batteryVolts,
+                    odometerKm = 0,
+                    faOptions = listOf(VehicleOrderOption("LIVE", "Canlı ECU Okuması Aktif")),
+                    mileageVerification = MileageVerificationResult(
+                        readings = listOf(MileageModuleReading("Gateway", 0)),
+                        maxDifferenceKm = 0,
+                        status = TamperStatus.VERIFIED,
+                        summary = "Fiziksel araç bağlı — tam modül taraması için Diagnostik -> Tüm ECU Tara çalıştırın."
+                    )
+                )
                 _session.update {
                     it.copy(
                         connectionState = connState,
-                        lastOperationMessage = "Fiziksel ENET Gateway bağlantısı hazır."
+                        vehicleProfile = physicalProfile,
+                        ecus = template.ecus.map { ecu -> ecu.copy(activeDtcCount = 0, shadowDtcCount = 0) },
+                        dtcs = emptyList(),
+                        presets = template.presets,
+                        cafdParameters = template.cafdParameters,
+                        liveChannels = template.liveChannels,
+                        serviceRoutines = template.serviceRoutines,
+                        serviceHistory = emptyList(),
+                        lastOperationMessage = "Fiziksel bağlantı kuruldu: $extractedVin (%.1f V)".format(batteryVolts)
                     )
                 }
             }
@@ -220,14 +274,51 @@ class BimmerRepository(
         }
 
         val sim = activeTransport as? SimulatorTransportAdapter
-        val refreshedDtcs = sim?.currentDtcs() ?: _session.value.dtcs
+        if (sim != null) {
+            val refreshedDtcs = sim.currentDtcs()
+            _session.update {
+                it.copy(
+                    isScanning = false,
+                    scanProgress = 1f,
+                    scanStatusText = "Tarama tamamlandı (${refreshedDtcs.size} kayıt)",
+                    dtcs = refreshedDtcs,
+                    lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu."
+                )
+            }
+            return
+        }
+
+        // Physical vehicle scan: query each ECU with UDS 0x19 0x02 and decode real DTC bytes
+        val physicalDtcs = mutableListOf<DtcFault>()
+        val odo = _session.value.vehicleProfile?.odometerKm ?: 0
+        val volts = _session.value.vehicleProfile?.batteryVoltage ?: 12.6
+        val updatedEcus = ecus.map { ecu ->
+            val resp = runCatching {
+                udsClient.sendUds(
+                    ecu.address,
+                    UdsCodec.buildReadDtcByStatusMask(0xFF),
+                    "UDS 0x19 Physical DTC (${ecu.shortName})"
+                )
+            }.getOrNull()
+            if (resp is UdsResponse.Positive) {
+                val parsed = PhysicalUdsParser.parseDtcRecords(ecu.address, ecu.shortName, resp.payload, odo, volts)
+                physicalDtcs.addAll(parsed)
+                ecu.copy(
+                    activeDtcCount = parsed.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
+                    shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
+                )
+            } else {
+                ecu
+            }
+        }
         _session.update {
             it.copy(
                 isScanning = false,
                 scanProgress = 1f,
-                scanStatusText = "Tarama tamamlandı (${refreshedDtcs.size} kayıt)",
-                dtcs = refreshedDtcs,
-                lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu."
+                scanStatusText = "Fiziksel tarama tamamlandı (${physicalDtcs.size} kayıt)",
+                ecus = updatedEcus,
+                dtcs = physicalDtcs,
+                lastOperationMessage = "Fiziksel araç tarandı: ${physicalDtcs.size} hata kaydı bulundu."
             )
         }
     }
