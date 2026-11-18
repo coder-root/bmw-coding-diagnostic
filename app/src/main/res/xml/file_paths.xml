@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="inspection_reports" path="reports/" />
+    <cache-path name="ota_updates" path="updates/" />
+    <files-path name="coding_backups" path="backups/" />
+</paths>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft drop shadow behind roundel -->
+    <path
+        android:fillColor="#55000000"
+        android:pathData="M54,26.5 A29.5,29.5 0 1,0 54,85.5 A29.5,29.5 0 1,0 54,26.5 Z" />
+
+    <!-- Outer metallic chrome/silver bezel -->
+    <path android:pathData="M54,25 A29,29 0 1,0 54,83 A29,29 0 1,0 54,25 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="74"
+                android:endY="74"
+                android:startX="34"
+                android:startY="34"
+                android:type="linear">
+                <item
+                    android:color="#FFF1F5F9"
+                    android:offset="0.0" />
+                <item
+                    android:color="#FF94A3B8"
+                    android:offset="0.5" />
+                <item
+                    android:color="#FFCBD5E1"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Classic black outer ring -->
+    <path
+        android:fillColor="#FF0D1017"
+        android:pathData="M54,26.6 A27.4,27.4 0 1,0 54,81.4 A27.4,27.4 0 1,0 54,26.6 Z" />
+
+    <!-- Minimal silver tick markers on black ring (12, 3, 6, 9 o'clock) -->
+    <path
+        android:fillColor="#FFE2E8F0"
+        android:pathData="M53.1,28.5 L54.9,28.5 L54.9,31.2 L53.1,31.2 Z" />
+    <path
+        android:fillColor="#FFE2E8F0"
+        android:pathData="M53.1,76.8 L54.9,76.8 L54.9,79.5 L53.1,79.5 Z" />
+    <path
+        android:fillColor="#FFE2E8F0"
+        android:pathData="M28.5,53.1 L31.2,53.1 L31.2,54.9 L28.5,54.9 Z" />
+    <path
+        android:fillColor="#FFE2E8F0"
+        android:pathData="M76.8,53.1 L79.5,53.1 L79.5,54.9 L76.8,54.9 Z" />
+
+    <!-- Inner silver ring border -->
+    <path
+        android:fillColor="#FFE2E8F0"
+        android:pathData="M54,34.4 A19.6,19.6 0 1,0 54,73.6 A19.6,19.6 0 1,0 54,34.4 Z" />
+
+    <!-- Top-Left Quadrant: Bavarian Blue (#0066B1) -->
+    <path
+        android:fillColor="#FF0066B1"
+        android:pathData="M54,54 L54,35.6 A18.4,18.4 0 0,0 35.6,54 Z" />
+
+    <!-- Top-Right Quadrant: Pure White -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,54 L72.4,54 A18.4,18.4 0 0,0 54,35.6 Z" />
+
+    <!-- Bottom-Right Quadrant: Bavarian Blue (#0066B1) -->
+    <path
+        android:fillColor="#FF0066B1"
+        android:pathData="M54,54 L54,72.4 A18.4,18.4 0 0,0 72.4,54 Z" />
+
+    <!-- Bottom-Left Quadrant: Pure White -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,54 L35.6,54 A18.4,18.4 0 0,0 54,72.4 Z" />
+
+    <!-- Crisp metallic cross-hair dividers -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M35.6,54 L72.4,54 M54,35.6 L54,72.4"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFCBD5E1" />
+
+    <!-- Subtle top glass gloss highlight -->
+    <path
+        android:fillColor="#22FFFFFF"
+        android:pathData="M54,35.6 A18.4,18.4 0 0,0 37.2,46.5 Q54,51 70.8,46.5 A18.4,18.4 0 0,0 54,35.6 Z" />
+</vector>

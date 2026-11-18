@@ -1,0 +1,257 @@
+package com.punhanaghayev.bimmerpro.ui
+
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.punhanaghayev.bimmerpro.BuildConfig
+import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
+import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
+import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
+import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
+import com.punhanaghayev.bimmerpro.core.report.InspectionReportGenerator
+import com.punhanaghayev.bimmerpro.core.report.TelemetryCsvExporter
+import com.punhanaghayev.bimmerpro.core.service.CodingSessionService
+import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
+import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
+import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
+import com.punhanaghayev.bimmerpro.core.update.SemVerComparator
+import com.punhanaghayev.bimmerpro.data.BimmerRepository
+import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+
+class BimmerViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val repository: BimmerRepository = BimmerRepository(application.applicationContext)
+
+    val session: StateFlow<BimmerSessionState> = repository.session
+    val protocolLogs: StateFlow<List<ProtocolLogEntry>> = repository.protocolLogs
+
+    private val _isLiveStreamRunning = MutableStateFlow(false)
+    val isLiveStreamRunning: StateFlow<Boolean> = _isLiveStreamRunning.asStateFlow()
+
+    private val _otaState = MutableStateFlow<OtaCheckState>(OtaCheckState.Idle)
+    val otaState: StateFlow<OtaCheckState> = _otaState.asStateFlow()
+
+    private val _uiEvents = MutableSharedFlow<UiEvent>()
+    val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
+
+    private var telemetryJob: Job? = null
+
+    fun connect(adapterType: AdapterType, customEnetIp: String = TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) {
+        viewModelScope.launch {
+            repository.connect(adapterType, customEnetIp)
+        }
+    }
+
+    fun disconnect() {
+        stopLiveTelemetry()
+        viewModelScope.launch {
+            repository.disconnect()
+        }
+    }
+
+    fun runFullScan() {
+        viewModelScope.launch {
+            repository.runFullVehicleScan()
+        }
+    }
+
+    fun clearAllDtcs() {
+        viewModelScope.launch {
+            repository.clearAllDtcs()
+            _uiEvents.emit(UiEvent.Snackbar("Tüm hata kodları temizlendi."))
+        }
+    }
+
+    fun applyPresetCoding(presetId: String, newIndex: Int) {
+        viewModelScope.launch {
+            val ctx = getApplication<Application>()
+            CodingSessionService.start(ctx, "ECU FDL Kodlama Yazılıyor...")
+            try {
+                val res = repository.applyPresetCoding(presetId, newIndex)
+                res.onSuccess {
+                    _uiEvents.emit(UiEvent.Snackbar("Kodlama tamamlandı ve yedek oluşturuldu."))
+                }.onFailure { err ->
+                    _uiEvents.emit(UiEvent.Snackbar(err.message ?: "Kodlama başarısız"))
+                }
+            } finally {
+                CodingSessionService.stop(ctx)
+            }
+        }
+    }
+
+    fun applyCafdParameter(paramId: String, optionLabel: String) {
+        viewModelScope.launch {
+            val ctx = getApplication<Application>()
+            CodingSessionService.start(ctx, "Expert CAFD Parametresi Yazılıyor...")
+            try {
+                val res = repository.applyCafdParameter(paramId, optionLabel)
+                res.onSuccess {
+                    _uiEvents.emit(UiEvent.Snackbar("Expert FDL parametresi yazıldı."))
+                }.onFailure { err ->
+                    _uiEvents.emit(UiEvent.Snackbar(err.message ?: "FDL yazma hatası"))
+                }
+            } finally {
+                CodingSessionService.stop(ctx)
+            }
+        }
+    }
+
+    fun restoreBackup(backupId: String) {
+        viewModelScope.launch {
+            repository.restoreBackup(backupId)
+            _uiEvents.emit(UiEvent.Snackbar("Önceki ECU kodlama yedeği geri yüklendi."))
+        }
+    }
+
+    fun addVehicleOrderOption(code: String, description: String) {
+        viewModelScope.launch {
+            repository.addVehicleOrderOption(code, description)
+            _uiEvents.emit(UiEvent.Snackbar("FA/VO opsiyonu eklendi: ${code.uppercase()}"))
+        }
+    }
+
+    fun executeServiceRoutine(routine: ServiceRoutine, optionByte: Byte = 0x01) {
+        viewModelScope.launch {
+            repository.executeServiceRoutine(routine, optionByte)
+        }
+    }
+
+    fun toggleLiveTelemetry() {
+        if (_isLiveStreamRunning.value) {
+            stopLiveTelemetry()
+        } else {
+            startLiveTelemetry()
+        }
+    }
+
+    private fun startLiveTelemetry() {
+        if (telemetryJob?.isActive == true) return
+        _isLiveStreamRunning.value = true
+        telemetryJob = viewModelScope.launch {
+            while (isActive) {
+                repository.stepLiveTelemetry()
+                delay(550)
+            }
+        }
+    }
+
+    private fun stopLiveTelemetry() {
+        telemetryJob?.cancel()
+        telemetryJob = null
+        _isLiveStreamRunning.value = false
+    }
+
+    fun adjustSimulatedVoltage(voltage: Double) {
+        repository.adjustSimulatedVoltage(voltage)
+    }
+
+    fun generateInspectionPdf(context: Context) {
+        val state = session.value
+        val profile = state.vehicleProfile ?: return
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                InspectionReportGenerator.generatePdf(
+                    context = context,
+                    profile = profile,
+                    ecus = state.ecus,
+                    dtcs = state.dtcs
+                )
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "Ekspertiz PDF Raporunu Paylaş"))
+        }
+    }
+
+    fun clearProtocolLogs() {
+        repository.clearProtocolLogs()
+    }
+
+    fun scanHardware() {
+        viewModelScope.launch {
+            repository.scanHardware()
+        }
+    }
+
+    fun selectBleDevice(address: String) {
+        repository.selectBleDevice(address)
+    }
+
+    fun exportTelemetryCsv(context: Context) {
+        val state = session.value
+        val chassisCode = state.vehicleProfile?.chassis?.code ?: return
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                TelemetryCsvExporter.exportCsv(context, chassisCode, state.liveChannels)
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "text/csv", "Canlı Telemetri CSV Paylaş"))
+        }
+    }
+
+    fun checkForOtaUpdates() {
+        viewModelScope.launch {
+            _otaState.value = OtaCheckState.Checking
+            runCatching {
+                OtaUpdateManager.fetchReleases()
+            }.onSuccess { remoteReleases ->
+                val combined = (remoteReleases + OtaUpdateManager.builtinChangelog)
+                    .distinctBy { it.versionName }
+                val latest = remoteReleases.firstOrNull()
+                if (latest != null && SemVerComparator.isNewer(latest.versionName, BuildConfig.VERSION_NAME)) {
+                    _otaState.value = OtaCheckState.UpdateAvailable(latest, combined)
+                } else {
+                    _otaState.value = OtaCheckState.UpToDate(BuildConfig.VERSION_NAME, combined)
+                }
+            }.onFailure { err ->
+                _otaState.value = OtaCheckState.Error(err.message ?: "OTA sunucusuna erişilemedi")
+            }
+        }
+    }
+
+    fun downloadAndInstallOta(context: Context, release: AppReleaseInfo) {
+        val url = release.apkDownloadUrl ?: run {
+            viewModelScope.launch {
+                _uiEvents.emit(UiEvent.Snackbar("Bu sürümde indirilebilir APK dosyası bulunamadı."))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _otaState.value = OtaCheckState.Downloading(0f, release.versionName)
+            runCatching {
+                OtaUpdateManager.downloadApk(url, context.cacheDir, release.versionName) { p ->
+                    _otaState.value = OtaCheckState.Downloading(p, release.versionName)
+                }
+            }.onSuccess { apkFile ->
+                _otaState.value = OtaCheckState.ReadyToInstall(apkFile, release.versionName)
+                _uiEvents.emit(UiEvent.InstallApk(apkFile))
+            }.onFailure { err ->
+                _otaState.value = OtaCheckState.Error("İndirme hatası: ${err.message}")
+            }
+        }
+    }
+
+    override fun onCleared() {
+        stopLiveTelemetry()
+        super.onCleared()
+    }
+}
+
+sealed interface UiEvent {
+    data class Snackbar(val message: String) : UiEvent
+    data class ShareFile(val file: File, val mimeType: String, val chooserTitle: String) : UiEvent
+    data class InstallApk(val apkFile: File) : UiEvent
+}
