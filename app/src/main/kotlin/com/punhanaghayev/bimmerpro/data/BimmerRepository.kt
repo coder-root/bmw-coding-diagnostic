@@ -9,6 +9,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceExecutionResult
+import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
@@ -51,6 +52,7 @@ data class BimmerSessionState(
     val backups: List<CodingBackupSnapshot> = emptyList(),
     val liveChannels: List<LiveSensorChannel> = emptyList(),
     val serviceRoutines: List<ServiceRoutine> = emptyList(),
+    val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
     val isScanning: Boolean = false,
     val scanProgress: Float = 0f,
     val scanStatusText: String = "",
@@ -88,7 +90,9 @@ class BimmerRepository(
         activeTransport.disconnect()
         activeTransport = when (adapterType) {
             AdapterType.SIMULATOR_F10,
+            AdapterType.SIMULATOR_F30,
             AdapterType.SIMULATOR_G30,
+            AdapterType.SIMULATOR_G20,
             AdapterType.SIMULATOR_E90 -> SimulatorTransportAdapter(adapterType)
 
             AdapterType.ENET_WIFI,
@@ -149,6 +153,7 @@ class BimmerRepository(
                         cafdParameters = bundle.cafdParameters,
                         liveChannels = bundle.liveChannels,
                         serviceRoutines = bundle.serviceRoutines,
+                        serviceHistory = bundle.serviceHistory,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
                     )
                 }
@@ -476,6 +481,34 @@ class BimmerRepository(
 
     fun selectBleDevice(address: String) {
         _session.update { it.copy(selectedBleAddress = address) }
+    }
+
+    suspend fun writeServiceHistoryRecord(
+        date: String,
+        mileageKm: Int,
+        dealerCode: String,
+        items: List<String>
+    ) {
+        if (items.isEmpty()) return
+        val payload = "$date|$mileageKm|$dealerCode|${items.joinToString(",")}".toByteArray()
+        udsClient.sendUds(
+            EcuAddress.HU_MEDIA,
+            UdsCodec.buildWriteDataById(0x3B01, payload),
+            "UDS 0x2E iDrive Service History Write ($mileageKm km)"
+        )
+        val newRecord = ServiceHistoryRecord(
+            id = "sh_${System.currentTimeMillis()}",
+            date = date,
+            mileageKm = mileageKm,
+            dealerCode = dealerCode.ifBlank { "Punhan Garage (08801)" },
+            performedItems = items
+        )
+        _session.update {
+            it.copy(
+                serviceHistory = listOf(newRecord) + it.serviceHistory,
+                lastOperationMessage = "iDrive dijital servis geçmişine yeni bakım kaydı işlendi ($mileageKm km)."
+            )
+        }
     }
 
     companion object {

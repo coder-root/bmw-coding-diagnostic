@@ -81,6 +81,20 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.0",
+            versionName = "1.1.0",
+            title = "BimmerPro v1.1.0 — iDrive Servis Geçmişi & F30/G20",
+            changelog = """
+                • iDrive Dijital Servis Geçmişi (Service History) yazma sihirbazı
+                • BMW F30 328i (N20) ve G20 M340i (B58) simülatörleri eklendi
+                • Yeni Easy Mode kodlamalar: 5x Sinyal, Geri Ayna Açısı, Spor Göstergeler
+                • OTA Güncelleme & GitHub Releases Changelog takibi
+            """.trimIndent(),
+            publishedDate = "2026-11-18",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.0",
             versionName = "1.0.0",
             title = "BimmerPro İlk Sürüm (Sprint 1–3)",

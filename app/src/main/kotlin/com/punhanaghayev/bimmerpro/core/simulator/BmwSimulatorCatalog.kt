@@ -14,6 +14,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
 import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
+import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
@@ -28,13 +29,16 @@ data class SimulatedVehicleBundle(
     val presets: List<CodingPreset>,
     val cafdParameters: List<CafdParameter>,
     val liveChannels: List<LiveSensorChannel>,
-    val serviceRoutines: List<ServiceRoutine>
+    val serviceRoutines: List<ServiceRoutine>,
+    val serviceHistory: List<ServiceHistoryRecord> = emptyList()
 )
 
 object BmwSimulatorCatalog {
 
     fun buildBundle(adapterType: AdapterType): SimulatedVehicleBundle = when (adapterType) {
+        AdapterType.SIMULATOR_F30 -> buildF30Bundle()
         AdapterType.SIMULATOR_G30 -> buildG30Bundle()
+        AdapterType.SIMULATOR_G20 -> buildG20Bundle()
         AdapterType.SIMULATOR_E90 -> buildE90Bundle()
         else -> buildF10Bundle()
     }
@@ -139,7 +143,61 @@ object BmwSimulatorCatalog {
             presets = defaultPresets(isGSeries = false),
             cafdParameters = defaultCafdParameters(isGSeries = false),
             liveChannels = defaultLiveChannels(isDiesel = true),
-            serviceRoutines = defaultServiceRoutines(isDiesel = true)
+            serviceRoutines = defaultServiceRoutines(isDiesel = true),
+            serviceHistory = listOf(
+                ServiceHistoryRecord("sh1", "2025-10-14", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
+                ServiceHistoryRecord("sh2", "2024-09-02", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
+            )
+        )
+    }
+
+    private fun buildF30Bundle(): SimulatedVehicleBundle {
+        val base = buildF10Bundle()
+        return base.copy(
+            profile = base.profile.copy(
+                vin = "WBA3A510X0F491822",
+                chassis = BmwChassis.F30,
+                modelDisplayName = "BMW 328i M Sport (F30)",
+                engineCode = "N20B20O0 (245 PS)",
+                productionYear = 2015,
+                iLevel = "F020-20-07-540",
+                odometerKm = 112_640,
+                mileageVerification = base.profile.mileageVerification.copy(
+                    readings = listOf(
+                        MileageModuleReading("FEM_BODY", 112_640),
+                        MileageModuleReading("KOMBI", 112_640),
+                        MileageModuleReading("DME (N20)", 112_635, engineHours = 2_410)
+                    ),
+                    maxDifferenceKm = 5,
+                    summary = "Tüm F30 modülleri tutarlı (±5 km)."
+                )
+            ),
+            liveChannels = defaultLiveChannels(isDiesel = false),
+            serviceRoutines = defaultServiceRoutines(isDiesel = false)
+        )
+    }
+
+    private fun buildG20Bundle(): SimulatedVehicleBundle {
+        val base = buildG30Bundle()
+        return base.copy(
+            profile = base.profile.copy(
+                vin = "WBA5U91090FJ72105",
+                chassis = BmwChassis.G20,
+                modelDisplayName = "BMW M340i xDrive (G20)",
+                engineCode = "B58B30O1 (374 PS)",
+                productionYear = 2021,
+                iLevel = "S18A-23-11-530",
+                odometerKm = 39_850,
+                mileageVerification = base.profile.mileageVerification.copy(
+                    readings = listOf(
+                        MileageModuleReading("BDC_BODY3", 39_850),
+                        MileageModuleReading("DKOMBI", 39_850),
+                        MileageModuleReading("DME8 (B58)", 39_847, engineHours = 820)
+                    ),
+                    maxDifferenceKm = 3,
+                    summary = "Tüm G20 modülleri doğrulandı (±3 km)."
+                )
+            )
         )
     }
 
@@ -364,6 +422,40 @@ object BmwSimulatorCatalog {
             cafdKey = "TFL_MODUS_BRIGHTNESS",
             options = listOf("%50 Fabrika", "%80 Dengeli", "%100 Tam Parlaklık"),
             currentOptionIndex = 0
+        ),
+        CodingPreset(
+            id = "turn_signal_count",
+            title = "Tek Dokunuş Sinyal Sayısı (3x -> 5x)",
+            description = "Sinyal koluna hafif dokunuşta yanıp sönme sayısını değiştirir.",
+            category = CodingCategory.LIGHTING,
+            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
+            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
+            cafdKey = "BLINKZYKLEN_ANZAHL_TIPP",
+            options = listOf("3 Kez (Fabrika)", "5 Kez", "7 Kez"),
+            currentOptionIndex = 0
+        ),
+        CodingPreset(
+            id = "reverse_mirror_tilt",
+            title = "Geri Viteste Sağ Ayna Eğilme Açısı",
+            description = "Kaldırım parkında sağ aynanın aşağı eğilme oranını ayarlar.",
+            category = CodingCategory.COMFORT,
+            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
+            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
+            cafdKey = "ASP_BORDSTEINAUTOMATIK_DELTA",
+            options = listOf("Fabrika (%70)", "Hafif (%40)", "Tam Eğilme (%90)"),
+            currentOptionIndex = 0
+        ),
+        CodingPreset(
+            id = "sport_displays",
+            title = "iDrive Spor Göstergeler (HP & Nm)",
+            description = "iDrive ekranında anlık beygir gücü ve tork kadranlarını aktif eder.",
+            category = CodingCategory.MULTIMEDIA,
+            targetEcu = if (isGSeries) "HU_MGU" else "HU_NBT",
+            targetAddress = EcuAddress.HU_MEDIA,
+            cafdKey = "EFF_DYN_SPORT_CID",
+            options = listOf("Pasif", "Aktif (Turuncu/Kırmızı)"),
+            currentOptionIndex = 1,
+            isLockedBySecureCoding = isGSeries
         )
     )
 

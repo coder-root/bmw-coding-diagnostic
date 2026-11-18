@@ -231,6 +231,7 @@ fun MainNavigation(
                     onToggleLiveStream = viewModel::toggleLiveTelemetry,
                     onExportCsv = { viewModel.exportTelemetryCsv(context) },
                     onExecuteRoutine = viewModel::executeServiceRoutine,
+                    onWriteServiceHistory = viewModel::writeServiceHistory,
                     onGoToGarage = { selectedTabIndex = 0 }
                 )
 

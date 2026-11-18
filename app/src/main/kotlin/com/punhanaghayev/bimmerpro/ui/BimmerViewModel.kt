@@ -132,6 +132,13 @@ class BimmerViewModel(
         }
     }
 
+    fun writeServiceHistory(date: String, mileageKm: Int, dealerCode: String, items: List<String>) {
+        viewModelScope.launch {
+            repository.writeServiceHistoryRecord(date, mileageKm, dealerCode, items)
+            _uiEvents.emit(UiEvent.Snackbar("iDrive servis geçmişi kaydı yazıldı."))
+        }
+    }
+
     fun toggleLiveTelemetry() {
         if (_isLiveStreamRunning.value) {
             stopLiveTelemetry()

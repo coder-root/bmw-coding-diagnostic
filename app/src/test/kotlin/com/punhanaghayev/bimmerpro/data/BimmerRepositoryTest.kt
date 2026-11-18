@@ -66,4 +66,19 @@ class BimmerRepositoryTest {
         repo.clearAllDtcs()
         assertTrue(repo.session.value.dtcs.isEmpty())
     }
+
+    @Test
+    fun `f30 and g20 simulators connect and write idrive service history`() = runTest {
+        val repo = BimmerRepository()
+        repo.connect(AdapterType.SIMULATOR_F30)
+        assertEquals(BmwChassis.F30, repo.session.value.vehicleProfile?.chassis)
+
+        repo.connect(AdapterType.SIMULATOR_G20)
+        assertEquals(BmwChassis.G20, repo.session.value.vehicleProfile?.chassis)
+
+        val beforeCount = repo.session.value.serviceHistory.size
+        repo.writeServiceHistoryRecord("2026-11-18", 40_000, "Punhan Garage", listOf("Motor Yağı", "Buji"))
+        assertEquals(beforeCount + 1, repo.session.value.serviceHistory.size)
+        assertEquals(40_000, repo.session.value.serviceHistory.first().mileageKm)
+    }
 }

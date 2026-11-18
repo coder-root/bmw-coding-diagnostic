@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
@@ -27,9 +30,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,6 +62,7 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
 import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LiveServiceScreen(
     session: BimmerSessionState,
@@ -64,9 +70,11 @@ fun LiveServiceScreen(
     onToggleLiveStream: () -> Unit,
     onExportCsv: () -> Unit,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
+    onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
     onGoToGarage: () -> Unit
 ) {
-    if (session.vehicleProfile == null) {
+    val profile = session.vehicleProfile
+    if (profile == null) {
         DisconnectedPlaceholder(
             title = "Canlı Veri & Servis Beklemede",
             subtitle = "Sensör grafikleri, DPF rejenerasyonu ve akü tanıtma işlemleri için önce araca bağlanın.",
@@ -76,6 +84,62 @@ fun LiveServiceScreen(
     }
 
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
+    var showHistoryDialog by remember { mutableStateOf(false) }
+
+    if (showHistoryDialog) {
+        var dealerCode by remember { mutableStateOf("Punhan Garage (08801)") }
+        var mileageInput by remember { mutableStateOf(profile.odometerKm.toString()) }
+        val allItems = listOf("Motor Yağı", "Mikrofiltre", "Hava Filtresi", "Fren Hidroliği", "Buji", "Araç Kontrol")
+        var selectedItems by remember { mutableStateOf(setOf("Motor Yağı", "Mikrofiltre")) }
+
+        AlertDialog(
+            onDismissRequest = { showHistoryDialog = false },
+            title = { Text("iDrive Dijital Servis Geçmişi Yaz") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = dealerCode,
+                        onValueChange = { dealerCode = it },
+                        label = { Text("Servis / Bayi Kodu") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = mileageInput,
+                        onValueChange = { mileageInput = it.filter { c -> c.isDigit() } },
+                        label = { Text("Bakım Kilometresi (km)") },
+                        singleLine = true
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        allItems.forEach { item ->
+                            val isSel = item in selectedItems
+                            FilterChip(
+                                selected = isSel,
+                                onClick = {
+                                    selectedItems = if (isSel) selectedItems - item else selectedItems + item
+                                },
+                                label = { Text(item, fontSize = 11.sp) }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val km = mileageInput.toIntOrNull() ?: profile.odometerKm
+                        onWriteServiceHistory("2026-11-18", km, dealerCode, selectedItems.toList())
+                        showHistoryDialog = false
+                    },
+                    enabled = selectedItems.isNotEmpty()
+                ) {
+                    Text("HU Modülüne Yaz")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showHistoryDialog = false }) { Text("İptal") }
+            }
+        )
+    }
 
     batteryDialogRoutine?.let { routine ->
         val capacities = listOf(
@@ -236,6 +300,38 @@ fun LiveServiceScreen(
                         Spacer(Modifier.width(6.dp))
                         Text("Rutini Çalıştır")
                     }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("iDrive Dijital Servis Geçmişi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+                OutlinedButton(onClick = { showHistoryDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Kayıt Yaz", fontSize = 11.sp)
+                }
+            }
+        }
+
+        items(session.serviceHistory, key = { it.id }) { entry ->
+            Card(
+                colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                border = BorderStroke(1.dp, BimmerOutline),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("${entry.date} • %,d km".format(entry.mileageKm), color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(entry.dealerCode, color = TextSecondary, fontSize = 11.sp)
+                    }
+                    Text(entry.performedItems.joinToString(" • "), color = TextPrimary, fontSize = 12.sp)
                 }
             }
         }

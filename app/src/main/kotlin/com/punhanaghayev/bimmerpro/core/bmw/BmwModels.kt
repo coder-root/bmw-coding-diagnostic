@@ -171,6 +171,14 @@ data class ServiceExecutionResult(
     val timestamp: String
 )
 
+data class ServiceHistoryRecord(
+    val id: String,
+    val date: String,
+    val mileageKm: Int,
+    val dealerCode: String,
+    val performedItems: List<String>
+)
+
 enum class CodingCategory(val label: String) {
     COMFORT("Konfor & Kilit"),
     INSTRUMENT("Gösterge & M/Alpina"),
