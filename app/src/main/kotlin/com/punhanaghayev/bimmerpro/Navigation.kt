@@ -147,7 +147,7 @@ fun MainNavigation(
                             BmwRoundelLogo(size = 28.dp)
                             Spacer(Modifier.width(10.dp))
                             Column {
-                                Text("BimmerPro", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                Text("BMW Expert PRO", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                                 val sub = session.vehicleProfile?.let {
                                     "${it.chassis.code} • ${it.vin.takeLast(7)}"
                                 } ?: BimmerTab.entries[selectedTabIndex].label
@@ -187,11 +187,11 @@ fun MainNavigation(
             when (BimmerTab.entries[selectedTabIndex]) {
                 BimmerTab.GARAGE -> GarageScreen(
                     session = session,
-                    onConnect = { adapter, ip ->
+                    onConnect = { adapter, host, port ->
                         if (adapter == AdapterType.USB_KDCAN) {
                             HardwarePermissionHelper.requestUsbKdcanPermissionIfNeeded(context)
                         }
-                        viewModel.connect(adapter, ip)
+                        viewModel.connect(adapter, host, port)
                     },
                     onDisconnect = viewModel::disconnect,
                     onAdjustSimVoltage = viewModel::adjustSimulatedVoltage,

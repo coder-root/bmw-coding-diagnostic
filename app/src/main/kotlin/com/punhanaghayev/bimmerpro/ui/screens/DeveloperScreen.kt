@@ -107,7 +107,7 @@ fun DeveloperScreen(
                             fontSize = 13.sp
                         )
                         Text(
-                            text = "BimmerPro v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • ${BuildConfig.APPLICATION_ID}",
+                            text = "BMW Expert PRO v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • ${BuildConfig.APPLICATION_ID}",
                             color = TextSecondary,
                             fontSize = 11.sp
                         )

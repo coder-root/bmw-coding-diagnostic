@@ -15,15 +15,16 @@ enum class AdapterType(
     val protocolSummary: String,
     val supportsEnetspeed: Boolean
 ) {
+    VLINKER_BM_WIFI("Vgate vLinker BM Wi-Fi", "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)", false),
+    ENET_WIFI("Wi-Fi ENET (Thor / MHD / BM3)", "HSFZ / DoIP TCP:6801", true),
+    ENET_USB("USB-C to ENET Kablo", "HSFZ / DoIP 100Mbps Ethernet", true),
+    BLE_OBD("OBDLink CX / UniCarScan BLE", "ISO-TP over CAN (BLE GATT)", false),
+    USB_KDCAN("USB OTG K+DCAN Kablo", "E-Series K-Line / D-CAN", false),
     SIMULATOR_F10("BMW F10 520d Simülasyonu", "Virtual HSFZ / ENET + UDS", true),
     SIMULATOR_F30("BMW F30 328i Simülasyonu", "Virtual HSFZ / ENET + N20", true),
     SIMULATOR_G30("BMW G30 530i Simülasyonu", "Virtual DoIP / HSFZ + Secure Coding Check", true),
     SIMULATOR_G20("BMW G20 M340i Simülasyonu", "Virtual DoIP / B58 + iDrive 7", true),
-    SIMULATOR_E90("BMW E90 335i Simülasyonu", "Virtual K+DCAN / KWP2000 + Tamper Alert Demo", false),
-    ENET_WIFI("Wi-Fi ENET (Thor / MHD / BM3)", "HSFZ / DoIP TCP:6801", true),
-    ENET_USB("USB-C to ENET Kablo", "HSFZ / DoIP 100Mbps Ethernet", true),
-    BLE_OBD("OBDLink CX / UniCarScan BLE", "ISO-TP over CAN (BLE GATT)", false),
-    USB_KDCAN("USB OTG K+DCAN Kablo", "E-Series K-Line / D-CAN", false)
+    SIMULATOR_E90("BMW E90 335i Simülasyonu", "Virtual K+DCAN / KWP2000 + Tamper Alert Demo", false)
 }
 
 sealed interface ConnectionState {

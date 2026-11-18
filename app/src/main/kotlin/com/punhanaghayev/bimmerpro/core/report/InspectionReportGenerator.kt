@@ -76,7 +76,7 @@ object InspectionReportGenerator {
         // Top Header Banner
         canvas.drawRect(0f, 0f, 595f, 84f, headerBg)
         canvas.drawRect(0f, 80f, 595f, 84f, accentPaint)
-        canvas.drawText("BimmerPro — BMW Teknik Ekspertiz & Diagnostik Raporu", 32f, 36f, titlePaint)
+        canvas.drawText("BMW Expert PRO — BMW Teknik Ekspertiz & Diagnostik Raporu", 32f, 36f, titlePaint)
         val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
         canvas.drawText("VIN: ${profile.vin}  |  Tarih: $dateStr  |  Developer: Punhan Aghayev", 32f, 58f, subtitlePaint)
 
@@ -150,7 +150,7 @@ object InspectionReportGenerator {
         // Footer
         canvas.drawLine(32f, 808f, 563f, 808f, accentPaint)
         canvas.drawText(
-            "BimmerPro Diagnostics & Coding Suite — Lead Developer: Punhan Aghayev",
+            "BMW Expert PRO Diagnostics & Coding Suite — Lead Developer: Punhan Aghayev",
             32f,
             824f,
             bodyPaint

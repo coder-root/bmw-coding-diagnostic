@@ -21,6 +21,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.DiscoveredGateway
 import com.punhanaghayev.bimmerpro.core.protocol.EnetGatewayDiscovery
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
+import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.UdsClient
@@ -84,11 +85,18 @@ class BimmerRepository(
 
     suspend fun connect(
         adapterType: AdapterType,
-        customEnetIp: String = TcpEnetTransportAdapter.DEFAULT_ZGW_HOST,
+        customHost: String = "",
+        customPort: Int? = null,
         bleAddress: String? = _session.value.selectedBleAddress
     ) {
         activeTransport.disconnect()
         activeTransport = when (adapterType) {
+            AdapterType.VLINKER_BM_WIFI -> TcpElmStnTransportAdapter(
+                adapterType = adapterType,
+                host = customHost.ifBlank { TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST },
+                port = customPort ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT
+            )
+
             AdapterType.SIMULATOR_F10,
             AdapterType.SIMULATOR_F30,
             AdapterType.SIMULATOR_G30,
@@ -96,7 +104,11 @@ class BimmerRepository(
             AdapterType.SIMULATOR_E90 -> SimulatorTransportAdapter(adapterType)
 
             AdapterType.ENET_WIFI,
-            AdapterType.ENET_USB -> TcpEnetTransportAdapter(adapterType, host = customEnetIp)
+            AdapterType.ENET_USB -> TcpEnetTransportAdapter(
+                adapterType = adapterType,
+                host = customHost.ifBlank { TcpEnetTransportAdapter.DEFAULT_ZGW_HOST },
+                port = customPort ?: TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
+            )
 
             AdapterType.BLE_OBD -> {
                 val ctx = appContext ?: error("BLE için Android Context gerekli")

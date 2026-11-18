@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.2.0",
+            versionName = "1.2.0",
+            title = "BMW Expert PRO v1.2.0 — Vgate vLinker BM Wi-Fi & Yeni Bağlantı",
+            changelog = """
+                • Uygulama adı ve proje başlığı "BMW Expert PRO" olarak güncellendi
+                • Vgate vLinker BM Wi-Fi (STN2255 / 192.168.0.10:35000) tam protokol desteği eklendi
+                • Bağlantı sayfası Dropdown (açılır liste) seçici ve adaptör kartları ile yenilendi
+            """.trimIndent(),
+            publishedDate = "2026-11-18",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.0",
             versionName = "1.1.0",
             title = "BimmerPro v1.1.0 — iDrive Servis Geçmişi & F30/G20",

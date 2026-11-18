@@ -63,4 +63,13 @@ class CafdAndTransportUnitTest {
             tempDir.deleteRecursively()
         }
     }
+
+    @Test
+    fun `vlinker wifi stn parser extracts voltage and uds payload`() {
+        val volts = TcpElmStnTransportAdapter.parseVoltage("12.6V\r\n>")
+        assertEquals(12.6, volts ?: 0.0, 0.01)
+
+        val uds = TcpElmStnTransportAdapter.parseStnUdsResponse("06 F1 62 F1 90 57 42 41\r\n>")
+        assertArrayEquals(byteArrayOf(0x62, 0xF1.toByte(), 0x90.toByte(), 0x57, 0x42, 0x41), uds)
+    }
 }

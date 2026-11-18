@@ -57,7 +57,7 @@ class CodingSessionService : Service() {
 
     private fun buildNotification(detail: String): Notification =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("BimmerPro Aktif Oturum")
+            .setContentTitle("BMW Expert PRO Aktif Oturum")
             .setContentText(detail)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setOngoing(true)

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -28,11 +27,18 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -54,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
+import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.components.BatterySafetyPill
@@ -70,10 +77,11 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
 import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GarageScreen(
     session: BimmerSessionState,
-    onConnect: (AdapterType, String) -> Unit,
+    onConnect: (AdapterType, String, Int?) -> Unit,
     onDisconnect: () -> Unit,
     onAdjustSimVoltage: (Double) -> Unit,
     onScanHardware: () -> Unit,
@@ -81,7 +89,11 @@ fun GarageScreen(
     onNavigateToTab: (Int) -> Unit
 ) {
     var selectedAdapter by remember(session.selectedAdapter) { mutableStateOf(session.selectedAdapter) }
-    var customEnetIp by remember { mutableStateOf(TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
+
+    var vlinkerHost by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST) }
+    var vlinkerPort by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT.toString()) }
+    var enetHost by remember { mutableStateOf(TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -145,11 +157,7 @@ fun GarageScreen(
                                     .background(StatusAmber.copy(alpha = 0.14f))
                                     .padding(10.dp)
                             ) {
-                                Text(
-                                    text = notice,
-                                    color = StatusAmber,
-                                    fontSize = 12.sp
-                                )
+                                Text(text = notice, color = StatusAmber, fontSize = 12.sp)
                             }
                         }
 
@@ -216,178 +224,233 @@ fun GarageScreen(
             }
         }
 
+        // Sleek Connection Hub Card with Dropdown Selector
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Adaptör & Araç Bağlantısı Seçin",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = TextSecondary,
-                    fontWeight = FontWeight.SemiBold
-                )
-                OutlinedButton(onClick = onScanHardware) {
-                    Text("Donanım Tara (ENET/BLE/USB)", fontSize = 11.sp, color = BmwBlueBright)
-                }
-            }
-        }
-
-        if (session.discoveredGateways.isNotEmpty() || session.discoveredBleDevices.isNotEmpty() || session.discoveredUsbDevices.isNotEmpty()) {
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = BimmerCardElevated),
-                    border = BorderStroke(1.dp, BmwBlue.copy(alpha = 0.5f))
-                ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Bulunan Fiziksel Aygıtlar", color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        session.discoveredGateways.forEach { gw ->
-                            Text(
-                                text = "• ENET Gateway: ${gw.ipAddress} ${gw.vin?.let { "($it)" } ?: ""}",
-                                color = TextPrimary,
-                                fontSize = 12.sp,
-                                modifier = Modifier.clickable {
-                                    customEnetIp = gw.ipAddress
-                                    selectedAdapter = AdapterType.ENET_WIFI
-                                }
-                            )
-                        }
-                        session.discoveredBleDevices.forEach { ble ->
-                            val active = session.selectedBleAddress == ble.address
-                            Text(
-                                text = "• BLE: ${ble.name} (${ble.address}) ${if (active) "[Seçili]" else ""}",
-                                color = if (active) StatusGreen else TextPrimary,
-                                fontSize = 12.sp,
-                                modifier = Modifier.clickable {
-                                    onSelectBleDevice(ble.address)
-                                    selectedAdapter = AdapterType.BLE_OBD
-                                }
-                            )
-                        }
-                        session.discoveredUsbDevices.forEach { usb ->
-                            Text(
-                                text = "• USB: ${usb.productName} (VID:0x%04X)".format(usb.vendorId),
-                                color = TextPrimary,
-                                fontSize = 12.sp,
-                                modifier = Modifier.clickable { selectedAdapter = AdapterType.USB_KDCAN }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        items(AdapterType.entries) { adapter ->
-            val isSelected = selectedAdapter == adapter
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { selectedAdapter = adapter },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isSelected) BimmerCardElevated else BimmerCard
-                ),
-                border = BorderStroke(
-                    width = if (isSelected) 1.5.dp else 1.dp,
-                    color = if (isSelected) BmwBlueBright else BimmerOutline
-                ),
-                shape = RoundedCornerShape(12.dp)
+                colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                border = BorderStroke(1.dp, BimmerOutline),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (adapter.name.startsWith("SIMULATOR")) Icons.Default.DirectionsCar else Icons.Default.Cable,
-                        contentDescription = null,
-                        tint = if (isSelected) BmwBlueBright else TextSecondary
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = adapter.displayName,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "OBD / ENET Bağlantı Merkezi",
+                            style = MaterialTheme.typography.titleSmall,
                             color = TextPrimary,
-                            fontSize = 14.sp
+                            fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text = adapter.protocolSummary,
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
-                    if (adapter.supportsEnetspeed) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(BmwBlue.copy(alpha = 0.25f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                        ) {
-                            Text("100M ENET", color = BmwBlueBright, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        OutlinedButton(onClick = onScanHardware) {
+                            Text("Donanım Tara", fontSize = 11.sp, color = BmwBlueBright)
                         }
                     }
-                }
-            }
-        }
 
-        if (selectedAdapter == AdapterType.ENET_WIFI || selectedAdapter == AdapterType.ENET_USB) {
-            item {
-                OutlinedTextField(
-                    value = customEnetIp,
-                    onValueChange = { customEnetIp = it },
-                    label = { Text("ZGW / BDC Gateway IP (Varsayılan: 169.254.0.1)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
+                    ExposedDropdownMenuBox(
+                        expanded = dropdownExpanded,
+                        onExpandedChange = { dropdownExpanded = !dropdownExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedAdapter.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Bağlantı Adaptörü / Simülatör Seçin") },
+                            supportingText = { Text(selectedAdapter.protocolSummary, color = BmwBlueBright, fontSize = 11.sp) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = when {
+                                        selectedAdapter == AdapterType.VLINKER_BM_WIFI -> Icons.Default.Wifi
+                                        selectedAdapter.name.startsWith("SIMULATOR") -> Icons.Default.DirectionsCar
+                                        else -> Icons.Default.Cable
+                                    },
+                                    contentDescription = null,
+                                    tint = BmwBlueBright
+                                )
+                            },
+                            modifier = Modifier
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                        )
 
-        if (session.connectionState is ConnectionState.Error) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(StatusRed.copy(alpha = 0.14f))
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = StatusRed)
-                    Spacer(Modifier.width(8.dp))
-                    Text(session.connectionState.message, color = StatusRed, fontSize = 12.sp)
-                }
-            }
-        }
+                        ExposedDropdownMenu(
+                            expanded = dropdownExpanded,
+                            onDismissRequest = { dropdownExpanded = false },
+                            modifier = Modifier.background(BimmerCardElevated)
+                        ) {
+                            AdapterType.entries.forEachIndexed { idx, adapter ->
+                                val isSim = adapter.name.startsWith("SIMULATOR")
+                                if (idx > 0 && isSim && !AdapterType.entries[idx - 1].name.startsWith("SIMULATOR")) {
+                                    HorizontalDivider(color = BimmerOutline)
+                                }
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(adapter.displayName, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                            Text(adapter.protocolSummary, color = TextSecondary, fontSize = 11.sp)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedAdapter = adapter
+                                        dropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
 
-        item {
-            val isConnecting = session.connectionState is ConnectionState.Connecting
-            Button(
-                onClick = { onConnect(selectedAdapter, customEnetIp) },
-                enabled = !isConnecting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
-            ) {
-                if (isConnecting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text("Gateway & VIN Okunuyor...")
-                } else {
-                    Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = if (session.connectionState is ConnectionState.Connected) {
-                            "Seçili Adaptörle Yeniden Bağlan"
-                        } else {
-                            "Araca Bağlan (UDS / HSFZ)"
+                    // Dynamic adapter configuration fields
+                    when (selectedAdapter) {
+                        AdapterType.VLINKER_BM_WIFI -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(BmwBlue.copy(alpha = 0.14f))
+                                    .padding(10.dp)
+                            ) {
+                                Text(
+                                    text = "Vgate vLinker BM Wi-Fi: Telefonunuzu 'vLinker-BM' Wi-Fi ağına bağlayın (Varsayılan: 192.168.0.10:35000). BMW F10 2015 D-CAN / UDS uyumludur.",
+                                    color = BmwBlueBright,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = vlinkerHost,
+                                    onValueChange = { vlinkerHost = it },
+                                    label = { Text("vLinker IP") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(0.65f)
+                                )
+                                OutlinedTextField(
+                                    value = vlinkerPort,
+                                    onValueChange = { vlinkerPort = it.filter { c -> c.isDigit() } },
+                                    label = { Text("Port") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(0.35f)
+                                )
+                            }
+                        }
+
+                        AdapterType.ENET_WIFI, AdapterType.ENET_USB -> {
+                            OutlinedTextField(
+                                value = enetHost,
+                                onValueChange = { enetHost = it },
+                                label = { Text("ZGW / BDC Gateway IP (Varsayılan: 169.254.0.1)") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        else -> Unit
+                    }
+
+                    if (session.discoveredGateways.isNotEmpty() || session.discoveredBleDevices.isNotEmpty() || session.discoveredUsbDevices.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(BimmerCardElevated)
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("Bulunan Fiziksel Aygıtlar", color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            session.discoveredGateways.forEach { gw ->
+                                Text(
+                                    text = "• ENET Gateway: ${gw.ipAddress} ${gw.vin?.let { "($it)" } ?: ""}",
+                                    color = TextPrimary,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.clickable {
+                                        enetHost = gw.ipAddress
+                                        selectedAdapter = AdapterType.ENET_WIFI
+                                    }
+                                )
+                            }
+                            session.discoveredBleDevices.forEach { ble ->
+                                val active = session.selectedBleAddress == ble.address
+                                Text(
+                                    text = "• BLE: ${ble.name} (${ble.address}) ${if (active) "[Seçili]" else ""}",
+                                    color = if (active) StatusGreen else TextPrimary,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.clickable {
+                                        onSelectBleDevice(ble.address)
+                                        selectedAdapter = AdapterType.BLE_OBD
+                                    }
+                                )
+                            }
+                            session.discoveredUsbDevices.forEach { usb ->
+                                Text(
+                                    text = "• USB: ${usb.productName} (VID:0x%04X)".format(usb.vendorId),
+                                    color = TextPrimary,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.clickable { selectedAdapter = AdapterType.USB_KDCAN }
+                                )
+                            }
+                        }
+                    }
+
+                    if (session.connectionState is ConnectionState.Error) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(StatusRed.copy(alpha = 0.14f))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = StatusRed)
+                            Spacer(Modifier.width(8.dp))
+                            Text(session.connectionState.message, color = StatusRed, fontSize = 12.sp)
+                        }
+                    }
+
+                    val isConnecting = session.connectionState is ConnectionState.Connecting
+                    Button(
+                        onClick = {
+                            when (selectedAdapter) {
+                                AdapterType.VLINKER_BM_WIFI -> onConnect(
+                                    selectedAdapter,
+                                    vlinkerHost.trim(),
+                                    vlinkerPort.toIntOrNull() ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT
+                                )
+                                AdapterType.ENET_WIFI, AdapterType.ENET_USB -> onConnect(
+                                    selectedAdapter,
+                                    enetHost.trim(),
+                                    TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
+                                )
+                                else -> onConnect(selectedAdapter, "", null)
+                            }
                         },
-                        fontWeight = FontWeight.Bold
-                    )
+                        enabled = !isConnecting,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
+                    ) {
+                        if (isConnecting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text("Bağlanıyor & VIN Okunuyor...")
+                        } else {
+                            Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (session.connectionState is ConnectionState.Connected) {
+                                    "Seçili Adaptörle Yeniden Bağlan"
+                                } else {
+                                    "Araca Bağlan (${selectedAdapter.displayName.substringBefore(" ")})"
+                                },
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -412,7 +475,7 @@ private fun GarageHeroHeader(connectionState: ConnectionState) {
                 Spacer(Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "BimmerPro Suite",
+                        text = "BMW Expert PRO",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
@@ -427,7 +490,7 @@ private fun GarageHeroHeader(connectionState: ConnectionState) {
                         is ConnectionState.Connected -> "Bağlı: ${connectionState.endpoint}" to StatusGreen
                         is ConnectionState.Connecting -> "Bağlanıyor..." to StatusAmber
                         is ConnectionState.Error -> "Bağlantı Hatası" to StatusRed
-                        ConnectionState.Disconnected -> "Bağlı Değil — Simülasyon veya ENET seçin" to TextSecondary
+                        ConnectionState.Disconnected -> "Bağlı Değil — Dropdown'dan adaptör seçin" to TextSecondary
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(

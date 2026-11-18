@@ -52,9 +52,13 @@ class BimmerViewModel(
 
     private var telemetryJob: Job? = null
 
-    fun connect(adapterType: AdapterType, customEnetIp: String = TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) {
+    fun connect(
+        adapterType: AdapterType,
+        customHost: String = "",
+        customPort: Int? = null
+    ) {
         viewModelScope.launch {
-            repository.connect(adapterType, customEnetIp)
+            repository.connect(adapterType, customHost, customPort)
         }
     }
 
