@@ -81,11 +81,11 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
-            tagName = "v1.7.0",
-            versionName = "1.7.0",
-            title = "BMW Expert PRO v1.7.0 — Çoklu Tema, Garaj Geçmişi, JSON Yedek & UI Yenilemesi",
+            tagName = "v1.1.6",
+            versionName = "1.1.6",
+            title = "BMW Expert PRO v1.1.6 — Çoklu Tema, Garaj Geçmişi, JSON Yedek & UI",
             changelog = """
-                • 5 farklı uygulama teması (M Carbon, Alpina Emerald, iPerformance, M Amber, Daylight Silver)
+                • 5 farklı uygulama teması (M Carbon, Alpina, iPerformance, M Amber, Daylight Silver)
                 • Araç Garaj Geçmişi / Çoklu VIN kaydı ve yönetimi
                 • Kodlama yedeklerini JSON olarak dışa/içe aktarma
                 • ECU Reset & Uyku Modu (UDS 0x11) ve vLinker BM Wi-Fi AT canlı logları
@@ -96,9 +96,9 @@ object OtaUpdateManager {
             apkSizeBytes = 0L
         ),
         AppReleaseInfo(
-            tagName = "v1.6.0",
-            versionName = "1.6.0",
-            title = "BMW Expert PRO v1.6.0 — ZF8 Adaptasyon, Enjektör IMA & Kategori Filtresi",
+            tagName = "v1.1.5",
+            versionName = "1.1.5",
+            title = "BMW Expert PRO v1.1.5 — ZF8 Adaptasyon, Enjektör IMA & Filtreler",
             changelog = """
                 • ZF8 EGS Kavrama Adaptasyonları (dolum basıncı/süresi) görüntüleme ve sıfırlama
                 • Silindir bazlı Enjektör IMA / IQA kalibrasyon kodu yazma (UDS 0x2E)
@@ -109,11 +109,11 @@ object OtaUpdateManager {
             apkSizeBytes = 0L
         ),
         AppReleaseInfo(
-            tagName = "v1.5.0",
-            versionName = "1.5.0",
-            title = "BMW Expert PRO v1.5.0 — BMW DTC Sözlüğü, Canlı PID & 0-100 Ölçer",
+            tagName = "v1.1.4",
+            versionName = "1.1.4",
+            title = "BMW Expert PRO v1.1.4 — BMW DTC Sözlüğü, Canlı PID & 0-100 Ölçer",
             changelog = """
-                • BmwDtcDictionary: Fiziksel ECU taramaları için yerleşik BMW Hex arıza kodu sözlüğü ve ISTA rehberi
+                • BmwDtcDictionary: Fiziksel ECU taramaları için yerleşik BMW Hex arıza kodu sözlüğü
                 • Fiziksel araçlarda canlı RPM (0xF40C) ve Soğutma Suyu (0xF405) UDS 0x22 okuma
                 • Canlı & Servis sekmesine 0-100 km/h Performans Kronometresi eklendi
             """.trimIndent(),
@@ -122,9 +122,9 @@ object OtaUpdateManager {
             apkSizeBytes = 0L
         ),
         AppReleaseInfo(
-            tagName = "v1.4.0",
-            versionName = "1.4.0",
-            title = "BMW Expert PRO v1.4.0 — Fiziksel Araç VIN & DTC Çözümleyici",
+            tagName = "v1.1.3",
+            versionName = "1.1.3",
+            title = "BMW Expert PRO v1.1.3 — Fiziksel Araç VIN & DTC Çözümleyici",
             changelog = """
                 • PhysicalUdsParser: Gerçek araçlardan (vLinker BM Wi-Fi / ENET) VIN (0xF190) ve DTC (0x19 0x02) çözümleme
                 • Şasi otomatik algılama (F10/F30/G30/G20/E90/E60) ve fiziksel ECU tarama desteği
@@ -135,9 +135,9 @@ object OtaUpdateManager {
             apkSizeBytes = 0L
         ),
         AppReleaseInfo(
-            tagName = "v1.3.0",
-            versionName = "1.3.0",
-            title = "BMW Expert PRO v1.3.0 — Çok Dilli Destek & UI Yenilemesi",
+            tagName = "v1.1.2",
+            versionName = "1.1.2",
+            title = "BMW Expert PRO v1.1.2 — Çok Dilli Destek & UI Yenilemesi",
             changelog = """
                 • Çok dilli destek eklendi: Azərbaycan, Türkçe, English, Русский
                 • Bağlantı ve tarama butonları tek satır ikonlu tasarımla yenilendi
@@ -149,9 +149,9 @@ object OtaUpdateManager {
             apkSizeBytes = 0L
         ),
         AppReleaseInfo(
-            tagName = "v1.2.0",
-            versionName = "1.2.0",
-            title = "BMW Expert PRO v1.2.0 — Vgate vLinker BM Wi-Fi & Yeni Bağlantı",
+            tagName = "v1.1.1",
+            versionName = "1.1.1",
+            title = "BMW Expert PRO v1.1.1 — Vgate vLinker BM Wi-Fi & Dropdown Hub",
             changelog = """
                 • Uygulama adı ve proje başlığı "BMW Expert PRO" olarak güncellendi
                 • Vgate vLinker BM Wi-Fi (STN2255 / 192.168.0.10:35000) tam protokol desteği eklendi
