@@ -11,6 +11,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
+import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
 import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
@@ -20,6 +21,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
+import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 
 data class SimulatedVehicleBundle(
@@ -30,7 +32,9 @@ data class SimulatedVehicleBundle(
     val cafdParameters: List<CafdParameter>,
     val liveChannels: List<LiveSensorChannel>,
     val serviceRoutines: List<ServiceRoutine>,
-    val serviceHistory: List<ServiceHistoryRecord> = emptyList()
+    val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
+    val zfAdaptations: List<ZfClutchAdaptation> = BmwSimulatorCatalog.defaultZfAdaptations(),
+    val injectorCodes: List<InjectorCalibration> = BmwSimulatorCatalog.defaultInjectors(4)
 )
 
 object BmwSimulatorCatalog {
@@ -351,9 +355,24 @@ object BmwSimulatorCatalog {
             presets = defaultPresets(isGSeries = false),
             cafdParameters = defaultCafdParameters(isGSeries = false),
             liveChannels = defaultLiveChannels(isDiesel = false),
-            serviceRoutines = defaultServiceRoutines(isDiesel = false)
+            serviceRoutines = defaultServiceRoutines(isDiesel = false),
+            injectorCodes = defaultInjectors(6)
         )
     }
+
+    internal fun defaultZfAdaptations(): List<ZfClutchAdaptation> = listOf(
+        ZfClutchAdaptation("Kavrama A", pressureMbar = -18, fillTimeMs = 12),
+        ZfClutchAdaptation("Kavrama B", pressureMbar = 24, fillTimeMs = 8),
+        ZfClutchAdaptation("Kavrama C", pressureMbar = -6, fillTimeMs = 15),
+        ZfClutchAdaptation("Kavrama D", pressureMbar = 42, fillTimeMs = 19),
+        ZfClutchAdaptation("Kavrama E", pressureMbar = -31, fillTimeMs = 11)
+    )
+
+    internal fun defaultInjectors(count: Int): List<InjectorCalibration> =
+        (1..count).map { cyl ->
+            val sampleCodes = listOf("7H8K9M", "8A4F2C", "6D9P3N", "7B2E5T", "9C1L4X", "6K8R2W")
+            InjectorCalibration(cyl, sampleCodes[(cyl - 1) % sampleCodes.size])
+        }
 
     private fun defaultPresets(isGSeries: Boolean): List<CodingPreset> = listOf(
         CodingPreset(

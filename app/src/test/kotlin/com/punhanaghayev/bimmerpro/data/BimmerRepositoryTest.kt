@@ -80,5 +80,11 @@ class BimmerRepositoryTest {
         repo.writeServiceHistoryRecord("2026-11-18", 40_000, "Punhan Garage", listOf("Motor Yağı", "Buji"))
         assertEquals(beforeCount + 1, repo.session.value.serviceHistory.size)
         assertEquals(40_000, repo.session.value.serviceHistory.first().mileageKm)
+
+        repo.writeInjectorCode(1, "9A7C5E")
+        assertEquals("9A7C5E", repo.session.value.injectorCodes.first { it.cylinder == 1 }.imaCode)
+
+        repo.resetZfAdaptations()
+        assertTrue(repo.session.value.zfAdaptations.all { it.pressureMbar == 0 && it.fillTimeMs == 0 })
     }
 }

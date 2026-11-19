@@ -285,6 +285,8 @@ fun MainNavigation(
                         onExportCsv = { viewModel.exportTelemetryCsv(context) },
                         onExecuteRoutine = viewModel::executeServiceRoutine,
                         onWriteServiceHistory = viewModel::writeServiceHistory,
+                        onWriteInjectorCode = viewModel::writeInjectorCode,
+                        onResetZfAdaptations = viewModel::resetZfAdaptations,
                         onGoToGarage = { selectedTabIndex = 0 }
                     )
 

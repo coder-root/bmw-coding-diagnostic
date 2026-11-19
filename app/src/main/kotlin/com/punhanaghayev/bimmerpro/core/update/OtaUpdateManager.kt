@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.6.0",
+            versionName = "1.6.0",
+            title = "BMW Expert PRO v1.6.0 — ZF8 Adaptasyon, Enjektör IMA & Kategori Filtresi",
+            changelog = """
+                • ZF8 EGS Kavrama Adaptasyonları (dolum basıncı/süresi) görüntüleme ve sıfırlama
+                • Silindir bazlı Enjektör IMA / IQA kalibrasyon kodu yazma (UDS 0x2E)
+                • Kodlama Easy Mode ekranına arama çubuğu ve kategori filtreleri eklendi
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.5.0",
             versionName = "1.5.0",
             title = "BMW Expert PRO v1.5.0 — BMW DTC Sözlüğü, Canlı PID & 0-100 Ölçer",

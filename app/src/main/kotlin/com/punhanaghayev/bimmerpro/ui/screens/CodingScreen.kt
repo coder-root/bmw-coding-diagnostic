@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
+import com.punhanaghayev.bimmerpro.core.bmw.CodingCategory
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
@@ -87,6 +89,8 @@ fun CodingScreen(
 
     var selectedMode by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
+    var easySearchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<CodingCategory?>(null) }
     var newVoCode by remember { mutableStateOf("") }
     var newVoDesc by remember { mutableStateOf("") }
 
@@ -138,7 +142,41 @@ fun CodingScreen(
         ) {
             when (selectedMode) {
                 0 -> {
-                    items(session.presets, key = { it.id }) { preset ->
+                    item {
+                        OutlinedTextField(
+                            value = easySearchQuery,
+                            onValueChange = { easySearchQuery = it },
+                            label = { Text("Kodlama Ara (Ayna, Start-Stop, Logo...)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item {
+                                FilterChip(
+                                    selected = selectedCategory == null,
+                                    onClick = { selectedCategory = null },
+                                    label = { Text("Tümü", fontSize = 11.sp) }
+                                )
+                            }
+                            items(CodingCategory.entries) { cat ->
+                                FilterChip(
+                                    selected = selectedCategory == cat,
+                                    onClick = { selectedCategory = if (selectedCategory == cat) null else cat },
+                                    label = { Text(cat.label, fontSize = 11.sp) }
+                                )
+                            }
+                        }
+                    }
+                    val filteredPresets = session.presets.filter { preset ->
+                        (selectedCategory == null || preset.category == selectedCategory) &&
+                            (easySearchQuery.isBlank() ||
+                                preset.title.contains(easySearchQuery, ignoreCase = true) ||
+                                preset.description.contains(easySearchQuery, ignoreCase = true) ||
+                                preset.targetEcu.contains(easySearchQuery, ignoreCase = true))
+                    }
+                    items(filteredPresets, key = { it.id }) { preset ->
                         PresetCodingCard(preset = preset, enabled = voltageSafe, onSelectOption = { idx ->
                             onApplyPreset(preset.id, idx)
                         })

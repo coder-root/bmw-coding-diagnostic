@@ -73,6 +73,8 @@ fun LiveServiceScreen(
     onExportCsv: () -> Unit,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
+    onWriteInjectorCode: (Int, String) -> Unit,
+    onResetZfAdaptations: () -> Unit,
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
@@ -87,7 +89,38 @@ fun LiveServiceScreen(
 
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
     val strings = LocalAppStrings.current
+
+    editingInjectorCyl?.let { (cyl, currentCode) ->
+        var codeInput by remember { mutableStateOf(currentCode) }
+        AlertDialog(
+            onDismissRequest = { editingInjectorCyl = null },
+            title = { Text("Silindir $cyl Enjektör IMA Kodu") },
+            text = {
+                OutlinedTextField(
+                    value = codeInput,
+                    onValueChange = { codeInput = it.uppercase().take(8) },
+                    label = { Text("6-7 Haneli IMA / IQA Kodu") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onWriteInjectorCode(cyl, codeInput)
+                        editingInjectorCyl = null
+                    },
+                    enabled = codeInput.length >= 5
+                ) {
+                    Text("DME/DDE'ye Yaz")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingInjectorCyl = null }) { Text("İptal") }
+            }
+        )
+    }
 
     if (showHistoryDialog) {
         var dealerCode by remember { mutableStateOf("Punhan Garage (08801)") }
@@ -374,6 +407,73 @@ fun LiveServiceScreen(
                         Text(entry.dealerCode, color = TextSecondary, fontSize = 11.sp)
                     }
                     Text(entry.performedItems.joinToString(" • "), color = TextPrimary, fontSize = 12.sp)
+                }
+            }
+        }
+
+        // ZF8 Transmission Clutch Adaptations
+        if (session.zfAdaptations.isNotEmpty()) {
+            item {
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("ZF8 EGS Kavrama Adaptasyonları", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    OutlinedButton(onClick = onResetZfAdaptations) {
+                        Text("Sıfırla", fontSize = 11.sp, color = StatusAmber, maxLines = 1, softWrap = false)
+                    }
+                }
+            }
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                    border = BorderStroke(1.dp, BimmerOutline),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        session.zfAdaptations.forEach { clutch ->
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(clutch.clutchName, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    text = "${clutch.pressureMbar} mbar  |  ${clutch.fillTimeMs} ms",
+                                    color = BmwBlueBright,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Injector IMA Coding
+        if (session.injectorCodes.isNotEmpty()) {
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text("Enjektör IMA Kalibrasyon Kodları", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                    border = BorderStroke(1.dp, BimmerOutline),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        session.injectorCodes.forEach { inj ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Silindir ${inj.cylinder}: ${inj.imaCode}", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                TextButton(onClick = { editingInjectorCyl = inj.cylinder to inj.imaCode }) {
+                                    Text("Kodla", color = BmwBlueBright, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -149,6 +149,20 @@ class BimmerViewModel(
         }
     }
 
+    fun writeInjectorCode(cylinder: Int, imaCode: String) {
+        viewModelScope.launch {
+            repository.writeInjectorCode(cylinder, imaCode)
+            _uiEvents.emit(UiEvent.Snackbar("Silindir $cylinder IMA kodu yazıldı."))
+        }
+    }
+
+    fun resetZfAdaptations() {
+        viewModelScope.launch {
+            repository.resetZfAdaptations()
+            _uiEvents.emit(UiEvent.Snackbar("ZF8 EGS adaptasyonları sıfırlandı."))
+        }
+    }
+
     fun toggleLiveTelemetry() {
         if (_isLiveStreamRunning.value) {
             stopLiveTelemetry()

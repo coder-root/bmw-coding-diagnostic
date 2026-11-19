@@ -8,6 +8,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
 import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
@@ -17,6 +18,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
+import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.BleAdapterDevice
 import com.punhanaghayev.bimmerpro.core.protocol.BleObdTransportAdapter
@@ -68,6 +70,8 @@ data class BimmerSessionState(
     val liveChannels: List<LiveSensorChannel> = emptyList(),
     val serviceRoutines: List<ServiceRoutine> = emptyList(),
     val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
+    val zfAdaptations: List<ZfClutchAdaptation> = emptyList(),
+    val injectorCodes: List<InjectorCalibration> = emptyList(),
     val isScanning: Boolean = false,
     val scanProgress: Float = 0f,
     val scanStatusText: String = "",
@@ -185,6 +189,8 @@ class BimmerRepository(
                         liveChannels = bundle.liveChannels,
                         serviceRoutines = bundle.serviceRoutines,
                         serviceHistory = bundle.serviceHistory,
+                        zfAdaptations = bundle.zfAdaptations,
+                        injectorCodes = bundle.injectorCodes,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
                     )
                 }
@@ -236,6 +242,8 @@ class BimmerRepository(
                         liveChannels = template.liveChannels,
                         serviceRoutines = template.serviceRoutines,
                         serviceHistory = emptyList(),
+                        zfAdaptations = template.zfAdaptations,
+                        injectorCodes = template.injectorCodes,
                         lastOperationMessage = "Fiziksel bağlantı kuruldu: $extractedVin (%.1f V)".format(batteryVolts)
                     )
                 }
@@ -639,6 +647,38 @@ class BimmerRepository(
                     performanceTimer = timer.copy(currentSpeedKmh = nextSpeed, elapsedMs = nextElapsed)
                 )
             }
+        }
+    }
+
+    suspend fun writeInjectorCode(cylinder: Int, imaCode: String) {
+        val clean = imaCode.trim().uppercase()
+        if (clean.length < 5) return
+        udsClient.sendUds(
+            EcuAddress.DME_DDE,
+            UdsCodec.buildWriteDataById(0x3C00 + cylinder, clean.toByteArray()),
+            "UDS 0x2E Injector IMA Cyl $cylinder = $clean"
+        )
+        _session.update { state ->
+            state.copy(
+                injectorCodes = state.injectorCodes.map {
+                    if (it.cylinder == cylinder) it.copy(imaCode = clean) else it
+                },
+                lastOperationMessage = "Silindir $cylinder enjektör IMA kodu ($clean) DME/DDE'ye yazıldı."
+            )
+        }
+    }
+
+    suspend fun resetZfAdaptations() {
+        udsClient.sendUds(
+            EcuAddress.EGS,
+            UdsCodec.buildRoutineControl(0x01, 0xF080, byteArrayOf(0x01)),
+            "UDS 0x31 EGS ZF8 Adaptation Reset"
+        )
+        _session.update { state ->
+            state.copy(
+                zfAdaptations = state.zfAdaptations.map { it.copy(pressureMbar = 0, fillTimeMs = 0) },
+                lastOperationMessage = "ZF8 EGS şanzıman adaptasyonları sıfırlandı (ilk 50 km öğrenme sürüşü yapın)."
+            )
         }
     }
 

@@ -179,6 +179,17 @@ data class ServiceHistoryRecord(
     val performedItems: List<String>
 )
 
+data class ZfClutchAdaptation(
+    val clutchName: String,
+    val pressureMbar: Int,
+    val fillTimeMs: Int
+)
+
+data class InjectorCalibration(
+    val cylinder: Int,
+    val imaCode: String
+)
+
 enum class CodingCategory(val label: String) {
     COMFORT("Konfor & Kilit"),
     INSTRUMENT("Gösterge & M/Alpina"),
