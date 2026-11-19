@@ -55,6 +55,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.ui.components.SportArcGauge
 import com.punhanaghayev.bimmerpro.ui.components.TelemetrySparkline
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
@@ -251,6 +252,47 @@ fun LiveServiceScreen(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(if (isLiveStreamRunning) strings.stopBtn else strings.startBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
+                    }
+                }
+            }
+        }
+
+        item {
+            val rpmVal = session.liveChannels.firstOrNull { it.id == "rpm" }?.currentValue ?: 780.0
+            val boostVal = session.liveChannels.firstOrNull { it.id == "boost" }?.currentValue ?: 0.25
+            val estHp = ((rpmVal / 6500.0) * 184.0 * (1.0 + boostVal.coerceAtLeast(0.0) * 0.45)).toInt().coerceAtLeast(18)
+            val estNm = (240 + (boostVal.coerceAtLeast(0.0) * 160)).toInt()
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("M-Sport Canlı Kadran & Güç Tahmini", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SportArcGauge(
+                            label = "RPM",
+                            valueText = "${rpmVal.toInt()}",
+                            progress = (rpmVal / 7000.0).toFloat(),
+                            accentColor = theme.primaryBright
+                        )
+                        SportArcGauge(
+                            label = "BOOST",
+                            valueText = "%.2f b".format(boostVal),
+                            progress = ((boostVal + 0.5) / 2.3).toFloat(),
+                            accentColor = StatusGreen
+                        )
+                        SportArcGauge(
+                            label = "$estNm Nm",
+                            valueText = "$estHp HP",
+                            progress = (estHp / 350.0).toFloat(),
+                            accentColor = theme.accentRed
+                        )
                     }
                 }
             }

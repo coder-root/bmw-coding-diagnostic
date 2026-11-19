@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Column
 import com.punhanaghayev.bimmerpro.ui.theme.BmwBlue
 import com.punhanaghayev.bimmerpro.ui.theme.BmwBlueBright
 import com.punhanaghayev.bimmerpro.ui.theme.BmwMotorsportDarkBlue
@@ -204,5 +205,41 @@ fun TelemetrySparkline(
             color = lineColor,
             style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
         )
+    }
+}
+
+@Composable
+fun SportArcGauge(
+    label: String,
+    valueText: String,
+    progress: Float,
+    accentColor: Color = BmwBlueBright,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.size(104.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(96.dp)) {
+            val stroke = 8.dp.toPx()
+            drawArc(
+                color = Color(0xFF2B394F),
+                startAngle = 140f,
+                sweepAngle = 260f,
+                useCenter = false,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+            drawArc(
+                color = accentColor,
+                startAngle = 140f,
+                sweepAngle = 260f * progress.coerceIn(0f, 1f),
+                useCenter = false,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(valueText, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, maxLines = 1)
+            Text(label, color = Color(0xFF94A3B8), fontSize = 10.sp, maxLines = 1)
+        }
     }
 }

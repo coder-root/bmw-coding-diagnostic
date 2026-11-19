@@ -31,4 +31,11 @@ class PhysicalUdsParserTest {
         assertEquals("CD9304", dtcs[1].code)
         assertEquals(DtcSeverity.SHADOW, dtcs[1].severity)
     }
+
+    @Test
+    fun `parses 3-byte big endian odometer km accurately`() {
+        // DID 0x100C + 148420 km (0x0243C4)
+        val payload = byteArrayOf(0x10, 0x0C, 0x02, 0x43, 0xC4.toByte())
+        assertEquals(148_420, PhysicalUdsParser.parseOdometerKm(payload))
+    }
 }

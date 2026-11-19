@@ -77,4 +77,13 @@ object PhysicalUdsParser {
         }
         return result
     }
+
+    fun parseOdometerKm(payload: ByteArray): Int? {
+        if (payload.size < 5) return null
+        // Payload after 2-byte DID: 3-byte big-endian km
+        val km = ((payload[2].toInt() and 0xFF) shl 16) or
+            ((payload[3].toInt() and 0xFF) shl 8) or
+            (payload[4].toInt() and 0xFF)
+        return km.takeIf { it in 1..1_500_000 }
+    }
 }

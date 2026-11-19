@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.7",
+            versionName = "1.1.7",
+            title = "BMW Expert PRO v1.1.7 — M-Sport Kadran & Hızlı Garaj Bağlantısı",
+            changelog = """
+                • M-Sport Canlı Kadran (RPM, Boost, HP & Nm tahmini) eklendi
+                • Kayıtlı araçlar listesinden tek dokunuşla hızlı yeniden bağlanma
+                • PhysicalUdsParser çoklu modül kilometre (0x100C) çözümleyici eklendi
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.6",
             versionName = "1.1.6",
             title = "BMW Expert PRO v1.1.6 — Çoklu Tema, Garaj Geçmişi, JSON Yedek & UI",

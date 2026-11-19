@@ -497,6 +497,11 @@ fun GarageScreen(
             }
             items(session.savedVehicles, key = { it.vin }) { saved ->
                 Card(
+                    modifier = Modifier.clickable {
+                        selectedAdapter = AdapterType.entries.firstOrNull { it.displayName == saved.adapterName }
+                            ?: AdapterType.SIMULATOR_F10
+                        onConnect(selectedAdapter, "", null)
+                    },
                     colors = CardDefaults.cardColors(containerColor = theme.card),
                     border = BorderStroke(1.dp, theme.outline),
                     shape = RoundedCornerShape(12.dp)
