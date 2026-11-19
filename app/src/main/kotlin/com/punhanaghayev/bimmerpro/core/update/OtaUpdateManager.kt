@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.5.0",
+            versionName = "1.5.0",
+            title = "BMW Expert PRO v1.5.0 — BMW DTC Sözlüğü, Canlı PID & 0-100 Ölçer",
+            changelog = """
+                • BmwDtcDictionary: Fiziksel ECU taramaları için yerleşik BMW Hex arıza kodu sözlüğü ve ISTA rehberi
+                • Fiziksel araçlarda canlı RPM (0xF40C) ve Soğutma Suyu (0xF405) UDS 0x22 okuma
+                • Canlı & Servis sekmesine 0-100 km/h Performans Kronometresi eklendi
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.4.0",
             versionName = "1.4.0",
             title = "BMW Expert PRO v1.4.0 — Fiziksel Araç VIN & DTC Çözümleyici",

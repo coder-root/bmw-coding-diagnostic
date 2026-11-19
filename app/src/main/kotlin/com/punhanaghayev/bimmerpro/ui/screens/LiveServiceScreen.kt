@@ -69,6 +69,7 @@ fun LiveServiceScreen(
     session: BimmerSessionState,
     isLiveStreamRunning: Boolean,
     onToggleLiveStream: () -> Unit,
+    onTogglePerformanceRun: () -> Unit,
     onExportCsv: () -> Unit,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
@@ -251,8 +252,47 @@ fun LiveServiceScreen(
         }
 
         item {
+            val perf = session.performanceTimer
+            Card(
+                colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                border = BorderStroke(1.dp, BmwBlue.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("0–100 km/h Performans Ölçer", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                        Text(
+                            text = "%d km/h • %.1f sn%s".format(
+                                perf.currentSpeedKmh,
+                                perf.elapsedMs / 1000.0,
+                                perf.bestZeroToHundredSec?.let { " | En İyi: %.1f sn".format(it) } ?: ""
+                            ),
+                            color = BmwBlueBright,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Button(
+                        onClick = onTogglePerformanceRun,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (perf.isRunning) StatusRed else BmwBlue
+                        )
+                    ) {
+                        Text(if (perf.isRunning) strings.stopBtn else strings.startBtn, maxLines = 1, softWrap = false, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        item {
             Spacer(Modifier.height(4.dp))
-            Text("Servis & Bakım Fonksiyonları (UDS 0x31)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text(strings.serviceRoutinesTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
         }
 
         session.lastServiceResult?.let { res ->

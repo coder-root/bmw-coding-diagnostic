@@ -48,6 +48,14 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.sin
 
+data class PerformanceTimerState(
+    val isArmed: Boolean = false,
+    val isRunning: Boolean = false,
+    val currentSpeedKmh: Int = 0,
+    val elapsedMs: Long = 0L,
+    val bestZeroToHundredSec: Double? = null
+)
+
 data class BimmerSessionState(
     val selectedAdapter: AdapterType = AdapterType.SIMULATOR_F10,
     val connectionState: ConnectionState = ConnectionState.Disconnected,
@@ -68,7 +76,8 @@ data class BimmerSessionState(
     val discoveredGateways: List<DiscoveredGateway> = emptyList(),
     val discoveredBleDevices: List<BleAdapterDevice> = emptyList(),
     val discoveredUsbDevices: List<UsbKdcanDeviceInfo> = emptyList(),
-    val selectedBleAddress: String? = null
+    val selectedBleAddress: String? = null,
+    val performanceTimer: PerformanceTimerState = PerformanceTimerState()
 )
 
 class BimmerRepository(
@@ -529,10 +538,40 @@ class BimmerRepository(
         }
     }
 
-    fun stepLiveTelemetry() {
+    suspend fun stepLiveTelemetry() {
         val current = _session.value.liveChannels
         if (current.isEmpty()) return
         telemetryTick++
+
+        val sim = activeTransport as? SimulatorTransportAdapter
+        if (sim == null) {
+            // Physical ECU live PID polling (DME/DDE RPM 0xF40C & Coolant 0xF405)
+            val rpmResp = runCatching {
+                udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0xF40C), "UDS 0x22 Live RPM")
+            }.getOrNull() as? UdsResponse.Positive
+            val coolResp = runCatching {
+                udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0xF405), "UDS 0x22 Live Coolant")
+            }.getOrNull() as? UdsResponse.Positive
+
+            val liveRpm = rpmResp?.payload?.takeIf { it.size >= 4 }?.let {
+                ((((it[2].toInt() and 0xFF) shl 8) or (it[3].toInt() and 0xFF)) / 4.0)
+            }
+            val liveCoolant = coolResp?.payload?.takeIf { it.size >= 3 }?.let {
+                ((it[2].toInt() and 0xFF) - 40).toDouble()
+            }
+
+            val updated = current.map { ch ->
+                val v = when {
+                    ch.id == "rpm" && liveRpm != null -> liveRpm
+                    ch.id == "coolant" && liveCoolant != null -> liveCoolant
+                    else -> ch.currentValue
+                }
+                ch.copy(currentValue = v, history = (ch.history.drop(1) + v.toFloat()))
+            }
+            _session.update { it.copy(liveChannels = updated) }
+            return
+        }
+
         val wave = sin(telemetryTick * 0.45)
         val updated = current.mapIndexed { idx, ch ->
             val delta = when (ch.id) {
@@ -550,6 +589,57 @@ class BimmerRepository(
             )
         }
         _session.update { it.copy(liveChannels = updated) }
+    }
+
+    fun startPerformanceRun() {
+        _session.update {
+            it.copy(
+                performanceTimer = it.performanceTimer.copy(
+                    isArmed = true,
+                    isRunning = true,
+                    currentSpeedKmh = 0,
+                    elapsedMs = 0L
+                )
+            )
+        }
+    }
+
+    fun stopPerformanceRun() {
+        _session.update {
+            it.copy(
+                performanceTimer = it.performanceTimer.copy(isArmed = false, isRunning = false)
+            )
+        }
+    }
+
+    fun stepPerformanceTimer(deltaMs: Long = 200L) {
+        val timer = _session.value.performanceTimer
+        if (!timer.isRunning) return
+        val nextElapsed = timer.elapsedMs + deltaMs
+        // Realistic launch curve up to 105 km/h in ~5.4s for simulator demo
+        val nextSpeed = ((nextElapsed / 54.0).toInt()).coerceAtMost(112)
+        if (nextSpeed >= 100) {
+            val sec = (nextElapsed / 100.0) / 10.0
+            val best = timer.bestZeroToHundredSec?.let { minOf(it, sec) } ?: sec
+            _session.update {
+                it.copy(
+                    performanceTimer = timer.copy(
+                        isArmed = false,
+                        isRunning = false,
+                        currentSpeedKmh = 100,
+                        elapsedMs = nextElapsed,
+                        bestZeroToHundredSec = best
+                    ),
+                    lastOperationMessage = "0-100 km/h tamamlandı: %.1f sn!".format(sec)
+                )
+            }
+        } else {
+            _session.update {
+                it.copy(
+                    performanceTimer = timer.copy(currentSpeedKmh = nextSpeed, elapsedMs = nextElapsed)
+                )
+            }
+        }
     }
 
     fun adjustSimulatedVoltage(voltage: Double) {

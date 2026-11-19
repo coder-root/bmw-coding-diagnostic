@@ -281,6 +281,7 @@ fun MainNavigation(
                         session = session,
                         isLiveStreamRunning = isLiveRunning,
                         onToggleLiveStream = viewModel::toggleLiveTelemetry,
+                        onTogglePerformanceRun = viewModel::togglePerformanceRun,
                         onExportCsv = { viewModel.exportTelemetryCsv(context) },
                         onExecuteRoutine = viewModel::executeServiceRoutine,
                         onWriteServiceHistory = viewModel::writeServiceHistory,

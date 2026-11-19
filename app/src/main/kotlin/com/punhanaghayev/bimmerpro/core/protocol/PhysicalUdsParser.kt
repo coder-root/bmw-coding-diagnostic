@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.core.protocol
 
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
@@ -53,22 +54,23 @@ object PhysicalUdsParser {
             val codeHex = "%02X%02X%02X".format(b0, b1, b2)
             val isActive = (statusByte and 0x01) != 0
             val isConfirmed = (statusByte and 0x08) != 0
+            val dict = BmwDtcDictionary.lookup(codeHex)
             result.add(
                 DtcFault(
                     id = "phys-${ecuAddress}-${codeHex}",
                     code = codeHex,
                     ecuAddress = ecuAddress,
                     ecuName = ecuName,
-                    title = "$ecuName Arıza Kodu ($codeHex)",
-                    technicalDetail = "Fiziksel ECU üzerinden UDS 0x19 0x02 ile okundu (Status=0x%02X).".format(statusByte),
-                    severity = when {
+                    title = dict?.title ?: "$ecuName Arıza Kodu ($codeHex)",
+                    technicalDetail = dict?.detail ?: "Fiziksel ECU üzerinden UDS 0x19 0x02 ile okundu (Status=0x%02X).".format(statusByte),
+                    severity = dict?.severity ?: when {
                         isActive -> DtcSeverity.WARNING
                         isConfirmed -> DtcSeverity.INFO
                         else -> DtcSeverity.SHADOW
                     },
                     status = if (isActive) DtcStatus.ACTIVE else DtcStatus.STORED,
                     freezeFrame = FreezeFrameData(odometerKm, voltage, 0, 0, 1),
-                    istaGuidance = "Detaylı test planı için $ecuName canlı sensör verilerini kontrol edin."
+                    istaGuidance = dict?.guidance ?: "Detaylı test planı için $ecuName canlı sensör verilerini kontrol edin."
                 )
             )
             idx += 4

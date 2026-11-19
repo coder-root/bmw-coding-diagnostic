@@ -26,8 +26,9 @@ class PhysicalUdsParserTest {
         val dtcs = PhysicalUdsParser.parseDtcRecords(0x12, "DDE7", payload, 150_000, 12.6)
         assertEquals(2, dtcs.size)
         assertEquals("245700", dtcs[0].code)
+        assertEquals("DPF Partikül Filtresi: Kurum Yükü Sınırda", dtcs[0].title)
         assertEquals(DtcSeverity.WARNING, dtcs[0].severity)
         assertEquals("CD9304", dtcs[1].code)
-        assertEquals(DtcSeverity.INFO, dtcs[1].severity)
+        assertEquals(DtcSeverity.SHADOW, dtcs[1].severity)
     }
 }

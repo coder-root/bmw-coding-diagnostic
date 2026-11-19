@@ -56,6 +56,7 @@ class BimmerViewModel(
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
     private var telemetryJob: Job? = null
+    private var perfJob: Job? = null
 
     fun connect(
         adapterType: AdapterType,
@@ -265,8 +266,26 @@ class BimmerViewModel(
         }
     }
 
+    fun togglePerformanceRun() {
+        if (session.value.performanceTimer.isRunning) {
+            perfJob?.cancel()
+            perfJob = null
+            repository.stopPerformanceRun()
+        } else {
+            repository.startPerformanceRun()
+            perfJob?.cancel()
+            perfJob = viewModelScope.launch {
+                while (isActive && session.value.performanceTimer.isRunning) {
+                    delay(200)
+                    repository.stepPerformanceTimer(200L)
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         stopLiveTelemetry()
+        perfJob?.cancel()
         super.onCleared()
     }
 }
