@@ -84,6 +84,20 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.0.2",
+            versionName = "1.0.2",
+            title = "BMW Expert PRO v1.0.2 — Vehicle Information, Equipment & Trouble Code",
+            changelog = """
+                • BimmerCode tarzı Vehicle Information kartı (Factory/Current I-Level, Tip Kodu, Üretim Tarihi, Renk, Döşeme)
+                • Vehicle Equipment (FA/VO donanım listesi) görüntüleme ve tek dokunuşla kodlama
+                • BimmerTool tarzı Trouble Code Sözlüğü & Anlık Hex DTC Arama
+                • GitHub Release APK dosyaları "BMW Expert PRO <sürüm>.apk" formatında yayınlandı
+            """.trimIndent(),
+            publishedDate = "19.11.2026 08:40",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.1",
             versionName = "1.0.1",
             title = "BMW Expert PRO v1.0.1 — Tam BimmerCode/BimmerLink Kataloğu & 0x2F Testler",

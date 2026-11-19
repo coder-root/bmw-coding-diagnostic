@@ -48,9 +48,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
@@ -86,6 +88,8 @@ fun DiagnosticsScreen(
 
     var filterMode by remember { mutableStateOf(DtcFilterMode.ALL) }
     var showClearDialog by remember { mutableStateOf(false) }
+    var dtcLookupQuery by remember { mutableStateOf("") }
+    val lookupResults = remember(dtcLookupQuery) { BmwDtcDictionary.search(dtcLookupQuery) }
 
     val filteredDtcs = remember(session.dtcs, filterMode) {
         when (filterMode) {
@@ -270,6 +274,43 @@ fun DiagnosticsScreen(
                 onClearDtc = { onClearEcuDtcs(ecu.address, ecu.shortName) },
                 onResetEcu = { onSendEcuReset(ecu.address, ecu.shortName, 0x01) }
             )
+        }
+
+        // BimmerTool-style Trouble Code Lookup
+        item {
+            Spacer(Modifier.height(4.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Trouble Code Sözlüğü (BimmerTool)", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                    androidx.compose.material3.OutlinedTextField(
+                        value = dtcLookupQuery,
+                        onValueChange = { dtcLookupQuery = it },
+                        placeholder = { Text("Kod veya kelime ara (245700, Turbo, DPF...)", fontSize = 12.sp) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                        textStyle = TextStyle(fontSize = 13.sp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    lookupResults.forEach { (code, entry) ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(theme.cardElevated)
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text("$code • ${entry.title}", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(entry.detail, color = theme.textSecondary, fontSize = 11.sp)
+                            Text(entry.guidance, color = theme.textPrimary, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
         }
     }
 }

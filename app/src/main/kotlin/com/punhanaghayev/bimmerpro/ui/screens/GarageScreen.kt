@@ -200,8 +200,68 @@ fun GarageScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            VehicleStatChip("I-Level", profile.iLevel)
+                            VehicleStatChip("I-Level (Güncel)", profile.iLevel)
                             VehicleStatChip("Kilometre", "%,d km".format(profile.odometerKm))
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            VehicleStatChip("Fabrika I-Level", profile.factoryILevel)
+                            VehicleStatChip("Tip / Üretim", "${profile.typeCode} • ${profile.productionDate}")
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            VehicleStatChip("Renk", profile.paintCode)
+                            VehicleStatChip("Döşeme", profile.upholsteryCode)
+                        }
+
+                        // BimmerCode-style Vehicle Equipment (FA/VO) Overview
+                        var showEquipment by remember { mutableStateOf(false) }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(theme.cardElevated)
+                                .clickable { showEquipment = !showEquipment }
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Vehicle Equipment (${profile.faOptions.size} FA/VO Opsiyon)",
+                                    color = theme.primaryBright,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = if (showEquipment) "Gizle" else "Göster",
+                                    color = theme.textSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            if (showEquipment) {
+                                profile.faOptions.forEach { opt ->
+                                    Text(
+                                        text = "• ${opt.code} — ${opt.description}",
+                                        color = theme.textPrimary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                OutlinedButton(
+                                    onClick = { onNavigateToTab(2) },
+                                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Donanım / VO Kodla", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                                }
+                            }
                         }
 
                         profile.chassis.secureCodingNotice?.let { notice ->

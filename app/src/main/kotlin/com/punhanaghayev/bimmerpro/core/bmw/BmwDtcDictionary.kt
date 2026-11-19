@@ -143,4 +143,17 @@ object BmwDtcDictionary {
 
     fun lookup(codeHex: String): DtcCatalogEntry? =
         entries[codeHex.trim().uppercase()]
+
+    fun search(query: String): List<Pair<String, DtcCatalogEntry>> {
+        val q = query.trim()
+        if (q.isBlank()) return emptyList()
+        return entries.entries
+            .filter { (code, entry) ->
+                code.contains(q, ignoreCase = true) ||
+                    entry.title.contains(q, ignoreCase = true) ||
+                    entry.detail.contains(q, ignoreCase = true)
+            }
+            .map { it.key to it.value }
+            .take(8)
+    }
 }

@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.core.protocol
 
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -37,5 +38,6 @@ class PhysicalUdsParserTest {
         // DID 0x100C + 148420 km (0x0243C4)
         val payload = byteArrayOf(0x10, 0x0C, 0x02, 0x43, 0xC4.toByte())
         assertEquals(148_420, PhysicalUdsParser.parseOdometerKm(payload))
+        assertEquals(true, BmwDtcDictionary.search("Turbo").isNotEmpty())
     }
 }

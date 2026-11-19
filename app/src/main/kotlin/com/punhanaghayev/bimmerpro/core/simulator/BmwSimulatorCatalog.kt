@@ -66,6 +66,11 @@ object BmwSimulatorCatalog {
             engineCode = "N47D20O1 (184 PS)",
             productionYear = 2014,
             iLevel = "F010-19-07-530",
+            factoryILevel = "F010-14-03-500",
+            typeCode = "5C31",
+            productionDate = "18.04.2014",
+            paintCode = "475 Black Sapphire Metallic",
+            upholsteryCode = "LCSW Dakota Black",
             batteryVoltage = 12.6,
             odometerKm = 148_420,
             faOptions = listOf(
