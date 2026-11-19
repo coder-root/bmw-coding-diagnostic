@@ -84,6 +84,20 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.0.1",
+            versionName = "1.0.1",
+            title = "BMW Expert PRO v1.0.1 — Tam BimmerCode/BimmerLink Kataloğu & 0x2F Testler",
+            changelog = """
+                • BmwCodingCatalog: 29 adet BimmerCode Easy Mode kodlaması + 13 adet Expert CAFD/FDL byte/bitmask tanımı
+                • BmwDtcDictionary: 22+ yaygın BMW Hex DTC arıza kodu ve ISTA test planı
+                • UDS 0x2F Aktüatör & Parça Testleri (Radyatör Fanı, Yakıt Pompası, Egzoz Flapı, İbre Sweep, Angel Eyes)
+                • IBS Akü Sağlığı (SOC/SOH) ve son 5 günlük akü grafiği
+            """.trimIndent(),
+            publishedDate = "19.11.2026 08:30",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.0",
             versionName = "1.0.0",
             title = "BMW Expert PRO v1.0.0 — İlk Resmi Sürüm",

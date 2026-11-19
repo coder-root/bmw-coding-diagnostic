@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
@@ -71,6 +72,7 @@ fun LiveServiceScreen(
     onTogglePerformanceRun: () -> Unit,
     onExportCsv: () -> Unit,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
+    onRunActuatorTest: (ActuatorTestItem) -> Unit,
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
     onWriteInjectorCode: (Int, String) -> Unit,
     onResetZfAdaptations: () -> Unit,
@@ -566,6 +568,69 @@ fun LiveServiceScreen(
                                     Text(strings.codeBtn, color = theme.primaryBright, fontSize = 12.sp, maxLines = 1, softWrap = false)
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // IBS Battery Health Card
+        session.ibsHealth?.let { ibs ->
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text("IBS Akü Sağlığı & Son 5 Gün (%)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+            }
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Şarj (SOC): %${ibs.stateOfChargePercent}", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Sağlık (SOH): %${ibs.stateOfHealthPercent}", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("${ibs.capacityAh}Ah ${if (ibs.isAgm) "AGM" else "Sulu"}", color = theme.textSecondary, fontSize = 12.sp)
+                        }
+                        TelemetrySparkline(
+                            points = ibs.last5DaysSoc.map { it.toFloat() },
+                            lineColor = StatusGreen,
+                            modifier = Modifier.fillMaxWidth().height(36.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // UDS 0x2F Actuator / Component Tests
+        if (session.actuatorTests.isNotEmpty()) {
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text("Aktüatör & Parça Testleri (UDS 0x2F)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+            }
+            items(session.actuatorTests, key = { it.id }) { test ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("${test.targetEcu} • 0x%04X".format(test.did), color = theme.primaryBright, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(test.title, color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text(test.description, color = theme.textSecondary, fontSize = 11.sp)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedButton(
+                            onClick = { onRunActuatorTest(test) },
+                            modifier = Modifier.height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+                        ) {
+                            Text("Test Et", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
                         }
                     }
                 }

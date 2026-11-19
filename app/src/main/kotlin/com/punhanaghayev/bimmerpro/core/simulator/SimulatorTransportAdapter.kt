@@ -76,6 +76,7 @@ class SimulatorTransportAdapter(
             UdsServiceId.READ_DTC_INFO -> handleReadDtc(targetEcu)
             UdsServiceId.CLEAR_DIAGNOSTIC_INFO -> handleClearDtc(targetEcu)
             UdsServiceId.WRITE_DATA_BY_ID -> handleWriteDid(targetEcu, uds)
+            UdsServiceId.IO_CONTROL_BY_ID -> byteArrayOf((sid + 0x40).toByte(), uds.getOrElse(1) { 0 }, uds.getOrElse(2) { 0 }, 0x03)
             UdsServiceId.ROUTINE_CONTROL -> handleRoutineControl(uds)
             UdsServiceId.TESTER_PRESENT -> byteArrayOf((sid + 0x40).toByte(), 0x00)
             else -> negativeResponse(sid, UdsNegativeResponseCode.SERVICE_NOT_SUPPORTED)

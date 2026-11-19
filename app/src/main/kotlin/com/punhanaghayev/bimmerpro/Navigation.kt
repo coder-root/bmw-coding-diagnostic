@@ -301,6 +301,7 @@ fun MainNavigation(
                             onTogglePerformanceRun = viewModel::togglePerformanceRun,
                             onExportCsv = { viewModel.exportTelemetryCsv(context) },
                             onExecuteRoutine = viewModel::executeServiceRoutine,
+                            onRunActuatorTest = viewModel::runActuatorTest,
                             onWriteServiceHistory = viewModel::writeServiceHistory,
                             onWriteInjectorCode = viewModel::writeInjectorCode,
                             onResetZfAdaptations = viewModel::resetZfAdaptations,

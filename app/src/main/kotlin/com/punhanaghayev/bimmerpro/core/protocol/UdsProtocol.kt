@@ -16,6 +16,7 @@ object UdsServiceId {
     const val READ_DATA_BY_ID = 0x22
     const val SECURITY_ACCESS = 0x27
     const val WRITE_DATA_BY_ID = 0x2E
+    const val IO_CONTROL_BY_ID = 0x2F
     const val ROUTINE_CONTROL = 0x31
     const val TESTER_PRESENT = 0x3E
     const val NEGATIVE_RESPONSE = 0x7F
@@ -95,6 +96,15 @@ object UdsCodec {
             ((routineId shr 8) and 0xFF).toByte(),
             (routineId and 0xFF).toByte()
         ) + optionBytes
+
+    fun buildIoControl(did: Int, controlParam: Int = 0x03, stateByte: Byte = 0x01): ByteArray =
+        byteArrayOf(
+            UdsServiceId.IO_CONTROL_BY_ID.toByte(),
+            ((did shr 8) and 0xFF).toByte(),
+            (did and 0xFF).toByte(),
+            controlParam.toByte(),
+            stateByte
+        )
 
     fun parseResponse(rawUds: ByteArray): UdsResponse {
         require(rawUds.isNotEmpty()) { "Empty UDS response" }

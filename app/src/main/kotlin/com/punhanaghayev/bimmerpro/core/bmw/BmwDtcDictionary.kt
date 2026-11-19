@@ -96,6 +96,48 @@ object BmwDtcDictionary {
             detail = "Telematik anten devresinde açık devre veya yüksek direnç.",
             severity = DtcSeverity.WARNING,
             guidance = "Tavan anteni su sızdırmazlığını ve TCB yedek bataryasını kontrol edin."
+        ),
+        "278F00" to DtcCatalogEntry(
+            title = "Alternatör Haberleşme / BSD Veri Yolu Hatası",
+            detail = "DME ile alternatör arasındaki BSD tek telli haberleşme kesildi.",
+            severity = DtcSeverity.WARNING,
+            guidance = "BSD hattı soketini, alternatör regülatörünü ve IBS sensörünü kontrol edin."
+        ),
+        "28A000" to DtcCatalogEntry(
+            title = "Gaz Kelebeği Açısı - Emme Basıncı Korelasyonu",
+            detail = "Ölçülen emme manifoldu basıncı hesaplanan değerden sapıyor (hava kaçağı).",
+            severity = DtcSeverity.WARNING,
+            guidance = "Charge-pipe, intercooler hortumları ve PCV valfini duman testi ile kontrol edin."
+        ),
+        "120308" to DtcCatalogEntry(
+            title = "Turbo Takviye Basıncı Kontrolü: Basınç Çok Düşük",
+            detail = "N20/B48/B58 turboşarj basınç devresinde hedef basınç yakalanamadı.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Elektrikli wastegate aktüatörü, diverter valf ve intercooler borularını kontrol edin."
+        ),
+        "140010" to DtcCatalogEntry(
+            title = "Ateşleme Teklemesi (Misfire) Çoklu Silindir",
+            detail = "Birden fazla silindirde yanma kesintisi tespit edildi.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Bujiler, ateşleme bobinleri ve enjektör yakıt düzeltme değerlerini kontrol edin."
+        ),
+        "8040B7" to DtcCatalogEntry(
+            title = "CAS4 / FEM Terminal 15N Röle Aktivasyon Hatası",
+            detail = "Kontak besleme hattında voltaj düşümü veya röle yapışması.",
+            severity = DtcSeverity.INFO,
+            guidance = "Sigorta kutusu ve akü kutup başı sıkılığını kontrol edin."
+        ),
+        "930910" to DtcCatalogEntry(
+            title = "ACSM Sürücü Hava Yastığı Direnç Çok Yüksek",
+            detail = "Direksiyon zembereği (SZL) veya koltuk altı soketinde yüksek direnç.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Aküyü söküp 10 dk bekledikten sonra koltuk/direksiyon sarı soketlerini kontrol edin."
+        ),
+        "E71420" to DtcCatalogEntry(
+            title = "IHKA AUC / Hava Kalite Sensörü Arızası",
+            detail = "Dış hava kirlilik sensörü yanıt vermiyor.",
+            severity = DtcSeverity.SHADOW,
+            guidance = "Klima performansını etkilemez; sensör soketi kontrol edilebilir."
         )
     )
 

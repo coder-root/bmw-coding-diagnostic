@@ -1,9 +1,11 @@
-package com.punhanaghayev.bimmerpro.core.simulator
+﻿package com.punhanaghayev.bimmerpro.core.simulator
 
+import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.BmwCodingCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
-import com.punhanaghayev.bimmerpro.core.bmw.CodingCategory
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
@@ -11,6 +13,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
+import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
@@ -34,7 +37,9 @@ data class SimulatedVehicleBundle(
     val serviceRoutines: List<ServiceRoutine>,
     val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
     val zfAdaptations: List<ZfClutchAdaptation> = BmwSimulatorCatalog.defaultZfAdaptations(),
-    val injectorCodes: List<InjectorCalibration> = BmwSimulatorCatalog.defaultInjectors(4)
+    val injectorCodes: List<InjectorCalibration> = BmwSimulatorCatalog.defaultInjectors(4),
+    val actuatorTests: List<ActuatorTestItem> = BmwActuatorCatalog.defaultTests(),
+    val ibsHealth: IbsBatteryHealth = BmwActuatorCatalog.defaultIbsHealth()
 )
 
 object BmwSimulatorCatalog {
@@ -50,7 +55,7 @@ object BmwSimulatorCatalog {
     private fun buildF10Bundle(): SimulatedVehicleBundle {
         val readings = listOf(
             MileageModuleReading("CAS4 (Karosseri)", 148_420),
-            MileageModuleReading("KOMBI (Gösterge)", 148_420),
+            MileageModuleReading("KOMBI (GÃ¶sterge)", 148_420),
             MileageModuleReading("DDE7 (Motor ECU)", 148_412, engineHours = 3_110),
             MileageModuleReading("EGS (ZF 8HP)", 148_418)
         )
@@ -64,7 +69,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.6,
             odometerKm = 148_420,
             faOptions = listOf(
-                VehicleOrderOption("S2TB", "Sport Otomatik Şanzıman (ZF 8HP)"),
+                VehicleOrderOption("S2TB", "Sport Otomatik ÅžanzÄ±man (ZF 8HP)"),
                 VehicleOrderOption("S403", "Elektrikli Cam Sunroof"),
                 VehicleOrderOption("S552", "Adaptive LED Farlar"),
                 VehicleOrderOption("S609", "Navigation System Professional (NBT)"),
@@ -74,7 +79,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 8,
                 status = TamperStatus.VERIFIED,
-                summary = "Tüm 4 ana kontrol ünitesi tutarlı (±8 km normal senkron farkı)."
+                summary = "TÃ¼m 4 ana kontrol Ã¼nitesi tutarlÄ± (Â±8 km normal senkron farkÄ±)."
             )
         )
 
@@ -95,48 +100,48 @@ object BmwSimulatorCatalog {
                 code = "245700",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DDE7",
-                title = "Partikül Filtresi Sistemi: Sınırlı Kalan Mesafe / Kurum Yükü",
-                technicalDetail = "DPF diferansiyel basınç değeri nominal aralığın üst sınırına yaklaştı (kurum yükü 34.8 g).",
+                title = "PartikÃ¼l Filtresi Sistemi: SÄ±nÄ±rlÄ± Kalan Mesafe / Kurum YÃ¼kÃ¼",
+                technicalDetail = "DPF diferansiyel basÄ±nÃ§ deÄŸeri nominal aralÄ±ÄŸÄ±n Ã¼st sÄ±nÄ±rÄ±na yaklaÅŸtÄ± (kurum yÃ¼kÃ¼ 34.8 g).",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(148_390, 14.1, 88, 2150, 3),
-                istaGuidance = "1) Canlı veriden DPF Egzoz Karşı Basıncı ve Kül Miktarını kontrol edin.\n2) Akü/yakıt yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu başlatın."
+                istaGuidance = "1) CanlÄ± veriden DPF Egzoz KarÅŸÄ± BasÄ±ncÄ± ve KÃ¼l MiktarÄ±nÄ± kontrol edin.\n2) AkÃ¼/yakÄ±t yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu baÅŸlatÄ±n."
             ),
             DtcFault(
                 id = "f10-8040b9",
                 code = "8040B9",
                 ecuAddress = EcuAddress.FEM_CAS,
                 ecuName = "CAS4",
-                title = "Akü Deşarj / Enerji Yönetimi Uyku Akımı İhlali",
-                technicalDetail = "Araç kilitliyken 80 mA üzeri parazit akım çekimi tespit edildi (muhtemel Comfort Access kapı kolu).",
+                title = "AkÃ¼ DeÅŸarj / Enerji YÃ¶netimi Uyku AkÄ±mÄ± Ä°hlali",
+                technicalDetail = "AraÃ§ kilitliyken 80 mA Ã¼zeri parazit akÄ±m Ã§ekimi tespit edildi (muhtemel Comfort Access kapÄ± kolu).",
                 severity = DtcSeverity.INFO,
                 status = DtcStatus.INTERMITTENT,
                 freezeFrame = FreezeFrameData(148_210, 11.9, 24, 0, 2),
-                istaGuidance = "1) Kapı kolu Comfort Access sensörlerinde nem/kısa devre kontrolü yapın.\n2) Akü yaşı > 4 yıl ise IBS akü sağlık ölçümünü doğrulayın."
+                istaGuidance = "1) KapÄ± kolu Comfort Access sensÃ¶rlerinde nem/kÄ±sa devre kontrolÃ¼ yapÄ±n.\n2) AkÃ¼ yaÅŸÄ± > 4 yÄ±l ise IBS akÃ¼ saÄŸlÄ±k Ã¶lÃ§Ã¼mÃ¼nÃ¼ doÄŸrulayÄ±n."
             ),
             DtcFault(
                 id = "f10-cd9304",
                 code = "CD9304",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DDE7",
-                title = "LIN Bus: Aktif Radyatör Panjuru Haberleşme Gecikmesi",
-                technicalDetail = "Gölge hafıza (Shadow Memory) — geçici LIN veri yolu cevapsızlığı.",
+                title = "LIN Bus: Aktif RadyatÃ¶r Panjuru HaberleÅŸme Gecikmesi",
+                technicalDetail = "GÃ¶lge hafÄ±za (Shadow Memory) â€” geÃ§ici LIN veri yolu cevapsÄ±zlÄ±ÄŸÄ±.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(147_980, 13.8, 72, 1400, 1),
-                istaGuidance = "Mekanik takılma yoksa ve hata aktifleşmiyorsa yalnızca bilgi amaçlı gölge kaydıdır; temizlenebilir."
+                istaGuidance = "Mekanik takÄ±lma yoksa ve hata aktifleÅŸmiyorsa yalnÄ±zca bilgi amaÃ§lÄ± gÃ¶lge kaydÄ±dÄ±r; temizlenebilir."
             ),
             DtcFault(
                 id = "f10-e1c447",
                 code = "E1C447",
                 ecuAddress = EcuAddress.HU_MEDIA,
                 ecuName = "HU_NBT",
-                title = "MOST Ring Geçici Senkronizasyon Kaybı",
-                technicalDetail = "Soğuk çalıştırmada MOST fiber optik halka geçici olarak yeniden başlatıldı.",
+                title = "MOST Ring GeÃ§ici Senkronizasyon KaybÄ±",
+                technicalDetail = "SoÄŸuk Ã§alÄ±ÅŸtÄ±rmada MOST fiber optik halka geÃ§ici olarak yeniden baÅŸlatÄ±ldÄ±.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(146_500, 12.1, 18, 820, 1),
-                istaGuidance = "Ses/iDrive kesintisi yaşanmıyorsa temizlenip izlenebilir."
+                istaGuidance = "Ses/iDrive kesintisi yaÅŸanmÄ±yorsa temizlenip izlenebilir."
             )
         )
 
@@ -149,8 +154,8 @@ object BmwSimulatorCatalog {
             liveChannels = defaultLiveChannels(isDiesel = true),
             serviceRoutines = defaultServiceRoutines(isDiesel = true),
             serviceHistory = listOf(
-                ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
-                ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
+                ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor YaÄŸÄ±", "Mikrofiltre")),
+                ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor YaÄŸÄ±", "Fren HidroliÄŸi", "AraÃ§ Kontrol"))
             )
         )
     }
@@ -173,7 +178,7 @@ object BmwSimulatorCatalog {
                         MileageModuleReading("DME (N20)", 112_635, engineHours = 2_410)
                     ),
                     maxDifferenceKm = 5,
-                    summary = "Tüm F30 modülleri tutarlı (±5 km)."
+                    summary = "TÃ¼m F30 modÃ¼lleri tutarlÄ± (Â±5 km)."
                 )
             ),
             liveChannels = defaultLiveChannels(isDiesel = false),
@@ -199,7 +204,7 @@ object BmwSimulatorCatalog {
                         MileageModuleReading("DME8 (B58)", 39_847, engineHours = 820)
                     ),
                     maxDifferenceKm = 3,
-                    summary = "Tüm G20 modülleri doğrulandı (±3 km)."
+                    summary = "TÃ¼m G20 modÃ¼lleri doÄŸrulandÄ± (Â±3 km)."
                 )
             )
         )
@@ -222,7 +227,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.7,
             odometerKm = 62_180,
             faOptions = listOf(
-                VehicleOrderOption("S2TB", "Sport Otomatik Şanzıman"),
+                VehicleOrderOption("S2TB", "Sport Otomatik ÅžanzÄ±man"),
                 VehicleOrderOption("S337", "M Sport Paket"),
                 VehicleOrderOption("S5AT", "Driving Assistant Plus"),
                 VehicleOrderOption("S6U3", "BMW Live Cockpit Professional (MGU)"),
@@ -232,7 +237,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 4,
                 status = TamperStatus.VERIFIED,
-                summary = "Tüm G30 modülleri doğrulandı (±4 km)."
+                summary = "TÃ¼m G30 modÃ¼lleri doÄŸrulandÄ± (Â±4 km)."
             )
         )
 
@@ -252,24 +257,24 @@ object BmwSimulatorCatalog {
                 code = "B7F8C3",
                 ecuAddress = EcuAddress.HU_MEDIA,
                 ecuName = "HU_MGU",
-                title = "RAM / TCB Acil Çağrı Anteni Yüksek Empedans",
-                technicalDetail = "Telematik bağlantı anten devresinde geçici yüksek direnç algılandı.",
+                title = "RAM / TCB Acil Ã‡aÄŸrÄ± Anteni YÃ¼ksek Empedans",
+                technicalDetail = "Telematik baÄŸlantÄ± anten devresinde geÃ§ici yÃ¼ksek direnÃ§ algÄ±landÄ±.",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.ACTIVE,
                 freezeFrame = FreezeFrameData(62_140, 14.3, 91, 1850, 4),
-                istaGuidance = "Tavan köpekbalığı anten (Shark Fin) su sızdırmazlığı ve TCB yedek pil durumunu kontrol edin."
+                istaGuidance = "Tavan kÃ¶pekbalÄ±ÄŸÄ± anten (Shark Fin) su sÄ±zdÄ±rmazlÄ±ÄŸÄ± ve TCB yedek pil durumunu kontrol edin."
             ),
             DtcFault(
                 id = "g30-1f0510",
                 code = "1F0510",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DME8",
-                title = "Valvetronic Limit Pozisyonu Soğuk Öğrenme",
-                technicalDetail = "Gölge hafıza — soğuk başlangıçta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
+                title = "Valvetronic Limit Pozisyonu SoÄŸuk Ã–ÄŸrenme",
+                technicalDetail = "GÃ¶lge hafÄ±za â€” soÄŸuk baÅŸlangÄ±Ã§ta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(61_910, 12.4, 14, 1100, 1),
-                istaGuidance = "Normal adaptasyon kaydıdır; rölanti dalgalanması yoksa işlem gerekmez."
+                istaGuidance = "Normal adaptasyon kaydÄ±dÄ±r; rÃ¶lanti dalgalanmasÄ± yoksa iÅŸlem gerekmez."
             )
         )
 
@@ -287,7 +292,7 @@ object BmwSimulatorCatalog {
     private fun buildE90Bundle(): SimulatedVehicleBundle {
         val readings = listOf(
             MileageModuleReading("CAS3 (Car Access)", 186_400),
-            MileageModuleReading("KOMBI (Gösterge)", 186_400),
+            MileageModuleReading("KOMBI (GÃ¶sterge)", 186_400),
             MileageModuleReading("MSD81 (N54 DME)", 264_890, engineHours = 5_410),
             MileageModuleReading("DSC MK60", 264_850)
         )
@@ -301,7 +306,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.1,
             odometerKm = 186_400,
             faOptions = listOf(
-                VehicleOrderOption("S205", "Otomatik Şanzıman"),
+                VehicleOrderOption("S205", "Otomatik ÅžanzÄ±man"),
                 VehicleOrderOption("S337", "M Sport Paket"),
                 VehicleOrderOption("S522", "Bi-Xenon Farlar"),
                 VehicleOrderOption("S609", "CCC / CIC Navigation Professional")
@@ -310,7 +315,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 78_490,
                 status = TamperStatus.SUSPICIOUS_MISMATCH,
-                summary = "DİKKAT: Gösterge/CAS (186.400 km) ile DME/DSC (264.890 km) arasında 78.490 km fark tespit edildi!"
+                summary = "DÄ°KKAT: GÃ¶sterge/CAS (186.400 km) ile DME/DSC (264.890 km) arasÄ±nda 78.490 km fark tespit edildi!"
             )
         )
 
@@ -327,24 +332,24 @@ object BmwSimulatorCatalog {
                 code = "30FF",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "MSD81",
-                title = "Boost Pressure Control: Hedef Basınç Altında (Turbo Underboost)",
-                technicalDetail = "İstenen 0.62 bar takviye basıncına ulaşılamadı (ölçülen 0.34 bar).",
+                title = "Boost Pressure Control: Hedef BasÄ±nÃ§ AltÄ±nda (Turbo Underboost)",
+                technicalDetail = "Ä°stenen 0.62 bar takviye basÄ±ncÄ±na ulaÅŸÄ±lamadÄ± (Ã¶lÃ§Ã¼len 0.34 bar).",
                 severity = DtcSeverity.CRITICAL,
                 status = DtcStatus.ACTIVE,
                 freezeFrame = FreezeFrameData(264_840, 13.7, 94, 4820, 6),
-                istaGuidance = "1) Vakum hatları ve basınç dönüştürücü selenoidleri (boost solenoids) test edin.\n2) Charge-pipe çatlağı ve wastegate rattle boşluğunu kontrol edin."
+                istaGuidance = "1) Vakum hatlarÄ± ve basÄ±nÃ§ dÃ¶nÃ¼ÅŸtÃ¼rÃ¼cÃ¼ selenoidleri (boost solenoids) test edin.\n2) Charge-pipe Ã§atlaÄŸÄ± ve wastegate rattle boÅŸluÄŸunu kontrol edin."
             ),
             DtcFault(
                 id = "e90-29f4",
                 code = "29F4",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "MSD81",
-                title = "Katalitik Konvertör Verimliliği Bank 1 Eşik Altı",
-                technicalDetail = "Lambda sonrası sensör salınımı katalizör yaşlanmasına işaret ediyor.",
+                title = "Katalitik KonvertÃ¶r VerimliliÄŸi Bank 1 EÅŸik AltÄ±",
+                technicalDetail = "Lambda sonrasÄ± sensÃ¶r salÄ±nÄ±mÄ± katalizÃ¶r yaÅŸlanmasÄ±na iÅŸaret ediyor.",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(264_700, 13.9, 92, 2400, 3),
-                istaGuidance = "Downpipe/katalizör durumu ve arka O2 sensör tepkisini canlı veride inceleyin."
+                istaGuidance = "Downpipe/katalizÃ¶r durumu ve arka O2 sensÃ¶r tepkisini canlÄ± veride inceleyin."
             )
         )
 
@@ -374,209 +379,22 @@ object BmwSimulatorCatalog {
             InjectorCalibration(cyl, sampleCodes[(cyl - 1) % sampleCodes.size])
         }
 
-    private fun defaultPresets(isGSeries: Boolean): List<CodingPreset> = listOf(
-        CodingPreset(
-            id = "start_stop_mem",
-            title = "Auto Start-Stop Son Durum Hafızası",
-            description = "Motor kapatıldığında Start-Stop'un kapalı/açık tercihini hatırlar.",
-            category = CodingCategory.DRIVETRAIN,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "TCM_MSA_MEMORY",
-            options = listOf("Kapalı (Fabrika)", "Son Durumu Hatırla (Aktif)"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "mirror_fold",
-            title = "Kumandadan Tek Basışta Ayna Katlama",
-            description = "Konfor kapatma gecikmesini 1.5 saniyeden 0.0 saniyeye düşürür.",
-            category = CodingCategory.COMFORT,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "KOMFORT_SCHLIESSEN",
-            options = listOf("1.5 sn Gecikme", "0.5 sn Hızlı", "Anında (0.0 sn)"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "kombi_logo",
-            title = "Gösterge Açılış & Tema Logosu",
-            description = "Gösterge paneli açılış animasyonunu ve yazı tipini değiştirir.",
-            category = CodingCategory.INSTRUMENT,
-            targetEcu = if (isGSeries) "DKOMBI" else "KOMBI",
-            targetAddress = EcuAddress.KOMBI,
-            cafdKey = "BMW_LOGO",
-            options = listOf("Standart AG", "M Performance", "Alpina Tema", "M5 / Motorsport"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "digital_speed",
-            title = "Kadranda Gerçek Dijital Hız (km/h)",
-            description = "Yol bilgisayarı (BC) döngüsüne büyük dijital hız göstergesi ekler.",
-            category = CodingCategory.INSTRUMENT,
-            targetEcu = if (isGSeries) "DKOMBI" else "KOMBI",
-            targetAddress = EcuAddress.KOMBI,
-            cafdKey = "BC_DIGITAL_V",
-            options = listOf("Pasif", "Aktif"),
-            currentOptionIndex = 1
-        ),
-        CodingPreset(
-            id = "video_in_motion",
-            title = "Hareket Halinde Video (Video in Motion)",
-            description = "iDrive ekranında sürüş esnasında USB video oynatım kilidini açar.",
-            category = CodingCategory.MULTIMEDIA,
-            targetEcu = if (isGSeries) "HU_MGU" else "HU_NBT",
-            targetAddress = EcuAddress.HU_MEDIA,
-            cafdKey = "SPEEDLOCK_X_KMH_MAX",
-            options = listOf("Fabrika Kilidi (3 km/h)", "Limitsiz (255 km/h)"),
-            currentOptionIndex = 0,
-            isLockedBySecureCoding = isGSeries
-        ),
-        CodingPreset(
-            id = "angel_eyes_drl",
-            title = "Angel Eyes / DRL Gündüz Parlaklığı",
-            description = "Kısalar açıkken gündüz LED halkalarının %100 parlaklıkta kalmasını sağlar.",
-            category = CodingCategory.LIGHTING,
-            targetEcu = if (isGSeries) "BDC_BODY" else "IHKA",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.IHKA,
-            cafdKey = "TFL_MODUS_BRIGHTNESS",
-            options = listOf("%50 Fabrika", "%80 Dengeli", "%100 Tam Parlaklık"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "turn_signal_count",
-            title = "Tek Dokunuş Sinyal Sayısı (3x -> 5x)",
-            description = "Sinyal koluna hafif dokunuşta yanıp sönme sayısını değiştirir.",
-            category = CodingCategory.LIGHTING,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "BLINKZYKLEN_ANZAHL_TIPP",
-            options = listOf("3 Kez (Fabrika)", "5 Kez", "7 Kez"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "reverse_mirror_tilt",
-            title = "Geri Viteste Sağ Ayna Eğilme Açısı",
-            description = "Kaldırım parkında sağ aynanın aşağı eğilme oranını ayarlar.",
-            category = CodingCategory.COMFORT,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "ASP_BORDSTEINAUTOMATIK_DELTA",
-            options = listOf("Fabrika (%70)", "Hafif (%40)", "Tam Eğilme (%90)"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "sport_displays",
-            title = "iDrive Spor Göstergeler (HP & Nm)",
-            description = "iDrive ekranında anlık beygir gücü ve tork kadranlarını aktif eder.",
-            category = CodingCategory.MULTIMEDIA,
-            targetEcu = if (isGSeries) "HU_MGU" else "HU_NBT",
-            targetAddress = EcuAddress.HU_MEDIA,
-            cafdKey = "EFF_DYN_SPORT_CID",
-            options = listOf("Pasif", "Aktif (Turuncu/Kırmızı)"),
-            currentOptionIndex = 1,
-            isLockedBySecureCoding = isGSeries
-        ),
-        CodingPreset(
-            id = "seatbelt_chime",
-            title = "Emniyet Kemeri İkaz Sesi (Sürücü/Yolcu)",
-            description = "ACSM modülünden emniyet kemeri sesli uyarısını açıp kapatır.",
-            category = CodingCategory.COMFORT,
-            targetEcu = "ACSM",
-            targetAddress = EcuAddress.ACSM,
-            cafdKey = "SBR_PREWARNING_FAHRER",
-            options = listOf("Aktif (Fabrika)", "Kapalı"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "welcome_lights_time",
-            title = "Karşılama Işıkları (Welcome Lights) Süresi",
-            description = "Kilit açıldığında farların ve kapı kolu LED'lerinin yanma süresini ayarlar.",
-            category = CodingCategory.LIGHTING,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "WL_TIMEOUT",
-            options = listOf("20 sn (Fabrika)", "40 sn", "60 sn"),
-            currentOptionIndex = 0
-        ),
-        CodingPreset(
-            id = "window_door_interrupt",
-            title = "Kapı Açılınca Cam Kapanmasını Durdurma",
-            description = "Tek dokunuşla cam kalkarken kapı açıldığında camın durmasını engeller.",
-            category = CodingCategory.COMFORT,
-            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
-            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdKey = "FH_TUERAUF_STOP_MAUT",
-            options = listOf("Durdur (Fabrika)", "Kesintisiz Kapat"),
-            currentOptionIndex = 0
-        )
-    )
+    private fun defaultPresets(isGSeries: Boolean): List<CodingPreset> =
+        BmwCodingCatalog.buildPresets(isGSeries)
 
-    private fun defaultCafdParameters(isGSeries: Boolean): List<CafdParameter> = listOf(
-        CafdParameter(
-            id = "cafd_msa_mem",
-            ecuName = if (isGSeries) "BDC_BODY" else "CAS4",
-            ecuAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdFile = if (isGSeries) "CAFD_00007083_031_020" else "CAFD_0000000F_005_025",
-            section = "3023 TcMaster2",
-            functionName = "TCM_MSA_MEMORY",
-            byteOffset = 0x1A,
-            bitMask = 0x01,
-            currentHex = "0x00",
-            availableOptions = mapOf("nicht_aktiv (0x00)" to "0x00", "aktiv (0x01)" to "0x01"),
-            selectedOptionLabel = "nicht_aktiv (0x00)"
-        ),
-        CafdParameter(
-            id = "cafd_comfort_delay",
-            ecuName = if (isGSeries) "BDC_BODY" else "CAS4",
-            ecuAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
-            cafdFile = if (isGSeries) "CAFD_00007083_031_020" else "CAFD_0000000F_005_025",
-            section = "3053 PwMaster",
-            functionName = "KOMFORT_SCHLIESSEN",
-            byteOffset = 0x42,
-            bitMask = 0xFF,
-            currentHex = "0x0F",
-            availableOptions = mapOf("1.5s (0x0F)" to "0x0F", "0.5s (0x05)" to "0x05", "0.0s (0x00)" to "0x00"),
-            selectedOptionLabel = "1.5s (0x0F)"
-        ),
-        CafdParameter(
-            id = "cafd_kombi_logo",
-            ecuName = if (isGSeries) "DKOMBI" else "KOMBI",
-            ecuAddress = EcuAddress.KOMBI,
-            cafdFile = if (isGSeries) "CAFD_00004508_009_012" else "CAFD_00000069_009_002",
-            section = "3000 Anzeige_Konfiguration",
-            functionName = "BMW_LOGO",
-            byteOffset = 0x08,
-            bitMask = 0x07,
-            currentHex = "0x00",
-            availableOptions = mapOf("ag (0x00)" to "0x00", "m_performance (0x01)" to "0x01", "alpina (0x03)" to "0x03"),
-            selectedOptionLabel = "ag (0x00)"
-        ),
-        CafdParameter(
-            id = "cafd_vim_lock",
-            ecuName = if (isGSeries) "HU_MGU" else "HU_NBT",
-            ecuAddress = EcuAddress.HU_MEDIA,
-            cafdFile = if (isGSeries) "CAFD_00003E52_007_018" else "CAFD_00000DED_003_015",
-            section = "3000 HMI",
-            functionName = "SPEEDLOCK_X_KMH_MAX",
-            byteOffset = 0x61,
-            bitMask = 0xFF,
-            currentHex = "0x03",
-            availableOptions = mapOf("3_kmh (0x03)" to "0x03", "werte_FF (0xFF)" to "0xFF"),
-            selectedOptionLabel = "3_kmh (0x03)",
-            isLockedBySecureCoding = isGSeries
-        )
-    )
+    private fun defaultCafdParameters(isGSeries: Boolean): List<CafdParameter> =
+        BmwCodingCatalog.buildCafdParameters(isGSeries)
 
     private fun defaultLiveChannels(isDiesel: Boolean): List<LiveSensorChannel> = listOf(
         LiveSensorChannel("rpm", "Motor Devri", "rpm", 780.0, 650.0, 6800.0, listOf(760f, 775f, 790f, 780f, 770f, 780f)),
-        LiveSensorChannel("boost", "Turbo Boost Basıncı", "bar", 0.28, -0.5, 1.8, listOf(0.24f, 0.26f, 0.30f, 0.29f, 0.27f, 0.28f)),
-        LiveSensorChannel("coolant", "Soğutma Suyu Sıcaklığı", "°C", 90.0, 80.0, 108.0, listOf(86f, 88f, 89f, 90f, 90f, 90f)),
-        LiveSensorChannel("trans_temp", "ZF8 Şanzıman Yağı", "°C", 68.0, 40.0, 110.0, listOf(64f, 65f, 66f, 67f, 68f, 68f)),
-        LiveSensorChannel("batt", "Akü / Alternatör Voltajı", "V", 14.2, 12.2, 14.9, listOf(14.1f, 14.2f, 14.2f, 14.3f, 14.2f, 14.2f)),
+        LiveSensorChannel("boost", "Turbo Boost BasÄ±ncÄ±", "bar", 0.28, -0.5, 1.8, listOf(0.24f, 0.26f, 0.30f, 0.29f, 0.27f, 0.28f)),
+        LiveSensorChannel("coolant", "SoÄŸutma Suyu SÄ±caklÄ±ÄŸÄ±", "Â°C", 90.0, 80.0, 108.0, listOf(86f, 88f, 89f, 90f, 90f, 90f)),
+        LiveSensorChannel("trans_temp", "ZF8 ÅžanzÄ±man YaÄŸÄ±", "Â°C", 68.0, 40.0, 110.0, listOf(64f, 65f, 66f, 67f, 68f, 68f)),
+        LiveSensorChannel("batt", "AkÃ¼ / AlternatÃ¶r VoltajÄ±", "V", 14.2, 12.2, 14.9, listOf(14.1f, 14.2f, 14.2f, 14.3f, 14.2f, 14.2f)),
         if (isDiesel) {
-            LiveSensorChannel("dpf_soot", "DPF Kurum Yükü (Soot)", "g", 34.8, 0.0, 45.0, listOf(34.2f, 34.4f, 34.5f, 34.6f, 34.7f, 34.8f))
+            LiveSensorChannel("dpf_soot", "DPF Kurum YÃ¼kÃ¼ (Soot)", "g", 34.8, 0.0, 45.0, listOf(34.2f, 34.4f, 34.5f, 34.6f, 34.7f, 34.8f))
         } else {
-            LiveSensorChannel("rail", "Yüksek Yakıt Rail Basıncı", "bar", 124.5, 45.0, 210.0, listOf(120f, 122f, 125f, 124f, 123f, 124.5f))
+            LiveSensorChannel("rail", "YÃ¼ksek YakÄ±t Rail BasÄ±ncÄ±", "bar", 124.5, 45.0, 210.0, listOf(120f, 122f, 125f, 124f, 123f, 124.5f))
         }
     )
 
@@ -584,24 +402,24 @@ object BmwSimulatorCatalog {
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.BATTERY_REGISTRATION,
-                title = "Akü Tanıtma & Kapasite Kaydı (IBS)",
+                title = "AkÃ¼ TanÄ±tma & Kapasite KaydÄ± (IBS)",
                 targetEcu = "DME/DDE",
                 targetAddress = EcuAddress.DME_DDE,
                 routineId = 0xF010,
-                description = "Yeni akü değişimi sonrası şarj profilini sıfırlar (Örn. 90Ah AGM).",
-                warningNote = "Yanlış akü tipi/kapasitesi seçilirse erken akü yıpranmasına yol açabilir."
+                description = "Yeni akÃ¼ deÄŸiÅŸimi sonrasÄ± ÅŸarj profilini sÄ±fÄ±rlar (Ã–rn. 90Ah AGM).",
+                warningNote = "YanlÄ±ÅŸ akÃ¼ tipi/kapasitesi seÃ§ilirse erken akÃ¼ yÄ±pranmasÄ±na yol aÃ§abilir."
             )
         )
         if (isDiesel) {
             add(
                 ServiceRoutine(
                     type = ServiceRoutineType.DPF_REGENERATION,
-                    title = "Zorunlu DPF Rejenerasyonu Başlat",
+                    title = "Zorunlu DPF Rejenerasyonu BaÅŸlat",
                     targetEcu = "DDE7",
                     targetAddress = EcuAddress.DME_DDE,
                     routineId = 0xF022,
-                    description = "Dizel Partikül Filtresi kurum yakma döngüsünü sürüş için onaylar.",
-                    warningNote = "Yakıt > 1/4 olmalı, soğutma suyu > 75°C ve kritik motor hatası bulunmamalıdır."
+                    description = "Dizel PartikÃ¼l Filtresi kurum yakma dÃ¶ngÃ¼sÃ¼nÃ¼ sÃ¼rÃ¼ÅŸ iÃ§in onaylar.",
+                    warningNote = "YakÄ±t > 1/4 olmalÄ±, soÄŸutma suyu > 75Â°C ve kritik motor hatasÄ± bulunmamalÄ±dÄ±r."
                 )
             )
         }
@@ -612,41 +430,41 @@ object BmwSimulatorCatalog {
                 targetEcu = "DSC",
                 targetAddress = EcuAddress.DSC,
                 routineId = 0xF031,
-                description = "Arka balata değişimi için EMF kaliper pistonlarını geri çeker.",
-                warningNote = "Araç düz zeminde ve takozlu olmalıdır."
+                description = "Arka balata deÄŸiÅŸimi iÃ§in EMF kaliper pistonlarÄ±nÄ± geri Ã§eker.",
+                warningNote = "AraÃ§ dÃ¼z zeminde ve takozlu olmalÄ±dÄ±r."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.CBS_OIL_RESET,
-                title = "CBS Bakım Sıfırlama (Yağ / Fren / Araç Kontrol)",
+                title = "CBS BakÄ±m SÄ±fÄ±rlama (YaÄŸ / Fren / AraÃ§ Kontrol)",
                 targetEcu = "KOMBI",
                 targetAddress = EcuAddress.KOMBI,
                 routineId = 0xF040,
-                description = "iDrive servis sayacını yeniler ve bakım geçmişine kayıt işler.",
-                warningNote = "Yalnızca bakım işlemi fiilen tamamlandıktan sonra sıfırlayın."
+                description = "iDrive servis sayacÄ±nÄ± yeniler ve bakÄ±m geÃ§miÅŸine kayÄ±t iÅŸler.",
+                warningNote = "YalnÄ±zca bakÄ±m iÅŸlemi fiilen tamamlandÄ±ktan sonra sÄ±fÄ±rlayÄ±n."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.EXHAUST_VALVE_OPEN,
-                title = "Egzoz Valfi Kontrolü (Aç / Fabrika)",
+                title = "Egzoz Valfi KontrolÃ¼ (AÃ§ / Fabrika)",
                 targetEcu = "DME/DDE",
                 targetAddress = EcuAddress.DME_DDE,
                 routineId = 0xF055,
-                description = "Sağ egzoz flapını açık konumda kilitler veya fabrika haritasına döndürür.",
-                warningNote = "Kontak açık (PAD modu) veya motor rölantide olmalıdır."
+                description = "SaÄŸ egzoz flapÄ±nÄ± aÃ§Ä±k konumda kilitler veya fabrika haritasÄ±na dÃ¶ndÃ¼rÃ¼r.",
+                warningNote = "Kontak aÃ§Ä±k (PAD modu) veya motor rÃ¶lantide olmalÄ±dÄ±r."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.STEERING_ANGLE_CALIBRATION,
-                title = "Direksiyon Açı Sensörü (SZL) Kalibrasyonu",
+                title = "Direksiyon AÃ§Ä± SensÃ¶rÃ¼ (SZL) Kalibrasyonu",
                 targetEcu = "DSC",
                 targetAddress = EcuAddress.DSC,
                 routineId = 0xF061,
-                description = "Rot ayarı veya akü sökümü sonrası sıfır noktası kalibrasyonu yapar.",
-                warningNote = "Direksiyon tam düz konumda tutulmalıdır."
+                description = "Rot ayarÄ± veya akÃ¼ sÃ¶kÃ¼mÃ¼ sonrasÄ± sÄ±fÄ±r noktasÄ± kalibrasyonu yapar.",
+                warningNote = "Direksiyon tam dÃ¼z konumda tutulmalÄ±dÄ±r."
             )
         )
     }

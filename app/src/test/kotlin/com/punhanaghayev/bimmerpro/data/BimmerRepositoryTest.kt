@@ -89,6 +89,12 @@ class BimmerRepositoryTest {
         assertTrue(repo.session.value.zfAdaptations.all { it.pressureMbar == 0 && it.fillTimeMs == 0 })
 
         repo.connect(AdapterType.SIMULATOR_F10)
+        assertTrue(repo.session.value.presets.size >= 25)
+        assertTrue(repo.session.value.cafdParameters.size >= 10)
+        val firstActuator = repo.session.value.actuatorTests.first()
+        repo.runActuatorTest(firstActuator)
+        assertTrue(repo.session.value.lastServiceResult?.success == true)
+
         val initialDtcs = repo.session.value.dtcs.size
         repo.clearEcuDtcs(EcuAddress.DME_DDE, "DDE7")
         assertTrue(repo.session.value.dtcs.size < initialDtcs)

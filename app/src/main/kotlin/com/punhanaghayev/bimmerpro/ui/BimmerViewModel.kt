@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.punhanaghayev.bimmerpro.BuildConfig
+import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.AppLocalization
@@ -171,6 +172,12 @@ class BimmerViewModel(
         viewModelScope.launch {
             repository.resetZfAdaptations()
             _uiEvents.emit(UiEvent.Snackbar("ZF8 EGS adaptasyonları sıfırlandı."))
+        }
+    }
+
+    fun runActuatorTest(test: ActuatorTestItem) {
+        viewModelScope.launch {
+            repository.runActuatorTest(test)
         }
     }
 

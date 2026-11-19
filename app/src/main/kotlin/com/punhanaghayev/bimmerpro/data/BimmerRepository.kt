@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.data
 
 import android.content.Context
+import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
@@ -8,6 +9,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
@@ -72,6 +74,8 @@ data class BimmerSessionState(
     val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
     val zfAdaptations: List<ZfClutchAdaptation> = emptyList(),
     val injectorCodes: List<InjectorCalibration> = emptyList(),
+    val actuatorTests: List<ActuatorTestItem> = emptyList(),
+    val ibsHealth: IbsBatteryHealth? = null,
     val isScanning: Boolean = false,
     val scanProgress: Float = 0f,
     val scanStatusText: String = "",
@@ -200,6 +204,8 @@ class BimmerRepository(
                         serviceHistory = bundle.serviceHistory,
                         zfAdaptations = bundle.zfAdaptations,
                         injectorCodes = bundle.injectorCodes,
+                        actuatorTests = bundle.actuatorTests,
+                        ibsHealth = bundle.ibsHealth,
                         savedVehicles = savedList,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
                     )
@@ -255,6 +261,8 @@ class BimmerRepository(
                         serviceHistory = emptyList(),
                         zfAdaptations = template.zfAdaptations,
                         injectorCodes = template.injectorCodes,
+                        actuatorTests = template.actuatorTests,
+                        ibsHealth = template.ibsHealth,
                         savedVehicles = savedList,
                         lastOperationMessage = "Fiziksel bağlantı kuruldu: $extractedVin (%.1f V)".format(batteryVolts)
                     )
@@ -722,6 +730,20 @@ class BimmerRepository(
         _session.update {
             it.copy(lastOperationMessage = "$ecuName için UDS 0x11 reset/uyku komutu gönderildi.")
         }
+    }
+
+    suspend fun runActuatorTest(test: ActuatorTestItem) {
+        val resp = udsClient.sendUds(
+            test.targetAddress,
+            UdsCodec.buildIoControl(test.did, controlParam = 0x03, stateByte = 0x01),
+            "UDS 0x2F Actuator Test (${test.title})"
+        )
+        val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        val result = when (resp) {
+            is UdsResponse.Positive -> ServiceExecutionResult(true, test.title, "${test.targetEcu} aktüatör testi aktif edildi.", stamp)
+            is UdsResponse.Negative -> ServiceExecutionResult(false, test.title, "Reddedildi: ${resp.nrc.description}", stamp)
+        }
+        _session.update { it.copy(lastServiceResult = result, lastOperationMessage = result.message) }
     }
 
     fun removeSavedVehicle(vin: String) {
