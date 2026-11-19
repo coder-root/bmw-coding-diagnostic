@@ -92,6 +92,13 @@ class BimmerViewModel(
         }
     }
 
+    fun clearEcuDtcs(ecuAddress: Int, ecuName: String) {
+        viewModelScope.launch {
+            repository.clearEcuDtcs(ecuAddress, ecuName)
+            _uiEvents.emit(UiEvent.Snackbar("$ecuName hata kodları temizlendi."))
+        }
+    }
+
     fun applyPresetCoding(presetId: String, newIndex: Int) {
         viewModelScope.launch {
             val ctx = getApplication<Application>()

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
@@ -52,25 +53,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
+import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerCardElevated
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerOutline
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlue
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlueBright
+import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
-import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
-import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
 @Composable
 fun DiagnosticsScreen(
     session: BimmerSessionState,
     onRunScan: () -> Unit,
     onClearAllDtcs: () -> Unit,
+    onClearEcuDtcs: (Int, String) -> Unit,
+    onSendEcuReset: (Int, String, Int) -> Unit,
     onExportPdf: () -> Unit,
     onGoToGarage: () -> Unit
 ) {
@@ -87,6 +85,7 @@ fun DiagnosticsScreen(
     var filterMode by remember { mutableStateOf(DtcFilterMode.ALL) }
     var showClearDialog by remember { mutableStateOf(false) }
     val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
 
     val filteredDtcs = remember(session.dtcs, filterMode) {
         when (filterMode) {
@@ -129,7 +128,7 @@ fun DiagnosticsScreen(
                     onClick = onRunScan,
                     enabled = !session.isScanning,
                     modifier = Modifier.weight(1f).height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
                 ) {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
@@ -138,11 +137,11 @@ fun DiagnosticsScreen(
                 OutlinedButton(
                     onClick = onExportPdf,
                     modifier = Modifier.weight(1f).height(44.dp),
-                    border = BorderStroke(1.dp, BmwBlueBright.copy(alpha = 0.7f))
+                    border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.7f))
                 ) {
-                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BmwBlueBright, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(strings.expertisePdfBtn, color = BmwBlueBright, maxLines = 1, softWrap = false, fontSize = 12.sp)
+                    Text(strings.expertisePdfBtn, color = theme.primaryBright, maxLines = 1, softWrap = false, fontSize = 12.sp)
                 }
             }
         }
@@ -150,28 +149,27 @@ fun DiagnosticsScreen(
         if (session.isScanning || session.scanStatusText.isNotBlank()) {
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                    border = BorderStroke(1.dp, BimmerOutline)
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline)
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(session.scanStatusText, color = TextPrimary, fontSize = 12.sp)
+                        Text(session.scanStatusText, color = theme.textPrimary, fontSize = 12.sp)
                         LinearProgressIndicator(
                             progress = { session.scanProgress },
                             modifier = Modifier.fillMaxWidth(),
-                            color = BmwBlueBright
+                            color = theme.primaryBright
                         )
                     }
                 }
             }
         }
 
-        // Cross-ECU Mileage Verification Card
         item {
             val mv = profile.mileageVerification
             val isTampered = mv.status == TamperStatus.SUSPICIOUS_MISMATCH
             val badgeColor = if (isTampered) StatusRed else StatusGreen
             Card(
-                colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.6f)),
                 shape = RoundedCornerShape(14.dp)
             ) {
@@ -184,20 +182,20 @@ fun DiagnosticsScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Column {
-                            Text("Çoklu Modül KM Doğrulama", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
+                            Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
                             Text(mv.status.label, color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         }
                     }
-                    Text(mv.summary, color = TextSecondary, fontSize = 12.sp)
+                    Text(mv.summary, color = theme.textSecondary, fontSize = 12.sp)
                     mv.readings.forEach { reading ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(reading.moduleName, color = TextSecondary, fontSize = 12.sp)
+                            Text(reading.moduleName, color = theme.textSecondary, fontSize = 12.sp)
                             Text(
                                 text = "%,d km".format(reading.mileageKm) + (reading.engineHours?.let { " • ${it}h" } ?: ""),
-                                color = TextPrimary,
+                                color = theme.textPrimary,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
@@ -226,7 +224,7 @@ fun DiagnosticsScreen(
                     TextButton(onClick = { showClearDialog = true }) {
                         Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = StatusRed, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Sil", color = StatusRed, fontSize = 12.sp)
+                        Text(strings.clearAllDtcBtn, color = StatusRed, fontSize = 12.sp, maxLines = 1, softWrap = false)
                     }
                 }
             }
@@ -235,11 +233,11 @@ fun DiagnosticsScreen(
         if (filteredDtcs.isEmpty()) {
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
                     border = BorderStroke(1.dp, StatusGreen.copy(alpha = 0.4f))
                 ) {
                     Text(
-                        text = "Seçili filtrede arıza kaydı bulunmuyor.",
+                        text = strings.noDtcInFilter,
                         modifier = Modifier.padding(18.dp),
                         color = StatusGreen,
                         fontWeight = FontWeight.Medium
@@ -254,42 +252,93 @@ fun DiagnosticsScreen(
 
         item {
             Text(
-                text = "Tarama Yapılan ECU Modülleri (${session.ecus.size})",
+                text = "${strings.scannedEcusTitle} (${session.ecus.size})",
                 style = MaterialTheme.typography.titleSmall,
-                color = TextSecondary,
+                color = theme.textSecondary,
                 fontWeight = FontWeight.SemiBold
             )
         }
 
         items(session.ecus, key = { it.address }) { ecu ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                border = BorderStroke(1.dp, BimmerOutline)
+            ExpandableEcuCard(
+                ecu = ecu,
+                onClearDtc = { onClearEcuDtcs(ecu.address, ecu.shortName) },
+                onResetEcu = { onSendEcuReset(ecu.address, ecu.shortName, 0x01) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandableEcuCard(
+    ecu: EcuModule,
+    onClearDtc: () -> Unit,
+    onResetEcu: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val theme = LocalThemeStyle.current
+    val total = ecu.activeDtcCount + ecu.shadowDtcCount
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("${ecu.shortName} (${ecu.addressHex}) • ${ecu.fullName}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text("${ecu.softwareVersion} | ${ecu.codingCapability.label}", color = theme.textSecondary, fontSize = 11.sp)
+                }
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .clip(RoundedCornerShape(6.dp))
+                        .background((if (total > 0) StatusAmber else StatusGreen).copy(alpha = 0.16f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("${ecu.shortName} (${ecu.addressHex}) • ${ecu.fullName}", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text("${ecu.softwareVersion} | ${ecu.codingCapability.label}", color = TextSecondary, fontSize = 11.sp)
-                    }
-                    val total = ecu.activeDtcCount + ecu.shadowDtcCount
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background((if (total > 0) StatusAmber else StatusGreen).copy(alpha = 0.16f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = if (total == 0) "TEMİZ" else "$total HATA",
-                            color = if (total > 0) StatusAmber else StatusGreen,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Text(
+                        text = if (total == 0) "TEMİZ" else "$total HATA",
+                        color = if (total > 0) StatusAmber else StatusGreen,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "HW: ${ecu.hardwareVersion} • CAFD: ${ecu.cafdId ?: "Yok"}" +
+                            (ecu.reportedMileageKm?.let { " • %,d km".format(it) } ?: ""),
+                        color = theme.textSecondary,
+                        fontSize = 11.sp
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = onClearDtc,
+                            modifier = Modifier.weight(1f).height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = StatusRed, modifier = Modifier.size(15.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("ECU Hata Sil", fontSize = 11.sp, color = StatusRed, maxLines = 1, softWrap = false)
+                        }
+                        OutlinedButton(
+                            onClick = onResetEcu,
+                            modifier = Modifier.weight(1f).height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(15.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("ECU Reset", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                        }
                     }
                 }
             }
@@ -300,18 +349,19 @@ fun DiagnosticsScreen(
 @Composable
 private fun ExpandableDtcCard(dtc: DtcFault) {
     var expanded by remember { mutableStateOf(false) }
+    val theme = LocalThemeStyle.current
     val severityColor = when (dtc.severity) {
         DtcSeverity.CRITICAL -> StatusRed
         DtcSeverity.WARNING -> StatusAmber
-        DtcSeverity.INFO -> BmwBlueBright
-        DtcSeverity.SHADOW -> TextSecondary
+        DtcSeverity.INFO -> theme.primaryBright
+        DtcSeverity.SHADOW -> theme.textSecondary
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { expanded = !expanded },
-        colors = CardDefaults.cardColors(containerColor = BimmerCard),
+        colors = CardDefaults.cardColors(containerColor = theme.card),
         border = BorderStroke(1.dp, severityColor.copy(alpha = 0.5f)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -330,25 +380,25 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                     ) {
                         Text(dtc.code, color = severityColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
-                    Text("${dtc.ecuName} • ${dtc.status.label}", color = TextSecondary, fontSize = 11.sp)
+                    Text("${dtc.ecuName} • ${dtc.status.label}", color = theme.textSecondary, fontSize = 11.sp)
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = TextSecondary
+                    tint = theme.textSecondary
                 )
             }
-            Text(dtc.title, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Text(dtc.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
 
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                    Text(dtc.technicalDetail, color = TextSecondary, fontSize = 12.sp)
+                    Text(dtc.technicalDetail, color = theme.textSecondary, fontSize = 12.sp)
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(BimmerCardElevated)
+                            .background(theme.cardElevated)
                             .padding(10.dp)
                     ) {
                         Text(
@@ -359,7 +409,7 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                                 dtc.freezeFrame.engineRpm,
                                 dtc.freezeFrame.occurrenceCount
                             ),
-                            color = TextPrimary,
+                            color = theme.textPrimary,
                             fontSize = 11.sp
                         )
                     }
@@ -368,13 +418,13 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(BmwBlue.copy(alpha = 0.16f))
+                            .background(theme.primary.copy(alpha = 0.16f))
                             .padding(10.dp)
                     ) {
                         Column {
-                            Text("ISTA Yönlendirmeli Kontrol Planı", color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text("ISTA Yönlendirmeli Kontrol Planı", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             Spacer(Modifier.height(4.dp))
-                            Text(dtc.istaGuidance, color = TextPrimary, fontSize = 12.sp)
+                            Text(dtc.istaGuidance, color = theme.textPrimary, fontSize = 12.sp)
                         }
                     }
                 }
@@ -389,6 +439,7 @@ fun DisconnectedPlaceholder(
     subtitle: String,
     onGoToGarage: () -> Unit
 ) {
+    val theme = LocalThemeStyle.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -396,8 +447,8 @@ fun DisconnectedPlaceholder(
         contentAlignment = Alignment.Center
     ) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = BimmerCard),
-            border = BorderStroke(1.dp, BimmerOutline),
+            colors = CardDefaults.cardColors(containerColor = theme.card),
+            border = BorderStroke(1.dp, theme.outline),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
@@ -405,10 +456,10 @@ fun DisconnectedPlaceholder(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text(subtitle, color = TextSecondary, fontSize = 13.sp)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                Text(subtitle, color = theme.textSecondary, fontSize = 13.sp)
                 Spacer(Modifier.height(4.dp))
-                Button(onClick = onGoToGarage, colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)) {
+                Button(onClick = onGoToGarage, colors = ButtonDefaults.buttonColors(containerColor = theme.primary)) {
                     Text("Garaj & Bağlantı Ekranına Git")
                 }
             }

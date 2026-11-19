@@ -277,6 +277,8 @@ fun MainNavigation(
                             session = session,
                             onRunScan = viewModel::runFullScan,
                             onClearAllDtcs = viewModel::clearAllDtcs,
+                            onClearEcuDtcs = viewModel::clearEcuDtcs,
+                            onSendEcuReset = viewModel::sendEcuReset,
                             onExportPdf = { viewModel.generateInspectionPdf(context) },
                             onGoToGarage = { selectedTabIndex = 0 }
                         )

@@ -372,6 +372,25 @@ class BimmerRepository(
         }
     }
 
+    suspend fun clearEcuDtcs(ecuAddress: Int, ecuName: String) {
+        val response = udsClient.sendUds(
+            ecuAddress,
+            UdsCodec.buildClearAllDtc(),
+            "UDS 0x14 Clear DTC ($ecuName)"
+        )
+        if (response is UdsResponse.Positive) {
+            _session.update { state ->
+                state.copy(
+                    dtcs = state.dtcs.filterNot { it.ecuAddress == ecuAddress },
+                    ecus = state.ecus.map {
+                        if (it.address == ecuAddress) it.copy(activeDtcCount = 0, shadowDtcCount = 0) else it
+                    },
+                    lastOperationMessage = "$ecuName modülünün hata hafızası temizlendi."
+                )
+            }
+        }
+    }
+
     suspend fun applyPresetCoding(presetId: String, newOptionIndex: Int): Result<String> {
         val state = _session.value
         val profile = state.vehicleProfile ?: return Result.failure(IllegalStateException("Araç bağlı değil"))

@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.data
 
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
@@ -86,5 +87,10 @@ class BimmerRepositoryTest {
 
         repo.resetZfAdaptations()
         assertTrue(repo.session.value.zfAdaptations.all { it.pressureMbar == 0 && it.fillTimeMs == 0 })
+
+        repo.connect(AdapterType.SIMULATOR_F10)
+        val initialDtcs = repo.session.value.dtcs.size
+        repo.clearEcuDtcs(EcuAddress.DME_DDE, "DDE7")
+        assertTrue(repo.session.value.dtcs.size < initialDtcs)
     }
 }

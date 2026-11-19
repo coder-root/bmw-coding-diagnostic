@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.8",
+            versionName = "1.1.8",
+            title = "BMW Expert PRO v1.1.8 — Modül Bazlı DTC Silme & Yeni Kodlamalar",
+            changelog = """
+                • ECU bazlı hata kodu silme (UDS 0x14) ve modül detay kartı
+                • Yeni Easy Mode kodlamalar: Emniyet Kemeri İkazı, Welcome Lights Süresi, Kapı Açılınca Cam Kapatma
+                • Diagnostik ekranı tam 5 tema (Daylight Silver dahil) ile uyumlu hale getirildi
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.7",
             versionName = "1.1.7",
             title = "BMW Expert PRO v1.1.7 — M-Sport Kadran & Hızlı Garaj Bağlantısı",

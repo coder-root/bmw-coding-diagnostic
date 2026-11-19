@@ -475,6 +475,39 @@ object BmwSimulatorCatalog {
             options = listOf("Pasif", "Aktif (Turuncu/Kırmızı)"),
             currentOptionIndex = 1,
             isLockedBySecureCoding = isGSeries
+        ),
+        CodingPreset(
+            id = "seatbelt_chime",
+            title = "Emniyet Kemeri İkaz Sesi (Sürücü/Yolcu)",
+            description = "ACSM modülünden emniyet kemeri sesli uyarısını açıp kapatır.",
+            category = CodingCategory.COMFORT,
+            targetEcu = "ACSM",
+            targetAddress = EcuAddress.ACSM,
+            cafdKey = "SBR_PREWARNING_FAHRER",
+            options = listOf("Aktif (Fabrika)", "Kapalı"),
+            currentOptionIndex = 0
+        ),
+        CodingPreset(
+            id = "welcome_lights_time",
+            title = "Karşılama Işıkları (Welcome Lights) Süresi",
+            description = "Kilit açıldığında farların ve kapı kolu LED'lerinin yanma süresini ayarlar.",
+            category = CodingCategory.LIGHTING,
+            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
+            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
+            cafdKey = "WL_TIMEOUT",
+            options = listOf("20 sn (Fabrika)", "40 sn", "60 sn"),
+            currentOptionIndex = 0
+        ),
+        CodingPreset(
+            id = "window_door_interrupt",
+            title = "Kapı Açılınca Cam Kapanmasını Durdurma",
+            description = "Tek dokunuşla cam kalkarken kapı açıldığında camın durmasını engeller.",
+            category = CodingCategory.COMFORT,
+            targetEcu = if (isGSeries) "BDC_BODY" else "CAS4",
+            targetAddress = if (isGSeries) EcuAddress.ZGW_BDC else EcuAddress.FEM_CAS,
+            cafdKey = "FH_TUERAUF_STOP_MAUT",
+            options = listOf("Durdur (Fabrika)", "Kesintisiz Kapat"),
+            currentOptionIndex = 0
         )
     )
 
