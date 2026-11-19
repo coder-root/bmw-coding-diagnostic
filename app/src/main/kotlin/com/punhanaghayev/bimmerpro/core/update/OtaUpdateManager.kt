@@ -81,6 +81,21 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.7.0",
+            versionName = "1.7.0",
+            title = "BMW Expert PRO v1.7.0 — Çoklu Tema, Garaj Geçmişi, JSON Yedek & UI Yenilemesi",
+            changelog = """
+                • 5 farklı uygulama teması (M Carbon, Alpina Emerald, iPerformance, M Amber, Daylight Silver)
+                • Araç Garaj Geçmişi / Çoklu VIN kaydı ve yönetimi
+                • Kodlama yedeklerini JSON olarak dışa/içe aktarma
+                • ECU Reset & Uyku Modu (UDS 0x11) ve vLinker BM Wi-Fi AT canlı logları
+                • Tüm adaptör dropdown içerikleri 4 dile çevrildi; butonlar, VIN ve arama alanları yenilendi
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.6.0",
             versionName = "1.6.0",
             title = "BMW Expert PRO v1.6.0 — ZF8 Adaptasyon, Enjektör IMA & Kategori Filtresi",

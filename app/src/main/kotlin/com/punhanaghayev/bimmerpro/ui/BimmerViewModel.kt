@@ -20,6 +20,7 @@ import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
 import com.punhanaghayev.bimmerpro.core.update.SemVerComparator
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,6 +52,9 @@ class BimmerViewModel(
 
     private val _appLanguage = MutableStateFlow(AppLocalization.loadSavedLanguage(application))
     val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
+
+    private val _themeStyle = MutableStateFlow(AppThemeStyle.loadSaved(application))
+    val themeStyle: StateFlow<AppThemeStyle> = _themeStyle.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
@@ -225,6 +229,39 @@ class BimmerViewModel(
     fun setAppLanguage(language: AppLanguage) {
         AppLocalization.saveLanguage(getApplication(), language)
         _appLanguage.value = language
+    }
+
+    fun setThemeStyle(style: AppThemeStyle) {
+        AppThemeStyle.save(getApplication(), style)
+        _themeStyle.value = style
+    }
+
+    fun removeSavedVehicle(vin: String) {
+        repository.removeSavedVehicle(vin)
+    }
+
+    fun sendEcuReset(ecuAddress: Int, ecuName: String, resetType: Int = 0x01) {
+        viewModelScope.launch {
+            repository.sendEcuReset(ecuAddress, ecuName, resetType)
+            _uiEvents.emit(UiEvent.Snackbar("$ecuName reset/uyku komutu gönderildi."))
+        }
+    }
+
+    fun exportBackupsJson(context: Context) {
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                repository.exportBackupsJson(context.cacheDir)
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "application/json", "Kodlama Yedeklerini JSON Paylaş"))
+        }
+    }
+
+    fun importBackupsJson(rawJson: String) {
+        viewModelScope.launch {
+            runCatching { repository.importBackupsJson(rawJson) }
+                .onSuccess { count -> _uiEvents.emit(UiEvent.Snackbar("$count yedek içe aktarıldı.")) }
+                .onFailure { _uiEvents.emit(UiEvent.Snackbar("Geçersiz JSON yedek dosyası.")) }
+        }
     }
 
     fun exportTelemetryCsv(context: Context) {

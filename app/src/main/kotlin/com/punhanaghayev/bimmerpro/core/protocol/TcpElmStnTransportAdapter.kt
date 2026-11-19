@@ -21,7 +21,8 @@ class TcpElmStnTransportAdapter(
     override val adapterType: AdapterType = AdapterType.VLINKER_BM_WIFI,
     private val host: String = DEFAULT_VLINKER_HOST,
     private val port: Int = DEFAULT_VLINKER_PORT,
-    private val timeoutMs: Int = 4000
+    private val timeoutMs: Int = 4000,
+    private val onAtLog: (String) -> Unit = {}
 ) : TransportAdapter {
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
@@ -113,7 +114,9 @@ class TcpElmStnTransportAdapter(
             sb.append(String(buf, 0, read, StandardCharsets.US_ASCII))
             if (sb.contains(">")) break
         }
-        return sb.toString()
+        val response = sb.toString()
+        onAtLog("AT [$command] -> ${response.replace("\r", " ").replace("\n", " ").trim()}")
+        return response
     }
 
     companion object {

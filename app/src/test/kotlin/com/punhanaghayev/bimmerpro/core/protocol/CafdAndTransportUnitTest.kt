@@ -2,6 +2,8 @@ package com.punhanaghayev.bimmerpro.core.protocol
 
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
 import com.punhanaghayev.bimmerpro.data.BackupStorage
+import com.punhanaghayev.bimmerpro.data.GarageHistoryStorage
+import com.punhanaghayev.bimmerpro.data.SavedVehicleRecord
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -71,5 +73,26 @@ class CafdAndTransportUnitTest {
 
         val uds = TcpElmStnTransportAdapter.parseStnUdsResponse("06 F1 62 F1 90 57 42 41\r\n>")
         assertArrayEquals(byteArrayOf(0x62, 0xF1.toByte(), 0x90.toByte(), 0x57, 0x42, 0x41), uds)
+    }
+
+    @Test
+    fun `backup json export import and garage multi-vin history work accurately`() {
+        val tempDir = Files.createTempDirectory("bimmerpro_v170_test").toFile()
+        try {
+            val storage = BackupStorage(tempDir)
+            val snap = CodingBackupSnapshot("id1", "10:00", "CAS4", 0x40, "MSA", "Test", mapOf("k" to 1))
+            val json = storage.exportToJson(listOf(snap))
+            val imported = storage.importFromJson(json)
+            assertEquals(1, imported.size)
+            assertEquals("CAS4", imported.first().ecuName)
+
+            val garage = GarageHistoryStorage(tempDir)
+            garage.upsertVehicle(SavedVehicleRecord("WBA5C31040D842910", "BMW 520d", "F10", 148000, "19.11", "vLinker"))
+            assertEquals(1, garage.loadVehicles().size)
+            garage.removeVehicle("WBA5C31040D842910")
+            assertEquals(0, garage.loadVehicles().size)
+        } finally {
+            tempDir.deleteRecursively()
+        }
     }
 }

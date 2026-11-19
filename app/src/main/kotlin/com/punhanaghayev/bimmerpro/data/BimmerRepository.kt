@@ -81,7 +81,8 @@ data class BimmerSessionState(
     val discoveredBleDevices: List<BleAdapterDevice> = emptyList(),
     val discoveredUsbDevices: List<UsbKdcanDeviceInfo> = emptyList(),
     val selectedBleAddress: String? = null,
-    val performanceTimer: PerformanceTimerState = PerformanceTimerState()
+    val performanceTimer: PerformanceTimerState = PerformanceTimerState(),
+    val savedVehicles: List<SavedVehicleRecord> = emptyList()
 )
 
 class BimmerRepository(
@@ -89,12 +90,16 @@ class BimmerRepository(
 ) {
 
     private val backupStorage: BackupStorage? = appContext?.let { BackupStorage(File(it.filesDir, "backups")) }
+    private val garageHistoryStorage: GarageHistoryStorage? = appContext?.let { GarageHistoryStorage(File(it.filesDir, "garage")) }
     private var activeTransport: TransportAdapter = SimulatorTransportAdapter(AdapterType.SIMULATOR_F10)
     private val udsClient = UdsClient { activeTransport }
     private val ecuCafdBuffers = mutableMapOf<Int, ByteArray>()
 
     private val _session = MutableStateFlow(
-        BimmerSessionState(backups = backupStorage?.loadBackups().orEmpty())
+        BimmerSessionState(
+            backups = backupStorage?.loadBackups().orEmpty(),
+            savedVehicles = garageHistoryStorage?.loadVehicles().orEmpty()
+        )
     )
     val session: StateFlow<BimmerSessionState> = _session.asStateFlow()
 
@@ -113,7 +118,8 @@ class BimmerRepository(
             AdapterType.VLINKER_BM_WIFI -> TcpElmStnTransportAdapter(
                 adapterType = adapterType,
                 host = customHost.ifBlank { TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST },
-                port = customPort ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT
+                port = customPort ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT,
+                onAtLog = { msg -> udsClient.logInfo("AT", EcuAddress.ZGW_BDC, msg) }
             )
 
             AdapterType.SIMULATOR_F10,
@@ -178,6 +184,7 @@ class BimmerRepository(
             val sim = activeTransport as? SimulatorTransportAdapter
             if (sim != null) {
                 val bundle = sim.bundle
+                val savedList = saveConnectedVehicle(bundle.profile, adapterType)
                 _session.update {
                     it.copy(
                         connectionState = connState,
@@ -191,6 +198,7 @@ class BimmerRepository(
                         serviceHistory = bundle.serviceHistory,
                         zfAdaptations = bundle.zfAdaptations,
                         injectorCodes = bundle.injectorCodes,
+                        savedVehicles = savedList,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
                     )
                 }
@@ -231,6 +239,7 @@ class BimmerRepository(
                         summary = "Fiziksel araç bağlı — tam modül taraması için Diagnostik -> Tüm ECU Tara çalıştırın."
                     )
                 )
+                val savedList = saveConnectedVehicle(physicalProfile, adapterType)
                 _session.update {
                     it.copy(
                         connectionState = connState,
@@ -244,6 +253,7 @@ class BimmerRepository(
                         serviceHistory = emptyList(),
                         zfAdaptations = template.zfAdaptations,
                         injectorCodes = template.injectorCodes,
+                        savedVehicles = savedList,
                         lastOperationMessage = "Fiziksel bağlantı kuruldu: $extractedVin (%.1f V)".format(batteryVolts)
                     )
                 }
@@ -680,6 +690,59 @@ class BimmerRepository(
                 lastOperationMessage = "ZF8 EGS şanzıman adaptasyonları sıfırlandı (ilk 50 km öğrenme sürüşü yapın)."
             )
         }
+    }
+
+    suspend fun sendEcuReset(ecuAddress: Int, ecuName: String, resetType: Int = 0x01) {
+        udsClient.sendUds(
+            ecuAddress,
+            UdsCodec.buildEcuReset(resetType),
+            "UDS 0x11 ECU Reset ($ecuName, type=0x%02X)".format(resetType)
+        )
+        _session.update {
+            it.copy(lastOperationMessage = "$ecuName için UDS 0x11 reset/uyku komutu gönderildi.")
+        }
+    }
+
+    fun removeSavedVehicle(vin: String) {
+        val updated = garageHistoryStorage?.removeVehicle(vin)
+            ?: _session.value.savedVehicles.filterNot { it.vin == vin }
+        _session.update { it.copy(savedVehicles = updated) }
+    }
+
+    fun exportBackupsJson(cacheDir: File): File {
+        val reportsDir = File(cacheDir, "reports").apply { mkdirs() }
+        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val out = File(reportsDir, "BMW_Expert_PRO_Backups_$stamp.json")
+        val storage = backupStorage ?: BackupStorage(reportsDir)
+        out.writeText(storage.exportToJson(_session.value.backups))
+        return out
+    }
+
+    fun importBackupsJson(rawJson: String): Int {
+        val storage = backupStorage ?: BackupStorage(File(System.getProperty("java.io.tmpdir")))
+        val imported = storage.importFromJson(rawJson)
+        val merged = (imported + _session.value.backups).distinctBy { it.id }.take(50)
+        backupStorage?.saveBackups(merged)
+        _session.update {
+            it.copy(
+                backups = merged,
+                lastOperationMessage = "${imported.size} adet kodlama yedeği JSON'dan içe aktarıldı."
+            )
+        }
+        return imported.size
+    }
+
+    private fun saveConnectedVehicle(profile: VehicleProfile, adapter: AdapterType): List<SavedVehicleRecord> {
+        val record = SavedVehicleRecord(
+            vin = profile.vin,
+            modelName = profile.modelDisplayName,
+            chassisCode = profile.chassis.code,
+            odometerKm = profile.odometerKm,
+            lastConnected = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date()),
+            adapterName = adapter.displayName
+        )
+        return garageHistoryStorage?.upsertVehicle(record)
+            ?: (listOf(record) + _session.value.savedVehicles.filterNot { it.vin == record.vin }).take(25)
     }
 
     fun adjustSimulatedVoltage(voltage: Double) {

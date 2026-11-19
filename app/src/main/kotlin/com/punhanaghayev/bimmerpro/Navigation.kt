@@ -68,7 +68,9 @@ import com.punhanaghayev.bimmerpro.ui.screens.LiveServiceScreen
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerBg
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerSurface
+import com.punhanaghayev.bimmerpro.ui.theme.BimmerProTheme
 import com.punhanaghayev.bimmerpro.ui.theme.BmwBlueBright
+import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
 import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
@@ -98,12 +100,22 @@ fun MainNavigation(
     val isLiveRunning by viewModel.isLiveStreamRunning.collectAsStateWithLifecycle()
     val otaState by viewModel.otaState.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val themeStyle by viewModel.themeStyle.collectAsStateWithLifecycle()
     val strings = remember(appLanguage) { AppLocalization.stringsFor(appLanguage) }
 
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     var langMenuExpanded by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+
+    val importJsonLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            if (text != null) viewModel.importBackupsJson(text)
+        }
+    }
 
     val btPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -153,152 +165,159 @@ fun MainNavigation(
         }
     }
 
-    CompositionLocalProvider(LocalAppStrings provides strings) {
-        Scaffold(
-            containerColor = BimmerBg,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                Column {
-                    TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = BimmerSurface,
-                            titleContentColor = TextPrimary
-                        ),
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                BmwRoundelLogo(size = 28.dp)
-                                Spacer(Modifier.width(10.dp))
-                                Column {
-                                    Text("BMW Expert PRO", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                                    val sub = session.vehicleProfile?.let {
-                                        "${it.chassis.code} • ${it.vin.takeLast(7)}"
-                                    } ?: BimmerTab.entries[selectedTabIndex].label(strings)
-                                    Text(sub, color = BmwBlueBright, fontSize = 11.sp)
-                                }
-                            }
-                        },
-                        actions = {
-                            Box {
-                                IconButton(onClick = { langMenuExpanded = true }) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Language, contentDescription = strings.languageTitle, tint = BmwBlueBright)
+    BimmerProTheme(themeStyle = themeStyle) {
+        val theme = LocalThemeStyle.current
+        CompositionLocalProvider(LocalAppStrings provides strings) {
+            Scaffold(
+                containerColor = theme.bg,
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                topBar = {
+                    Column {
+                        TopAppBar(
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = theme.surface,
+                                titleContentColor = theme.textPrimary
+                            ),
+                            title = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    BmwRoundelLogo(size = 28.dp)
+                                    Spacer(Modifier.width(10.dp))
+                                    Column {
+                                        Text("BMW Expert PRO", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                        val sub = session.vehicleProfile?.let {
+                                            "${it.chassis.code} • ${it.vin.takeLast(7)}"
+                                        } ?: BimmerTab.entries[selectedTabIndex].label(strings)
+                                        Text(sub, color = theme.primaryBright, fontSize = 11.sp)
                                     }
                                 }
-                                DropdownMenu(
-                                    expanded = langMenuExpanded,
-                                    onDismissRequest = { langMenuExpanded = false }
-                                ) {
-                                    AppLanguage.entries.forEach { lang ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(
-                                                    text = "${lang.flagCode} • ${lang.nativeName}",
-                                                    fontWeight = if (lang == appLanguage) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (lang == appLanguage) BmwBlueBright else TextPrimary
-                                                )
-                                            },
-                                            onClick = {
-                                                viewModel.setAppLanguage(lang)
-                                                langMenuExpanded = false
-                                            }
-                                        )
+                            },
+                            actions = {
+                                Box {
+                                    IconButton(onClick = { langMenuExpanded = true }) {
+                                        Icon(Icons.Default.Language, contentDescription = strings.languageTitle, tint = theme.primaryBright)
+                                    }
+                                    DropdownMenu(
+                                        expanded = langMenuExpanded,
+                                        onDismissRequest = { langMenuExpanded = false }
+                                    ) {
+                                        AppLanguage.entries.forEach { lang ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        text = "${lang.flagCode} • ${lang.nativeName}",
+                                                        fontWeight = if (lang == appLanguage) FontWeight.Bold else FontWeight.Normal,
+                                                        color = if (lang == appLanguage) theme.primaryBright else theme.textPrimary
+                                                    )
+                                                },
+                                                onClick = {
+                                                    viewModel.setAppLanguage(lang)
+                                                    langMenuExpanded = false
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
-                    )
-                    MSportAccentStrip()
-                }
-            },
-            bottomBar = {
-                NavigationBar(containerColor = BimmerSurface) {
-                    BimmerTab.entries.forEachIndexed { index, tab ->
-                        val tabLabel = tab.label(strings)
-                        NavigationBarItem(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            icon = { Icon(tab.icon, contentDescription = tabLabel) },
-                            label = { Text(tabLabel, fontSize = 10.sp, maxLines = 1) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = BmwBlueBright,
-                                selectedTextColor = BmwBlueBright,
-                                indicatorColor = BimmerCard,
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary
-                            )
                         )
+                        MSportAccentStrip()
+                    }
+                },
+                bottomBar = {
+                    NavigationBar(containerColor = theme.surface) {
+                        BimmerTab.entries.forEachIndexed { index, tab ->
+                            val tabLabel = tab.label(strings)
+                            NavigationBarItem(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                icon = { Icon(tab.icon, contentDescription = tabLabel) },
+                                label = { Text(tabLabel, fontSize = 10.sp, maxLines = 1) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = theme.primaryBright,
+                                    selectedTextColor = theme.primaryBright,
+                                    indicatorColor = theme.card,
+                                    unselectedIconColor = theme.textSecondary,
+                                    unselectedTextColor = theme.textSecondary
+                                )
+                            )
+                        }
                     }
                 }
-            }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                when (BimmerTab.entries[selectedTabIndex]) {
-                    BimmerTab.GARAGE -> GarageScreen(
-                        session = session,
-                        onConnect = { adapter, host, port ->
-                            if (adapter == AdapterType.USB_KDCAN) {
-                                HardwarePermissionHelper.requestUsbKdcanPermissionIfNeeded(context)
-                            }
-                            viewModel.connect(adapter, host, port)
-                        },
-                        onDisconnect = viewModel::disconnect,
-                        onAdjustSimVoltage = viewModel::adjustSimulatedVoltage,
-                        onScanHardware = {
-                            val missingBt = HardwarePermissionHelper.requiredBluetoothPermissions()
-                            if (missingBt.isNotEmpty() && !HardwarePermissionHelper.hasAllBluetoothPermissions(context)) {
-                                btPermissionLauncher.launch(missingBt)
-                            } else {
-                                HardwarePermissionHelper.requestUsbKdcanPermissionIfNeeded(context)
-                                viewModel.scanHardware()
-                            }
-                        },
-                        onSelectBleDevice = viewModel::selectBleDevice,
-                        onNavigateToTab = { selectedTabIndex = it }
-                    )
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    when (BimmerTab.entries[selectedTabIndex]) {
+                        BimmerTab.GARAGE -> GarageScreen(
+                            session = session,
+                            onConnect = { adapter, host, port ->
+                                if (adapter == AdapterType.USB_KDCAN) {
+                                    HardwarePermissionHelper.requestUsbKdcanPermissionIfNeeded(context)
+                                }
+                                viewModel.connect(adapter, host, port)
+                            },
+                            onDisconnect = viewModel::disconnect,
+                            onAdjustSimVoltage = viewModel::adjustSimulatedVoltage,
+                            onScanHardware = {
+                                val missingBt = HardwarePermissionHelper.requiredBluetoothPermissions()
+                                if (missingBt.isNotEmpty() && !HardwarePermissionHelper.hasAllBluetoothPermissions(context)) {
+                                    btPermissionLauncher.launch(missingBt)
+                                } else {
+                                    HardwarePermissionHelper.requestUsbKdcanPermissionIfNeeded(context)
+                                    viewModel.scanHardware()
+                                }
+                            },
+                            onSelectBleDevice = viewModel::selectBleDevice,
+                            onRemoveSavedVehicle = viewModel::removeSavedVehicle,
+                            onNavigateToTab = { selectedTabIndex = it }
+                        )
 
-                    BimmerTab.DIAGNOSTICS -> DiagnosticsScreen(
-                        session = session,
-                        onRunScan = viewModel::runFullScan,
-                        onClearAllDtcs = viewModel::clearAllDtcs,
-                        onExportPdf = { viewModel.generateInspectionPdf(context) },
-                        onGoToGarage = { selectedTabIndex = 0 }
-                    )
+                        BimmerTab.DIAGNOSTICS -> DiagnosticsScreen(
+                            session = session,
+                            onRunScan = viewModel::runFullScan,
+                            onClearAllDtcs = viewModel::clearAllDtcs,
+                            onExportPdf = { viewModel.generateInspectionPdf(context) },
+                            onGoToGarage = { selectedTabIndex = 0 }
+                        )
 
-                    BimmerTab.CODING -> CodingScreen(
-                        session = session,
-                        onApplyPreset = viewModel::applyPresetCoding,
-                        onApplyCafd = viewModel::applyCafdParameter,
-                        onRestoreBackup = viewModel::restoreBackup,
-                        onAddVoOption = viewModel::addVehicleOrderOption,
-                        onGoToGarage = { selectedTabIndex = 0 }
-                    )
+                        BimmerTab.CODING -> CodingScreen(
+                            session = session,
+                            onApplyPreset = viewModel::applyPresetCoding,
+                            onApplyCafd = viewModel::applyCafdParameter,
+                            onRestoreBackup = viewModel::restoreBackup,
+                            onExportBackupsJson = { viewModel.exportBackupsJson(context) },
+                            onImportBackupsJson = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
+                            onAddVoOption = viewModel::addVehicleOrderOption,
+                            onGoToGarage = { selectedTabIndex = 0 }
+                        )
 
-                    BimmerTab.LIVE_SERVICE -> LiveServiceScreen(
-                        session = session,
-                        isLiveStreamRunning = isLiveRunning,
-                        onToggleLiveStream = viewModel::toggleLiveTelemetry,
-                        onTogglePerformanceRun = viewModel::togglePerformanceRun,
-                        onExportCsv = { viewModel.exportTelemetryCsv(context) },
-                        onExecuteRoutine = viewModel::executeServiceRoutine,
-                        onWriteServiceHistory = viewModel::writeServiceHistory,
-                        onWriteInjectorCode = viewModel::writeInjectorCode,
-                        onResetZfAdaptations = viewModel::resetZfAdaptations,
-                        onGoToGarage = { selectedTabIndex = 0 }
-                    )
+                        BimmerTab.LIVE_SERVICE -> LiveServiceScreen(
+                            session = session,
+                            isLiveStreamRunning = isLiveRunning,
+                            onToggleLiveStream = viewModel::toggleLiveTelemetry,
+                            onTogglePerformanceRun = viewModel::togglePerformanceRun,
+                            onExportCsv = { viewModel.exportTelemetryCsv(context) },
+                            onExecuteRoutine = viewModel::executeServiceRoutine,
+                            onWriteServiceHistory = viewModel::writeServiceHistory,
+                            onWriteInjectorCode = viewModel::writeInjectorCode,
+                            onResetZfAdaptations = viewModel::resetZfAdaptations,
+                            onSendEcuReset = viewModel::sendEcuReset,
+                            onGoToGarage = { selectedTabIndex = 0 }
+                        )
 
-                    BimmerTab.DEVELOPER -> DeveloperScreen(
-                        protocolLogs = protocolLogs,
-                        otaState = otaState,
-                        currentLanguage = appLanguage,
-                        onSelectLanguage = viewModel::setAppLanguage,
-                        onCheckOta = viewModel::checkForOtaUpdates,
-                        onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
-                        onClearLogs = viewModel::clearProtocolLogs
-                    )
+                        BimmerTab.DEVELOPER -> DeveloperScreen(
+                            protocolLogs = protocolLogs,
+                            otaState = otaState,
+                            currentLanguage = appLanguage,
+                            currentTheme = themeStyle,
+                            onSelectLanguage = viewModel::setAppLanguage,
+                            onSelectTheme = viewModel::setThemeStyle,
+                            onCheckOta = viewModel::checkForOtaUpdates,
+                            onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
+                            onClearLogs = viewModel::clearProtocolLogs
+                        )
+                    }
                 }
             }
         }

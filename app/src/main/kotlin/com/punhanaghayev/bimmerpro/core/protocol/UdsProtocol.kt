@@ -85,6 +85,9 @@ object UdsCodec {
     fun buildClearAllDtc(): ByteArray =
         byteArrayOf(UdsServiceId.CLEAR_DIAGNOSTIC_INFO.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte())
 
+    fun buildEcuReset(resetType: Int = 0x01): ByteArray =
+        byteArrayOf(UdsServiceId.ECU_RESET.toByte(), resetType.toByte())
+
     fun buildRoutineControl(subFunction: Int, routineId: Int, optionBytes: ByteArray = byteArrayOf()): ByteArray =
         byteArrayOf(
             UdsServiceId.ROUTINE_CONTROL.toByte(),
@@ -154,6 +157,10 @@ class UdsClient(
 
     fun clearLogs() {
         _logs.value = emptyList()
+    }
+
+    fun logInfo(direction: String, ecuAddress: Int, summary: String, rawHex: String = "") {
+        appendLog(direction, ecuAddress, summary, rawHex, isError = false)
     }
 
     private fun appendLog(

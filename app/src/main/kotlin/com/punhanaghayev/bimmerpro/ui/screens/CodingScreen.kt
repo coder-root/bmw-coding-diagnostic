@@ -2,7 +2,6 @@ package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,9 +22,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -47,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,16 +59,10 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerCardElevated
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerOutline
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlue
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlueBright
+import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
-import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
-import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -74,6 +71,8 @@ fun CodingScreen(
     onApplyPreset: (String, Int) -> Unit,
     onApplyCafd: (String, String) -> Unit,
     onRestoreBackup: (String) -> Unit,
+    onExportBackupsJson: () -> Unit,
+    onImportBackupsJson: () -> Unit,
     onAddVoOption: (String, String) -> Unit,
     onGoToGarage: () -> Unit
 ) {
@@ -96,9 +95,9 @@ fun CodingScreen(
 
     val voltageSafe = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE
     val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Safety Banner
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -127,8 +126,8 @@ fun CodingScreen(
 
         PrimaryTabRow(
             selectedTabIndex = selectedMode,
-            containerColor = BimmerCard,
-            contentColor = BmwBlueBright
+            containerColor = theme.card,
+            contentColor = theme.primaryBright
         ) {
             Tab(selected = selectedMode == 0, onClick = { selectedMode = 0 }, text = { Text(strings.codingEasyMode, fontSize = 12.sp, maxLines = 1) })
             Tab(selected = selectedMode == 1, onClick = { selectedMode = 1 }, text = { Text(strings.codingExpertCafd, fontSize = 12.sp, maxLines = 1) })
@@ -146,7 +145,9 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = easySearchQuery,
                             onValueChange = { easySearchQuery = it },
-                            label = { Text("Kodlama Ara (Ayna, Start-Stop, Logo...)") },
+                            placeholder = { Text("Kodlama ara...", fontSize = 13.sp) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -188,7 +189,9 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            label = { Text("CAFD / Fonksiyon Ara (örn. BMW_LOGO, MSA)") },
+                            placeholder = { Text("CAFD / Fonksiyon ara (BMW_LOGO, MSA)", fontSize = 13.sp) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -209,11 +212,12 @@ fun CodingScreen(
                 2 -> {
                     item {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                            border = BorderStroke(1.dp, BimmerOutline)
+                            colors = CardDefaults.cardColors(containerColor = theme.card),
+                            border = BorderStroke(1.dp, theme.outline),
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text("Araç Sipariş Kodları (FA / VO)", fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text("Araç Sipariş Kodları (FA / VO)", fontWeight = FontWeight.Bold, color = theme.textPrimary)
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -222,27 +226,31 @@ fun CodingScreen(
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(BimmerCardElevated)
+                                                .background(theme.cardElevated)
                                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                         ) {
-                                            Text("${opt.code} • ${opt.description}", color = TextPrimary, fontSize = 11.sp)
+                                            Text("${opt.code} • ${opt.description}", color = theme.textPrimary, fontSize = 11.sp)
                                         }
                                     }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = newVoCode,
-                                        onValueChange = { newVoCode = it },
-                                        label = { Text("Kod (6NS)") },
+                                        onValueChange = { newVoCode = it.uppercase().take(6) },
+                                        label = { Text("Kod", fontSize = 12.sp, maxLines = 1) },
+                                        placeholder = { Text("6NS", fontSize = 12.sp) },
+                                        textStyle = TextStyle(fontSize = 13.sp),
                                         singleLine = true,
-                                        modifier = Modifier.weight(0.35f)
+                                        modifier = Modifier.weight(0.36f)
                                     )
                                     OutlinedTextField(
                                         value = newVoDesc,
                                         onValueChange = { newVoDesc = it },
-                                        label = { Text("Açıklama") },
+                                        label = { Text("Açıklama", fontSize = 12.sp, maxLines = 1) },
+                                        placeholder = { Text("Enhanced BT", fontSize = 12.sp) },
+                                        textStyle = TextStyle(fontSize = 13.sp),
                                         singleLine = true,
-                                        modifier = Modifier.weight(0.65f)
+                                        modifier = Modifier.weight(0.64f)
                                     )
                                 }
                                 Button(
@@ -252,29 +260,55 @@ fun CodingScreen(
                                         newVoDesc = ""
                                     },
                                     enabled = voltageSafe && newVoCode.isNotBlank(),
-                                    colors = ButtonDefaults.buttonColors(containerColor = BmwBlue)
+                                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
-                                    Text("VO Opsiyonu Ekle & ECU Kodla")
+                                    Text("VO Opsiyonu Ekle & Kodla", maxLines = 1, softWrap = false)
                                 }
                             }
                         }
                     }
 
                     item {
-                        Text("Otomatik Kodlama Yedekleri (${session.backups.size})", color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onExportBackupsJson,
+                                enabled = session.backups.isNotEmpty(),
+                                modifier = Modifier.weight(1f).height(42.dp)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(strings.exportJsonBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
+                            }
+                            OutlinedButton(
+                                onClick = onImportBackupsJson,
+                                modifier = Modifier.weight(1f).height(42.dp)
+                            ) {
+                                Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(strings.importJsonBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
+                            }
+                        }
+                    }
+
+                    item {
+                        Text("Otomatik Kodlama Yedekleri (${session.backups.size})", color = theme.textSecondary, fontWeight = FontWeight.SemiBold)
                     }
 
                     if (session.backups.isEmpty()) {
                         item {
-                            Text("Henüz kodlama yapılmadı. Her yazma işleminde buraya geri yükleme noktası eklenir.", color = TextSecondary, fontSize = 12.sp)
+                            Text("Henüz kodlama yapılmadı. Her yazma işleminde buraya geri yükleme noktası eklenir.", color = theme.textSecondary, fontSize = 12.sp)
                         }
                     } else {
                         items(session.backups, key = { it.id }) { backup ->
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                                border = BorderStroke(1.dp, BimmerOutline)
+                                colors = CardDefaults.cardColors(containerColor = theme.card),
+                                border = BorderStroke(1.dp, theme.outline)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -284,13 +318,13 @@ fun CodingScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("${backup.ecuName} • ${backup.timestamp}", color = BmwBlueBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                        Text(backup.summary, color = TextPrimary, fontSize = 12.sp)
+                                        Text("${backup.ecuName} • ${backup.timestamp}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text(backup.summary, color = theme.textPrimary, fontSize = 12.sp)
                                     }
                                     TextButton(onClick = { onRestoreBackup(backup.id) }) {
                                         Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Geri Al")
+                                        Text("Geri Al", maxLines = 1, softWrap = false)
                                     }
                                 }
                             }
@@ -309,9 +343,10 @@ private fun PresetCodingCard(
     enabled: Boolean,
     onSelectOption: (Int) -> Unit
 ) {
+    val theme = LocalThemeStyle.current
     Card(
-        colors = CardDefaults.cardColors(containerColor = BimmerCard),
-        border = BorderStroke(1.dp, if (preset.isLockedBySecureCoding) StatusAmber.copy(alpha = 0.5f) else BimmerOutline),
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, if (preset.isLockedBySecureCoding) StatusAmber.copy(alpha = 0.5f) else theme.outline),
         shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -320,7 +355,7 @@ private fun PresetCodingCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("${preset.targetEcu} • ${preset.category.label}", color = BmwBlueBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("${preset.targetEcu} • ${preset.category.label}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 if (preset.isLockedBySecureCoding) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Lock, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(14.dp))
@@ -329,8 +364,8 @@ private fun PresetCodingCard(
                     }
                 }
             }
-            Text(preset.title, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Text(preset.description, color = TextSecondary, fontSize = 12.sp)
+            Text(preset.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(preset.description, color = theme.textSecondary, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 preset.options.forEachIndexed { idx, label ->
                     FilterChip(
@@ -351,16 +386,17 @@ private fun ExpertCafdCard(
     enabled: Boolean,
     onApply: (String) -> Unit
 ) {
+    val theme = LocalThemeStyle.current
     Card(
-        colors = CardDefaults.cardColors(containerColor = BimmerCard),
-        border = BorderStroke(1.dp, BimmerOutline)
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${param.ecuName} • ${param.cafdFile}", color = BmwBlueBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text("Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask), color = TextSecondary, fontSize = 10.sp)
+                Text("${param.ecuName} • ${param.cafdFile}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask), color = theme.textSecondary, fontSize = 10.sp)
             }
-            Text("${param.section} -> ${param.functionName}", color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Text("${param.section} -> ${param.functionName}", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             Text("Mevcut Değer: ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 param.availableOptions.keys.forEach { optionLabel ->
@@ -368,10 +404,10 @@ private fun ExpertCafdCard(
                         onClick = { if (enabled) onApply(optionLabel) },
                         border = BorderStroke(
                             1.dp,
-                            if (param.selectedOptionLabel == optionLabel) BmwBlueBright else BimmerOutline
+                            if (param.selectedOptionLabel == optionLabel) theme.primaryBright else theme.outline
                         )
                     ) {
-                        Text(optionLabel, fontSize = 11.sp, color = TextPrimary)
+                        Text(optionLabel, fontSize = 11.sp, color = theme.textPrimary)
                     }
                 }
             }

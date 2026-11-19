@@ -1,12 +1,41 @@
 package com.punhanaghayev.bimmerpro.data
 
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.Base64
+
+@Serializable
+private data class BackupJsonDto(
+    val id: String,
+    val timestamp: String,
+    val ecuName: String,
+    val ecuAddress: Int,
+    val cafdFile: String,
+    val summary: String,
+    val previousValues: Map<String, Int>
+)
 
 class BackupStorage(private val storageDir: File) {
 
     private val backupFile = File(storageDir, "coding_backups.dat")
+    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+
+    fun exportToJson(backups: List<CodingBackupSnapshot>): String {
+        val dtos = backups.map {
+            BackupJsonDto(it.id, it.timestamp, it.ecuName, it.ecuAddress, it.cafdFile, it.summary, it.previousValues)
+        }
+        return json.encodeToString(dtos)
+    }
+
+    fun importFromJson(rawJson: String): List<CodingBackupSnapshot> {
+        val dtos = json.decodeFromString<List<BackupJsonDto>>(rawJson)
+        return dtos.map {
+            CodingBackupSnapshot(it.id, it.timestamp, it.ecuName, it.ecuAddress, it.cafdFile, it.summary, it.previousValues)
+        }
+    }
 
     fun loadBackups(): List<CodingBackupSnapshot> {
         if (!backupFile.exists()) return emptyList()

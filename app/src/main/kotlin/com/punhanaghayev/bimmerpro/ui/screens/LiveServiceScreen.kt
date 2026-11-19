@@ -21,9 +21,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -48,20 +50,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.components.TelemetrySparkline
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerCard
-import com.punhanaghayev.bimmerpro.ui.theme.BimmerOutline
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlue
-import com.punhanaghayev.bimmerpro.ui.theme.BmwBlueBright
+import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
-import com.punhanaghayev.bimmerpro.ui.theme.TextPrimary
-import com.punhanaghayev.bimmerpro.ui.theme.TextSecondary
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -75,6 +73,7 @@ fun LiveServiceScreen(
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
     onWriteInjectorCode: (Int, String) -> Unit,
     onResetZfAdaptations: () -> Unit,
+    onSendEcuReset: (Int, String, Int) -> Unit,
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
@@ -91,6 +90,7 @@ fun LiveServiceScreen(
     var showHistoryDialog by remember { mutableStateOf(false) }
     var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
     val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
 
     editingInjectorCyl?.let { (cyl, currentCode) ->
         var codeInput by remember { mutableStateOf(currentCode) }
@@ -223,25 +223,31 @@ fun LiveServiceScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(strings.liveTelemetryTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("UDS 0x22 DID", color = TextSecondary, fontSize = 12.sp)
+                    Text(strings.liveTelemetryTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                    Text("UDS 0x22 DID", color = theme.textSecondary, fontSize = 12.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedButton(onClick = onExportCsv) {
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                    OutlinedButton(
+                        onClick = onExportCsv,
+                        modifier = Modifier.height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(4.dp))
                         Text("CSV", fontSize = 11.sp, maxLines = 1, softWrap = false)
                     }
                     Button(
                         onClick = onToggleLiveStream,
+                        modifier = Modifier.height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isLiveStreamRunning) StatusRed else BmwBlue
+                            containerColor = if (isLiveStreamRunning) StatusRed else theme.primary
                         )
                     ) {
                         Icon(
                             imageVector = if (isLiveStreamRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(if (isLiveStreamRunning) strings.stopBtn else strings.startBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
@@ -258,21 +264,21 @@ fun LiveServiceScreen(
                 pair.forEach { channel ->
                     Card(
                         modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                        border = BorderStroke(1.dp, BimmerOutline),
+                        colors = CardDefaults.cardColors(containerColor = theme.card),
+                        border = BorderStroke(1.dp, theme.outline),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(channel.name, color = TextSecondary, fontSize = 11.sp, maxLines = 1)
+                            Text(channel.name, color = theme.textSecondary, fontSize = 11.sp, maxLines = 1)
                             Text(
                                 text = "${channel.currentValue} ${channel.unit}",
-                                color = TextPrimary,
+                                color = theme.textPrimary,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 18.sp
                             )
                             TelemetrySparkline(
                                 points = channel.history,
-                                lineColor = BmwBlueBright,
+                                lineColor = theme.primaryBright,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(34.dp)
@@ -287,8 +293,8 @@ fun LiveServiceScreen(
         item {
             val perf = session.performanceTimer
             Card(
-                colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                border = BorderStroke(1.dp, BmwBlue.copy(alpha = 0.5f)),
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.primary.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Row(
@@ -299,22 +305,24 @@ fun LiveServiceScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("0–100 km/h Performans Ölçer", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                        Text("0–100 km/h Performans Ölçer", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                         Text(
                             text = "%d km/h • %.1f sn%s".format(
                                 perf.currentSpeedKmh,
                                 perf.elapsedMs / 1000.0,
                                 perf.bestZeroToHundredSec?.let { " | En İyi: %.1f sn".format(it) } ?: ""
                             ),
-                            color = BmwBlueBright,
+                            color = theme.primaryBright,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp
                         )
                     }
                     Button(
                         onClick = onTogglePerformanceRun,
+                        modifier = Modifier.height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (perf.isRunning) StatusRed else BmwBlue
+                            containerColor = if (perf.isRunning) StatusRed else theme.primary
                         )
                     ) {
                         Text(if (perf.isRunning) strings.stopBtn else strings.startBtn, maxLines = 1, softWrap = false, fontSize = 12.sp)
@@ -323,9 +331,42 @@ fun LiveServiceScreen(
             }
         }
 
+        // ECU Reset & Sleep Mode Commands (UDS 0x11)
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(strings.ecuResetTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { onSendEcuReset(EcuAddress.ZGW_BDC, "ZGW/BDC", 0x01) },
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(strings.hardResetBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                        }
+                        OutlinedButton(
+                            onClick = { onSendEcuReset(EcuAddress.ZGW_BDC, "Gateway Sleep", 0x03) },
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Bedtime, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(strings.gatewaySleepBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                        }
+                    }
+                }
+            }
+        }
+
         item {
             Spacer(Modifier.height(4.dp))
-            Text(strings.serviceRoutinesTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text(strings.serviceRoutinesTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = theme.textPrimary)
         }
 
         session.lastServiceResult?.let { res ->
@@ -345,20 +386,14 @@ fun LiveServiceScreen(
 
         items(session.serviceRoutines, key = { it.routineId }) { routine ->
             Card(
-                colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                border = BorderStroke(1.dp, BimmerOutline),
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("${routine.targetEcu} • RID 0x%04X".format(routine.routineId), color = BmwBlueBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Text(routine.title, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Text(routine.description, color = TextSecondary, fontSize = 12.sp)
+                    Text("${routine.targetEcu} • RID 0x%04X".format(routine.routineId), color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(routine.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Text(routine.description, color = theme.textSecondary, fontSize = 12.sp)
                     Text("Not: ${routine.warningNote}", color = StatusAmber, fontSize = 11.sp)
                     Button(
                         onClick = {
@@ -368,50 +403,63 @@ fun LiveServiceScreen(
                                 onExecuteRoutine(routine, 0x01)
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = BmwBlue),
-                        modifier = Modifier.align(Alignment.End)
+                        colors = ButtonDefaults.buttonColors(containerColor = theme.primary),
+                        modifier = Modifier.align(Alignment.End).height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
                     ) {
                         Icon(Icons.Default.Build, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Rutini Çalıştır")
+                        Text(strings.runRoutineBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
                     }
                 }
             }
         }
 
+        // Fixed iDrive Digital Service History Header + Compact Write Button
         item {
             Spacer(Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("iDrive Dijital Servis Geçmişi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
-                OutlinedButton(onClick = { showHistoryDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Text(
+                    text = strings.serviceHistoryTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = theme.textPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedButton(
+                    onClick = { showHistoryDialog = true },
+                    modifier = Modifier.height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.7f))
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Kayıt Yaz", fontSize = 11.sp)
+                    Text(strings.writeRecordBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
                 }
             }
         }
 
         items(session.serviceHistory, key = { it.id }) { entry ->
             Card(
-                colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                border = BorderStroke(1.dp, BimmerOutline),
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${entry.date} • %,d km".format(entry.mileageKm), color = BmwBlueBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text(entry.dealerCode, color = TextSecondary, fontSize = 11.sp)
+                        Text("${entry.date} • %,d km".format(entry.mileageKm), color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(entry.dealerCode, color = theme.textSecondary, fontSize = 11.sp)
                     }
-                    Text(entry.performedItems.joinToString(" • "), color = TextPrimary, fontSize = 12.sp)
+                    Text(entry.performedItems.joinToString(" • "), color = theme.textPrimary, fontSize = 12.sp)
                 }
             }
         }
 
-        // ZF8 Transmission Clutch Adaptations
         if (session.zfAdaptations.isNotEmpty()) {
             item {
                 Spacer(Modifier.height(4.dp))
@@ -420,25 +468,29 @@ fun LiveServiceScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("ZF8 EGS Kavrama Adaptasyonları", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    OutlinedButton(onClick = onResetZfAdaptations) {
+                    Text("ZF8 EGS Kavrama Adaptasyonları", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary, modifier = Modifier.weight(1f))
+                    OutlinedButton(
+                        onClick = onResetZfAdaptations,
+                        modifier = Modifier.height(34.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+                    ) {
                         Text("Sıfırla", fontSize = 11.sp, color = StatusAmber, maxLines = 1, softWrap = false)
                     }
                 }
             }
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                    border = BorderStroke(1.dp, BimmerOutline),
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         session.zfAdaptations.forEach { clutch ->
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(clutch.clutchName, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Text(clutch.clutchName, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 Text(
                                     text = "${clutch.pressureMbar} mbar  |  ${clutch.fillTimeMs} ms",
-                                    color = BmwBlueBright,
+                                    color = theme.primaryBright,
                                     fontSize = 12.sp
                                 )
                             }
@@ -448,16 +500,15 @@ fun LiveServiceScreen(
             }
         }
 
-        // Injector IMA Coding
         if (session.injectorCodes.isNotEmpty()) {
             item {
                 Spacer(Modifier.height(4.dp))
-                Text("Enjektör IMA Kalibrasyon Kodları", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text("Enjektör IMA Kalibrasyon Kodları", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
             }
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = BimmerCard),
-                    border = BorderStroke(1.dp, BimmerOutline),
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -467,9 +518,9 @@ fun LiveServiceScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Silindir ${inj.cylinder}: ${inj.imaCode}", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                Text("Silindir ${inj.cylinder}: ${inj.imaCode}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 TextButton(onClick = { editingInjectorCyl = inj.cylinder to inj.imaCode }) {
-                                    Text("Kodla", color = BmwBlueBright, fontSize = 12.sp)
+                                    Text("Kodla", color = theme.primaryBright, fontSize = 12.sp, maxLines = 1, softWrap = false)
                                 }
                             }
                         }

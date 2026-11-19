@@ -2,6 +2,7 @@ package com.punhanaghayev.bimmerpro.core.i18n
 
 import android.content.Context
 import androidx.compose.runtime.compositionLocalOf
+import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 
 enum class AppLanguage(val code: String, val nativeName: String, val flagCode: String) {
     AZ("az", "Azərbaycan", "AZ"),
@@ -23,6 +24,7 @@ data class AppStrings(
     val tabDeveloper: String,
 
     val heroSubtitle: String,
+    val heroSubtitleLine2: String,
     val disconnectedHint: String,
     val connectionHubTitle: String,
     val scanHardwareBtn: String,
@@ -65,8 +67,96 @@ data class AppStrings(
     val supportedArchTitle: String,
     val packetInspectorTitle: String,
     val packetInspectorSub: String,
-    val clearBtn: String
-)
+    val clearBtn: String,
+    val themeTitle: String,
+    val savedVehiclesTitle: String,
+    val exportJsonBtn: String,
+    val importJsonBtn: String,
+    val ecuResetTitle: String,
+    val gatewaySleepBtn: String,
+    val hardResetBtn: String,
+    val language: AppLanguage
+) {
+    fun adapterTitle(type: AdapterType): String = when (language) {
+        AppLanguage.AZ -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
+            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
+            AdapterType.ENET_USB -> "USB-C to ENET Kabel"
+            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
+            AdapterType.USB_KDCAN -> "USB OTG K+DCAN Kabel"
+            AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulyasiyası"
+            AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulyasiyası"
+            AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulyasiyası"
+            AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulyasiyası"
+            AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulyasiyası"
+        }
+        AppLanguage.TR -> type.displayName
+        AppLanguage.EN -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
+            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
+            AdapterType.ENET_USB -> "USB-C to ENET Cable"
+            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
+            AdapterType.USB_KDCAN -> "USB OTG K+DCAN Cable"
+            AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulation"
+            AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulation"
+            AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulation"
+            AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulation"
+            AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulation"
+        }
+        AppLanguage.RU -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
+            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
+            AdapterType.ENET_USB -> "Кабель USB-C — ENET"
+            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
+            AdapterType.USB_KDCAN -> "Кабель USB OTG K+DCAN"
+            AdapterType.SIMULATOR_F10 -> "Симуляция BMW F10 520d"
+            AdapterType.SIMULATOR_F30 -> "Симуляция BMW F30 328i"
+            AdapterType.SIMULATOR_G30 -> "Симуляция BMW G30 530i"
+            AdapterType.SIMULATOR_G20 -> "Симуляция BMW G20 M340i"
+            AdapterType.SIMULATOR_E90 -> "Симуляция BMW E90 335i"
+        }
+    }
+
+    fun adapterDesc(type: AdapterType): String = when (language) {
+        AppLanguage.AZ -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
+            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
+            AdapterType.ENET_USB -> "HSFZ / DoIP 100Mbps Ethernet"
+            AdapterType.BLE_OBD -> "CAN üzərindən ISO-TP (BLE GATT)"
+            AdapterType.USB_KDCAN -> "E-Seriyası K-Line / D-CAN"
+            AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
+            AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
+            AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
+            AdapterType.SIMULATOR_E90 -> "Virtual K+DCAN / KM Yoxlaması Demo"
+        }
+        AppLanguage.TR -> type.protocolSummary
+        AppLanguage.EN -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
+            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
+            AdapterType.ENET_USB -> "HSFZ / DoIP 100Mbps Ethernet"
+            AdapterType.BLE_OBD -> "ISO-TP over CAN (BLE GATT)"
+            AdapterType.USB_KDCAN -> "E-Series K-Line / D-CAN"
+            AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
+            AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
+            AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
+            AdapterType.SIMULATOR_E90 -> "Virtual K+DCAN / Tamper Alert Demo"
+        }
+        AppLanguage.RU -> when (type) {
+            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
+            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
+            AdapterType.ENET_USB -> "HSFZ / DoIP 100 Мбит/с Ethernet"
+            AdapterType.BLE_OBD -> "ISO-TP по CAN (BLE GATT)"
+            AdapterType.USB_KDCAN -> "E-серия K-Line / D-CAN"
+            AdapterType.SIMULATOR_F10 -> "Виртуальный HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F30 -> "Виртуальный HSFZ / ENET + N20"
+            AdapterType.SIMULATOR_G30 -> "Виртуальный DoIP / HSFZ + Secure Coding"
+            AdapterType.SIMULATOR_G20 -> "Виртуальный DoIP / B58 + iDrive 7"
+            AdapterType.SIMULATOR_E90 -> "Виртуальный K+DCAN / Тест пробега"
+        }
+    }
+}
 
 object AppLocalization {
 
@@ -92,7 +182,8 @@ object AppLocalization {
             tabCoding = "Kodlama",
             tabLiveService = "Canlı/Servis",
             tabDeveloper = "Developer",
-            heroSubtitle = "Tam BMW Kodlama, Diaqnostika və Ekspertiza",
+            heroSubtitle = "Tam BMW Kodlama",
+            heroSubtitleLine2 = "Diaqnostika və Ekspertiza",
             disconnectedHint = "Qoşulmayıb — Siyahıdan adapter seçin",
             connectionHubTitle = "OBD / ENET Bağlantı Mərkəzi",
             scanHardwareBtn = "Avadanlıq Axtar (ENET / BLE / USB)",
@@ -131,7 +222,15 @@ object AppLocalization {
             supportedArchTitle = "Dəstəklənən BMW Arxitekturası və Protokollar",
             packetInspectorTitle = "Canlı HSFZ / UDS Paket İzləyici",
             packetInspectorSub = "Real vaxt TX / RX hex çərçivələri",
-            clearBtn = "Təmizlə"
+            clearBtn = "Təmizlə",
+            themeTitle = "Tətbiq Teması",
+            savedVehiclesTitle = "Qaraj Tarixçəsi / Saxlanılan VIN-lər",
+            exportJsonBtn = "JSON İxrac",
+            importJsonBtn = "JSON İdxal",
+            ecuResetTitle = "ECU Sıfırlama / Yuxu Rejimi (UDS 0x11)",
+            gatewaySleepBtn = "Yuxu Rejimi (Sleep)",
+            hardResetBtn = "Gateway Reset",
+            language = AppLanguage.AZ
         )
 
         AppLanguage.TR -> AppStrings(
@@ -140,7 +239,8 @@ object AppLocalization {
             tabCoding = "Kodlama",
             tabLiveService = "Canlı/Servis",
             tabDeveloper = "Developer",
-            heroSubtitle = "Full BMW Kodlama, Diagnostik & Ekspertiz",
+            heroSubtitle = "Full BMW Coding",
+            heroSubtitleLine2 = "Diagnostics & Inspection",
             disconnectedHint = "Bağlı Değil — Dropdown'dan adaptör seçin",
             connectionHubTitle = "OBD / ENET Bağlantı Merkezi",
             scanHardwareBtn = "Donanım Tara (ENET / BLE / USB)",
@@ -179,7 +279,15 @@ object AppLocalization {
             supportedArchTitle = "Desteklenen BMW Mimarisi & Protokol Yığını",
             packetInspectorTitle = "Canlı HSFZ / UDS Paket İnceleyici",
             packetInspectorSub = "Gerçek zamanlı TX / RX hex çerçeveleri",
-            clearBtn = "Temizle"
+            clearBtn = "Temizle",
+            themeTitle = "Uygulama Teması",
+            savedVehiclesTitle = "Kayıtlı Araçlarım / Garaj Geçmişi",
+            exportJsonBtn = "JSON Dışa Aktar",
+            importJsonBtn = "JSON İçe Aktar",
+            ecuResetTitle = "ECU Reset & Uyku Modu (UDS 0x11)",
+            gatewaySleepBtn = "Uyku Modu (Sleep)",
+            hardResetBtn = "Gateway Reset",
+            language = AppLanguage.TR
         )
 
         AppLanguage.EN -> AppStrings(
@@ -188,7 +296,8 @@ object AppLocalization {
             tabCoding = "Coding",
             tabLiveService = "Live/Service",
             tabDeveloper = "Developer",
-            heroSubtitle = "Full BMW Coding, Diagnostics & Inspection",
+            heroSubtitle = "Full BMW Coding",
+            heroSubtitleLine2 = "Diagnostics & Inspection",
             disconnectedHint = "Disconnected — Select an adapter from dropdown",
             connectionHubTitle = "OBD / ENET Connection Hub",
             scanHardwareBtn = "Scan Hardware (ENET / BLE / USB)",
@@ -227,7 +336,15 @@ object AppLocalization {
             supportedArchTitle = "Supported BMW Architecture & Protocol Stack",
             packetInspectorTitle = "Live HSFZ / UDS Packet Inspector",
             packetInspectorSub = "Real-time TX / RX hex frames",
-            clearBtn = "Clear"
+            clearBtn = "Clear",
+            themeTitle = "App Theme",
+            savedVehiclesTitle = "Saved Vehicles / Garage History",
+            exportJsonBtn = "Export JSON",
+            importJsonBtn = "Import JSON",
+            ecuResetTitle = "ECU Reset & Sleep Mode (UDS 0x11)",
+            gatewaySleepBtn = "Sleep Mode",
+            hardResetBtn = "Gateway Reset",
+            language = AppLanguage.EN
         )
 
         AppLanguage.RU -> AppStrings(
@@ -236,7 +353,8 @@ object AppLocalization {
             tabCoding = "Кодирование",
             tabLiveService = "Данные/Сервис",
             tabDeveloper = "Разработчик",
-            heroSubtitle = "Полное кодирование, диагностика и проверка BMW",
+            heroSubtitle = "Полное кодирование BMW",
+            heroSubtitleLine2 = "Диагностика и проверка",
             disconnectedHint = "Не подключено — выберите адаптер",
             connectionHubTitle = "Центр подключения OBD / ENET",
             scanHardwareBtn = "Поиск адаптеров (ENET / BLE / USB)",
@@ -275,7 +393,15 @@ object AppLocalization {
             supportedArchTitle = "Поддерживаемые кузова BMW и протоколы",
             packetInspectorTitle = "Инспектор пакетов HSFZ / UDS",
             packetInspectorSub = "TX / RX hex-фреймы в реальном времени",
-            clearBtn = "Очистить"
+            clearBtn = "Очистить",
+            themeTitle = "Тема оформления",
+            savedVehiclesTitle = "История гаража / Сохранённые VIN",
+            exportJsonBtn = "Экспорт JSON",
+            importJsonBtn = "Импорт JSON",
+            ecuResetTitle = "Сброс ЭБУ и спящий режим (UDS 0x11)",
+            gatewaySleepBtn = "Спящий режим",
+            hardResetBtn = "Сброс Gateway",
+            language = AppLanguage.RU
         )
     }
 }
