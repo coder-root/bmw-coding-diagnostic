@@ -77,10 +77,12 @@ fun CodingScreen(
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
+    val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
     if (profile == null) {
         DisconnectedPlaceholder(
-            title = "Kodlama Motoru Beklemede",
-            subtitle = "Easy Mode, Expert CAFD/FDL ve FA/VO kodlama için önce araca bağlanın.",
+            title = strings.disconnectedCodingTitle,
+            subtitle = strings.disconnectedCodingSub,
             onGoToGarage = onGoToGarage
         )
         return
@@ -94,8 +96,6 @@ fun CodingScreen(
     var newVoDesc by remember { mutableStateOf("") }
 
     val voltageSafe = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE
-    val strings = LocalAppStrings.current
-    val theme = LocalThemeStyle.current
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -145,7 +145,7 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = easySearchQuery,
                             onValueChange = { easySearchQuery = it },
-                            placeholder = { Text("Kodlama ara...", fontSize = 13.sp) },
+                            placeholder = { Text(strings.searchCodingHint, fontSize = 13.sp) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
                             textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
@@ -158,7 +158,7 @@ fun CodingScreen(
                                 FilterChip(
                                     selected = selectedCategory == null,
                                     onClick = { selectedCategory = null },
-                                    label = { Text("Tümü", fontSize = 11.sp) }
+                                    label = { Text(strings.filterAll, fontSize = 11.sp) }
                                 )
                             }
                             items(CodingCategory.entries) { cat ->
@@ -189,7 +189,7 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("CAFD / Fonksiyon ara (BMW_LOGO, MSA)", fontSize = 13.sp) },
+                            placeholder = { Text(strings.searchCafdHint, fontSize = 13.sp) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
                             textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
@@ -217,7 +217,7 @@ fun CodingScreen(
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text("Araç Sipariş Kodları (FA / VO)", fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                                Text(strings.faVoTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary)
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -237,7 +237,7 @@ fun CodingScreen(
                                     OutlinedTextField(
                                         value = newVoCode,
                                         onValueChange = { newVoCode = it.uppercase().take(6) },
-                                        label = { Text("Kod", fontSize = 12.sp, maxLines = 1) },
+                                        label = { Text(strings.codeLabel, fontSize = 12.sp, maxLines = 1) },
                                         placeholder = { Text("6NS", fontSize = 12.sp) },
                                         textStyle = TextStyle(fontSize = 13.sp),
                                         singleLine = true,
@@ -246,7 +246,7 @@ fun CodingScreen(
                                     OutlinedTextField(
                                         value = newVoDesc,
                                         onValueChange = { newVoDesc = it },
-                                        label = { Text("Açıklama", fontSize = 12.sp, maxLines = 1) },
+                                        label = { Text(strings.descLabel, fontSize = 12.sp, maxLines = 1) },
                                         placeholder = { Text("Enhanced BT", fontSize = 12.sp) },
                                         textStyle = TextStyle(fontSize = 13.sp),
                                         singleLine = true,
@@ -265,7 +265,7 @@ fun CodingScreen(
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
-                                    Text("VO Opsiyonu Ekle & Kodla", maxLines = 1, softWrap = false)
+                                    Text(strings.addVoBtn, maxLines = 1, softWrap = false)
                                 }
                             }
                         }
@@ -297,12 +297,12 @@ fun CodingScreen(
                     }
 
                     item {
-                        Text("Otomatik Kodlama Yedekleri (${session.backups.size})", color = theme.textSecondary, fontWeight = FontWeight.SemiBold)
+                        Text("${strings.autoBackupsTitle} (${session.backups.size})", color = theme.textSecondary, fontWeight = FontWeight.SemiBold)
                     }
 
                     if (session.backups.isEmpty()) {
                         item {
-                            Text("Henüz kodlama yapılmadı. Her yazma işleminde buraya geri yükleme noktası eklenir.", color = theme.textSecondary, fontSize = 12.sp)
+                            Text(strings.noBackupsHint, color = theme.textSecondary, fontSize = 12.sp)
                         }
                     } else {
                         items(session.backups, key = { it.id }) { backup ->
@@ -324,7 +324,7 @@ fun CodingScreen(
                                     TextButton(onClick = { onRestoreBackup(backup.id) }) {
                                         Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Geri Al", maxLines = 1, softWrap = false)
+                                        Text(strings.rollbackBtn, maxLines = 1, softWrap = false)
                                     }
                                 }
                             }
@@ -387,6 +387,7 @@ private fun ExpertCafdCard(
     onApply: (String) -> Unit
 ) {
     val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
     Card(
         colors = CardDefaults.cardColors(containerColor = theme.card),
         border = BorderStroke(1.dp, theme.outline)
@@ -397,7 +398,7 @@ private fun ExpertCafdCard(
                 Text("Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask), color = theme.textSecondary, fontSize = 10.sp)
             }
             Text("${param.section} -> ${param.functionName}", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-            Text("Mevcut Değer: ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
+            Text("${strings.currentValueLabel} ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 param.availableOptions.keys.forEach { optionLabel ->
                     OutlinedButton(

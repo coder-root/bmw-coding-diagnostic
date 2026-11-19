@@ -9,6 +9,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 @Serializable
 data class GitHubAssetDto(
@@ -81,158 +84,37 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
-            tagName = "v1.1.9",
-            versionName = "1.1.9",
-            title = "BMW Expert PRO v1.1.9 — vLinker Wi-Fi Ağ Kilidi & Connect/Simulator Ekranı",
-            changelog = """
-                • WifiNetworkBinder: Vgate vLinker BM Wi-Fi ve ENET soketleri doğrudan Wi-Fi ağına kilitlendi (4G/5G yönlendirme sorunu çözüldü)
-                • vLinker BM Wi-Fi 35000 / 23 otomatik port denemesi, ATZ tampon temizleme ve detaylı hata teşhisi eklendi
-                • Giriş ekranı BimmerCode tarzı Connect (fiziksel adaptörler) ve Simulator (sanal araçlar) olarak ayrıldı
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.8",
-            versionName = "1.1.8",
-            title = "BMW Expert PRO v1.1.8 — Modül Bazlı DTC Silme & Yeni Kodlamalar",
-            changelog = """
-                • ECU bazlı hata kodu silme (UDS 0x14) ve modül detay kartı
-                • Yeni Easy Mode kodlamalar: Emniyet Kemeri İkazı, Welcome Lights Süresi, Kapı Açılınca Cam Kapatma
-                • Diagnostik ekranı tam 5 tema (Daylight Silver dahil) ile uyumlu hale getirildi
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.7",
-            versionName = "1.1.7",
-            title = "BMW Expert PRO v1.1.7 — M-Sport Kadran & Hızlı Garaj Bağlantısı",
-            changelog = """
-                • M-Sport Canlı Kadran (RPM, Boost, HP & Nm tahmini) eklendi
-                • Kayıtlı araçlar listesinden tek dokunuşla hızlı yeniden bağlanma
-                • PhysicalUdsParser çoklu modül kilometre (0x100C) çözümleyici eklendi
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.6",
-            versionName = "1.1.6",
-            title = "BMW Expert PRO v1.1.6 — Çoklu Tema, Garaj Geçmişi, JSON Yedek & UI",
-            changelog = """
-                • 5 farklı uygulama teması (M Carbon, Alpina, iPerformance, M Amber, Daylight Silver)
-                • Araç Garaj Geçmişi / Çoklu VIN kaydı ve yönetimi
-                • Kodlama yedeklerini JSON olarak dışa/içe aktarma
-                • ECU Reset & Uyku Modu (UDS 0x11) ve vLinker BM Wi-Fi AT canlı logları
-                • Tüm adaptör dropdown içerikleri 4 dile çevrildi; butonlar, VIN ve arama alanları yenilendi
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.5",
-            versionName = "1.1.5",
-            title = "BMW Expert PRO v1.1.5 — ZF8 Adaptasyon, Enjektör IMA & Filtreler",
-            changelog = """
-                • ZF8 EGS Kavrama Adaptasyonları (dolum basıncı/süresi) görüntüleme ve sıfırlama
-                • Silindir bazlı Enjektör IMA / IQA kalibrasyon kodu yazma (UDS 0x2E)
-                • Kodlama Easy Mode ekranına arama çubuğu ve kategori filtreleri eklendi
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.4",
-            versionName = "1.1.4",
-            title = "BMW Expert PRO v1.1.4 — BMW DTC Sözlüğü, Canlı PID & 0-100 Ölçer",
-            changelog = """
-                • BmwDtcDictionary: Fiziksel ECU taramaları için yerleşik BMW Hex arıza kodu sözlüğü
-                • Fiziksel araçlarda canlı RPM (0xF40C) ve Soğutma Suyu (0xF405) UDS 0x22 okuma
-                • Canlı & Servis sekmesine 0-100 km/h Performans Kronometresi eklendi
-            """.trimIndent(),
-            publishedDate = "2026-11-19",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.3",
-            versionName = "1.1.3",
-            title = "BMW Expert PRO v1.1.3 — Fiziksel Araç VIN & DTC Çözümleyici",
-            changelog = """
-                • PhysicalUdsParser: Gerçek araçlardan (vLinker BM Wi-Fi / ENET) VIN (0xF190) ve DTC (0x19 0x02) çözümleme
-                • Şasi otomatik algılama (F10/F30/G30/G20/E90/E60) ve fiziksel ECU tarama desteği
-                • GitHub Actions Android CI/CD otomatik derleme ve test iş akışı
-            """.trimIndent(),
-            publishedDate = "2026-11-18",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.2",
-            versionName = "1.1.2",
-            title = "BMW Expert PRO v1.1.2 — Çok Dilli Destek & UI Yenilemesi",
-            changelog = """
-                • Çok dilli destek eklendi: Azərbaycan, Türkçe, English, Русский
-                • Bağlantı ve tarama butonları tek satır ikonlu tasarımla yenilendi
-                • Desteklenen BMW Mimarisi kartı alt alta okunaklı formata geçirildi
-                • Developer kartında Punhan Aghayev, Lead Architect / BMW Diagnostics Developer & cwghost@hotmail.com güncellendi
-            """.trimIndent(),
-            publishedDate = "2026-11-18",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.1",
-            versionName = "1.1.1",
-            title = "BMW Expert PRO v1.1.1 — Vgate vLinker BM Wi-Fi & Dropdown Hub",
-            changelog = """
-                • Uygulama adı ve proje başlığı "BMW Expert PRO" olarak güncellendi
-                • Vgate vLinker BM Wi-Fi (STN2255 / 192.168.0.10:35000) tam protokol desteği eklendi
-                • Bağlantı sayfası Dropdown (açılır liste) seçici ve adaptör kartları ile yenilendi
-            """.trimIndent(),
-            publishedDate = "2026-11-18",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
-            tagName = "v1.1.0",
-            versionName = "1.1.0",
-            title = "BimmerPro v1.1.0 — iDrive Servis Geçmişi & F30/G20",
-            changelog = """
-                • iDrive Dijital Servis Geçmişi (Service History) yazma sihirbazı
-                • BMW F30 328i (N20) ve G20 M340i (B58) simülatörleri eklendi
-                • Yeni Easy Mode kodlamalar: 5x Sinyal, Geri Ayna Açısı, Spor Göstergeler
-                • OTA Güncelleme & GitHub Releases Changelog takibi
-            """.trimIndent(),
-            publishedDate = "2026-11-18",
-            apkDownloadUrl = null,
-            apkSizeBytes = 0L
-        ),
-        AppReleaseInfo(
             tagName = "v1.0.0",
             versionName = "1.0.0",
-            title = "BimmerPro İlk Sürüm (Sprint 1–3)",
+            title = "BMW Expert PRO v1.0.0 — İlk Resmi Sürüm",
             changelog = """
-                • HSFZ / ENET (TCP 6801) ve UDS ISO 14229 protokol motoru
-                • F10 520d, G30 530i ve E90 335i sanal ECU simülatörleri
-                • BLE OBD-II (OBDLink/UniCarScan) ve USB K+DCAN sürücü katmanı
-                • ENET UDP 6811 otomatik Gateway keşfi
-                • Easy Mode, Expert CAFD/FDL bitmask editörü ve FA/VO kodlama
-                • 12.2V akü güvenlik kilidi, kalıcı yedekleme ve tek tıkla geri alma
-                • Çoklu modül KM doğrulama + A4 PDF Ekspertiz Raporu & CSV telemetri
-                • Foreground Coding Service & Developer: Punhan Aghayev
+                • Vgate vLinker BM Wi-Fi (Wi-Fi ağ kilidi + 35000/23 port), ENET HSFZ/DoIP, BLE OBD ve USB K+DCAN desteği
+                • BimmerCode tarzı Connect / Simulator giriş ekranı (F10, F30, G30, G20, E90)
+                • Tam Diagnostik, Çoklu Modül KM Doğrulama, BmwDtcDictionary ve A4 PDF Ekspertiz Raporu
+                • Easy Mode, Expert CAFD/FDL bitmask editörü, FA/VO, JSON Yedek Dışa/İçe Aktarma
+                • Canlı Telemetri, M-Sport Kadran, 0-100 km/h Ölçer, ZF8 Adaptasyon, Enjektör IMA & iDrive Servis Geçmişi
+                • 4 Dil (AZ / TR / EN / RU), 5 Tema ve GitHub Releases OTA Güncelleme
             """.trimIndent(),
-            publishedDate = "2026-11-18",
+            publishedDate = "19.11.2026 08:20",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         )
     )
+
+    internal fun formatPublishedDate(isoString: String): String {
+        if (isoString.isBlank()) return "—"
+        return runCatching {
+            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val parsed = parser.parse(isoString) ?: return@runCatching isoString.take(10)
+            SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(parsed)
+        }.getOrElse {
+            // Fallback for YYYY-MM-DD
+            val parts = isoString.take(10).split("-")
+            if (parts.size == 3) "${parts[2]}.${parts[1]}.${parts[0]}" else isoString.take(10)
+        }
+    }
 
     internal fun parseReleases(rawJson: String): List<AppReleaseInfo> {
         val dtos = json.decodeFromString<List<GitHubReleaseDto>>(rawJson)
@@ -245,7 +127,7 @@ object OtaUpdateManager {
                     versionName = dto.tagName.removePrefix("v").removePrefix("V"),
                     title = dto.name.ifBlank { dto.tagName },
                     changelog = dto.body.ifBlank { "Sürüm notu girilmemiş." },
-                    publishedDate = dto.publishedAt.take(10).ifBlank { "—" },
+                    publishedDate = formatPublishedDate(dto.publishedAt),
                     apkDownloadUrl = apkAsset?.browserDownloadUrl,
                     apkSizeBytes = apkAsset?.size ?: 0L
                 )
@@ -258,7 +140,7 @@ object OtaUpdateManager {
             connectTimeout = 5000
             readTimeout = 5000
             setRequestProperty("Accept", "application/vnd.github+json")
-            setRequestProperty("User-Agent", "BimmerPro-Android-OTA")
+            setRequestProperty("User-Agent", "BMWExpertPRO-Android-OTA")
         }
         try {
             val code = conn.responseCode
@@ -279,12 +161,12 @@ object OtaUpdateManager {
         onProgress: (Float) -> Unit
     ): File = withContext(Dispatchers.IO) {
         val updatesDir = File(cacheDir, "updates").apply { mkdirs() }
-        val outFile = File(updatesDir, "BimmerPro-$version.apk")
+        val outFile = File(updatesDir, "BMWExpertPRO-$version.apk")
         val conn = (URL(downloadUrl).openConnection() as HttpURLConnection).apply {
             instanceFollowRedirects = true
             connectTimeout = 8000
             readTimeout = 15000
-            setRequestProperty("User-Agent", "BimmerPro-Android-OTA")
+            setRequestProperty("User-Agent", "BMWExpertPRO-Android-OTA")
         }
         try {
             val total = conn.contentLengthLong.coerceAtLeast(1L)

@@ -11,13 +11,15 @@ android {
     applicationId = "com.punhanaghayev.bimmerpro"
     minSdk = 26
     targetSdk = 36
-    versionCode = 11
-    versionName = "1.1.9"
+    versionCode = 1
+    versionName = "1.0.0"
   }
 
   buildTypes {
     release {
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
+      signingConfig = signingConfigs.getByName("debug")
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }
@@ -35,6 +37,9 @@ android {
   packaging {
     resources {
       excludes += "/META-INF/{AL2.0,LGPL2.1}"
+      excludes += "/META-INF/*.version"
+      excludes += "DebugProbesKt.bin"
+      excludes += "kotlin-tooling-metadata.json"
     }
   }
 }

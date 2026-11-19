@@ -78,10 +78,12 @@ fun LiveServiceScreen(
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
+    val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
     if (profile == null) {
         DisconnectedPlaceholder(
-            title = "Canlı Veri & Servis Beklemede",
-            subtitle = "Sensör grafikleri, DPF rejenerasyonu ve akü tanıtma işlemleri için önce araca bağlanın.",
+            title = strings.disconnectedLiveTitle,
+            subtitle = strings.disconnectedLiveSub,
             onGoToGarage = onGoToGarage
         )
         return
@@ -90,8 +92,6 @@ fun LiveServiceScreen(
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
-    val strings = LocalAppStrings.current
-    val theme = LocalThemeStyle.current
 
     editingInjectorCyl?.let { (cyl, currentCode) ->
         var codeInput by remember { mutableStateOf(currentCode) }
@@ -164,7 +164,8 @@ fun LiveServiceScreen(
                 Button(
                     onClick = {
                         val km = mileageInput.toIntOrNull() ?: profile.odometerKm
-                        onWriteServiceHistory("2026-11-18", km, dealerCode, selectedItems.toList())
+                        val todayStr = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.US).format(java.util.Date())
+                        onWriteServiceHistory(todayStr, km, dealerCode, selectedItems.toList())
                         showHistoryDialog = false
                     },
                     enabled = selectedItems.isNotEmpty()
@@ -269,7 +270,7 @@ fun LiveServiceScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("M-Sport Canlı Kadran & Güç Tahmini", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    Text(strings.sportGaugeTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -347,7 +348,7 @@ fun LiveServiceScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("0–100 km/h Performans Ölçer", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                        Text(strings.perfTimerTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                         Text(
                             text = "%d km/h • %.1f sn%s".format(
                                 perf.currentSpeedKmh,
@@ -510,13 +511,13 @@ fun LiveServiceScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("ZF8 EGS Kavrama Adaptasyonları", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary, modifier = Modifier.weight(1f))
+                    Text(strings.zfAdaptTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary, modifier = Modifier.weight(1f))
                     OutlinedButton(
                         onClick = onResetZfAdaptations,
                         modifier = Modifier.height(34.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
                     ) {
-                        Text("Sıfırla", fontSize = 11.sp, color = StatusAmber, maxLines = 1, softWrap = false)
+                        Text(strings.resetBtn, fontSize = 11.sp, color = StatusAmber, maxLines = 1, softWrap = false)
                     }
                 }
             }
@@ -545,7 +546,7 @@ fun LiveServiceScreen(
         if (session.injectorCodes.isNotEmpty()) {
             item {
                 Spacer(Modifier.height(4.dp))
-                Text("Enjektör IMA Kalibrasyon Kodları", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                Text(strings.injectorTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
             }
             item {
                 Card(
@@ -560,9 +561,9 @@ fun LiveServiceScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Silindir ${inj.cylinder}: ${inj.imaCode}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                Text("Sil. ${inj.cylinder}: ${inj.imaCode}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 TextButton(onClick = { editingInjectorCyl = inj.cylinder to inj.imaCode }) {
-                                    Text("Kodla", color = theme.primaryBright, fontSize = 12.sp, maxLines = 1, softWrap = false)
+                                    Text(strings.codeBtn, color = theme.primaryBright, fontSize = 12.sp, maxLines = 1, softWrap = false)
                                 }
                             }
                         }

@@ -149,8 +149,8 @@ object BmwSimulatorCatalog {
             liveChannels = defaultLiveChannels(isDiesel = true),
             serviceRoutines = defaultServiceRoutines(isDiesel = true),
             serviceHistory = listOf(
-                ServiceHistoryRecord("sh1", "2025-10-14", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
-                ServiceHistoryRecord("sh2", "2024-09-02", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
+                ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
+                ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
             )
         )
     }

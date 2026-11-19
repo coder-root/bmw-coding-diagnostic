@@ -88,12 +88,17 @@ fun DeveloperScreen(
     val theme = LocalThemeStyle.current
     var langExpanded by remember { mutableStateOf(false) }
     var themeExpanded by remember { mutableStateOf(false) }
+    var changelogExpanded by remember { mutableStateOf(false) }
 
     val changelogList = when (otaState) {
-        is OtaCheckState.UpToDate -> otaState.releases
-        is OtaCheckState.UpdateAvailable -> otaState.releases
+        is OtaCheckState.UpToDate -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
+        is OtaCheckState.UpdateAvailable -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
         else -> OtaUpdateManager.builtinChangelog
     }
+    var selectedReleaseTag by remember(changelogList) {
+        mutableStateOf(changelogList.firstOrNull()?.tagName ?: "v1.0.0")
+    }
+    val selectedRelease = changelogList.firstOrNull { it.tagName == selectedReleaseTag } ?: changelogList.first()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -264,22 +269,54 @@ fun DeveloperScreen(
             )
         }
 
+        // Release History / Changelog Dropdown Section
         item {
-            Text(
-                text = strings.changelogTitle,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = theme.textPrimary
-            )
-        }
-
-        items(changelogList, key = { it.tagName }) { release ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = strings.changelogTitle,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = theme.textPrimary
+                    )
+                    ExposedDropdownMenuBox(
+                        expanded = changelogExpanded,
+                        onExpandedChange = { changelogExpanded = !changelogExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = "${selectedRelease.tagName} • ${selectedRelease.publishedDate}",
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = { Text(strings.selectVersionLabel) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = changelogExpanded) },
+                            modifier = Modifier
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = changelogExpanded,
+                            onDismissRequest = { changelogExpanded = false },
+                            modifier = Modifier.background(theme.cardElevated)
+                        ) {
+                            changelogList.forEach { rel ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text("${rel.tagName} • ${rel.publishedDate}", color = theme.textPrimary)
+                                    },
+                                    onClick = {
+                                        selectedReleaseTag = rel.tagName
+                                        changelogExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -291,12 +328,12 @@ fun DeveloperScreen(
                                 .background(theme.primary.copy(alpha = 0.25f))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
-                            Text(release.tagName, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(selectedRelease.tagName, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
-                        Text(release.publishedDate, color = theme.textSecondary, fontSize = 11.sp)
+                        Text(selectedRelease.publishedDate, color = theme.textSecondary, fontSize = 11.sp)
                     }
-                    Text(release.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    Text(release.changelog, color = theme.textSecondary, fontSize = 12.sp, lineHeight = 18.sp)
+                    Text(selectedRelease.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text(selectedRelease.changelog, color = theme.textSecondary, fontSize = 12.sp, lineHeight = 18.sp)
                 }
             }
         }

@@ -73,10 +73,12 @@ fun DiagnosticsScreen(
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
+    val strings = LocalAppStrings.current
+    val theme = LocalThemeStyle.current
     if (profile == null) {
         DisconnectedPlaceholder(
-            title = "Diagnostik Hazır Değil",
-            subtitle = "Tüm ECU'ları taramak ve arıza/ekspertiz raporu almak için önce araç bağlantısı kurun.",
+            title = strings.disconnectedDiagTitle,
+            subtitle = strings.disconnectedDiagSub,
             onGoToGarage = onGoToGarage
         )
         return
@@ -84,8 +86,6 @@ fun DiagnosticsScreen(
 
     var filterMode by remember { mutableStateOf(DtcFilterMode.ALL) }
     var showClearDialog by remember { mutableStateOf(false) }
-    val strings = LocalAppStrings.current
-    val theme = LocalThemeStyle.current
 
     val filteredDtcs = remember(session.dtcs, filterMode) {
         when (filterMode) {
@@ -213,10 +213,15 @@ fun DiagnosticsScreen(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     DtcFilterMode.entries.forEach { mode ->
+                        val chipLabel = when (mode) {
+                            DtcFilterMode.ALL -> strings.filterAll
+                            DtcFilterMode.ACTIVE_AND_WARN -> strings.filterWarn
+                            DtcFilterMode.SHADOW_ONLY -> strings.filterShadow
+                        }
                         FilterChip(
                             selected = filterMode == mode,
                             onClick = { filterMode = mode },
-                            label = { Text(mode.label, fontSize = 11.sp) }
+                            label = { Text(chipLabel, fontSize = 11.sp) }
                         )
                     }
                 }
@@ -277,6 +282,7 @@ private fun ExpandableEcuCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
     val total = ecu.activeDtcCount + ecu.shadowDtcCount
 
     Card(
@@ -304,7 +310,7 @@ private fun ExpandableEcuCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (total == 0) "TEMİZ" else "$total HATA",
+                        text = if (total == 0) strings.statusClean else "$total ${strings.statusFault}",
                         color = if (total > 0) StatusAmber else StatusGreen,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -315,7 +321,7 @@ private fun ExpandableEcuCard(
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "HW: ${ecu.hardwareVersion} • CAFD: ${ecu.cafdId ?: "Yok"}" +
+                        text = "HW: ${ecu.hardwareVersion} • CAFD: ${ecu.cafdId ?: "-"}" +
                             (ecu.reportedMileageKm?.let { " • %,d km".format(it) } ?: ""),
                         color = theme.textSecondary,
                         fontSize = 11.sp
@@ -328,7 +334,7 @@ private fun ExpandableEcuCard(
                         ) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = StatusRed, modifier = Modifier.size(15.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("ECU Hata Sil", fontSize = 11.sp, color = StatusRed, maxLines = 1, softWrap = false)
+                            Text(strings.clearEcuDtcBtn, fontSize = 11.sp, color = StatusRed, maxLines = 1, softWrap = false)
                         }
                         OutlinedButton(
                             onClick = onResetEcu,
@@ -337,7 +343,7 @@ private fun ExpandableEcuCard(
                         ) {
                             Icon(Icons.Default.RestartAlt, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(15.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("ECU Reset", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                            Text(strings.ecuResetBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
                         }
                     }
                 }
@@ -440,6 +446,7 @@ fun DisconnectedPlaceholder(
     onGoToGarage: () -> Unit
 ) {
     val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -460,7 +467,7 @@ fun DisconnectedPlaceholder(
                 Text(subtitle, color = theme.textSecondary, fontSize = 13.sp)
                 Spacer(Modifier.height(4.dp))
                 Button(onClick = onGoToGarage, colors = ButtonDefaults.buttonColors(containerColor = theme.primary)) {
-                    Text("Garaj & Bağlantı Ekranına Git")
+                    Text(strings.goToGarageBtn, maxLines = 1, softWrap = false)
                 }
             }
         }
