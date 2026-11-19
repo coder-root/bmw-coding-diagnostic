@@ -81,6 +81,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.9",
+            versionName = "1.1.9",
+            title = "BMW Expert PRO v1.1.9 — vLinker Wi-Fi Ağ Kilidi & Connect/Simulator Ekranı",
+            changelog = """
+                • WifiNetworkBinder: Vgate vLinker BM Wi-Fi ve ENET soketleri doğrudan Wi-Fi ağına kilitlendi (4G/5G yönlendirme sorunu çözüldü)
+                • vLinker BM Wi-Fi 35000 / 23 otomatik port denemesi, ATZ tampon temizleme ve detaylı hata teşhisi eklendi
+                • Giriş ekranı BimmerCode tarzı Connect (fiziksel adaptörler) ve Simulator (sanal araçlar) olarak ayrıldı
+            """.trimIndent(),
+            publishedDate = "2026-11-19",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.8",
             versionName = "1.1.8",
             title = "BMW Expert PRO v1.1.8 — Modül Bazlı DTC Silme & Yeni Kodlamalar",

@@ -14,8 +14,9 @@ class BimmerNavigationTest {
 
     @Test
     fun developerTabDisplaysPunhanAghayevAndSimulatorConnects() {
-        // Connect to F10 Simulator on Garaj tab
-        composeRule.onNodeWithText("Araca Bağlan").performClick()
+        // Switch to Simulator mode and start F10 simulator
+        composeRule.onNodeWithText("Simulator").performClick()
+        composeRule.onNodeWithText("Simülatörü Başlat").performClick()
         composeRule.waitForIdle()
 
         // Navigate to Developer tab and verify author attribution

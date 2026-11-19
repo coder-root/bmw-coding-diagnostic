@@ -1,5 +1,6 @@
 package com.punhanaghayev.bimmerpro.core.protocol
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,10 @@ enum class AdapterType(
     SIMULATOR_F30("BMW F30 328i Simülasyonu", "Virtual HSFZ / ENET + N20", true),
     SIMULATOR_G30("BMW G30 530i Simülasyonu", "Virtual DoIP / HSFZ + Secure Coding Check", true),
     SIMULATOR_G20("BMW G20 M340i Simülasyonu", "Virtual DoIP / B58 + iDrive 7", true),
-    SIMULATOR_E90("BMW E90 335i Simülasyonu", "Virtual K+DCAN / KWP2000 + Tamper Alert Demo", false)
+    SIMULATOR_E90("BMW E90 335i Simülasyonu", "Virtual K+DCAN / KWP2000 + Tamper Alert Demo", false);
+
+    val isSimulator: Boolean
+        get() = name.startsWith("SIMULATOR")
 }
 
 sealed interface ConnectionState {
@@ -47,6 +51,7 @@ interface TransportAdapter {
  */
 class TcpEnetTransportAdapter(
     override val adapterType: AdapterType,
+    private val context: Context? = null,
     private val host: String = DEFAULT_ZGW_HOST,
     private val port: Int = DEFAULT_HSFZ_PORT,
     private val timeoutMs: Int = 3500
@@ -62,7 +67,7 @@ class TcpEnetTransportAdapter(
     override suspend fun connect() = withContext(Dispatchers.IO) {
         _connectionState.value = ConnectionState.Connecting(adapterType.displayName)
         try {
-            val tcpSocket = Socket()
+            val tcpSocket = WifiNetworkBinder.createSocket(context)
             tcpSocket.tcpNoDelay = true
             tcpSocket.soTimeout = timeoutMs
             tcpSocket.connect(InetSocketAddress(host, port), timeoutMs)

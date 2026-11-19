@@ -1,6 +1,8 @@
 package com.punhanaghayev.bimmerpro.core.protocol
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,15 +15,16 @@ import java.nio.charset.StandardCharsets
 
 /**
  * Physical Wi-Fi TCP transport for Vgate vLinker BM Wi-Fi (STN2255) and ELM327 Wi-Fi OBD-II adapters.
- * Default endpoint for vLinker BM Wi-Fi is 192.168.0.10:35000.
+ * Default endpoint for vLinker BM Wi-Fi is 192.168.0.10:35000 (fallback port 23).
  *
- * Uses BMW 500kbps CAN (ATSP6) with extended addressing (ATCEA / 0x6F1) and STN long-frame support.
+ * Explicitly binds to the Android Wi-Fi network so traffic is never routed over 4G/5G cellular data.
  */
 class TcpElmStnTransportAdapter(
     override val adapterType: AdapterType = AdapterType.VLINKER_BM_WIFI,
+    private val context: Context? = null,
     private val host: String = DEFAULT_VLINKER_HOST,
     private val port: Int = DEFAULT_VLINKER_PORT,
-    private val timeoutMs: Int = 4000,
+    private val timeoutMs: Int = 5000,
     private val onAtLog: (String) -> Unit = {}
 ) : TransportAdapter {
 
@@ -37,18 +40,51 @@ class TcpElmStnTransportAdapter(
 
     override suspend fun connect() = withContext(Dispatchers.IO) {
         _connectionState.value = ConnectionState.Connecting("${adapterType.displayName} ($host:$port)")
-        try {
-            val tcp = Socket().apply {
-                tcpNoDelay = true
-                soTimeout = timeoutMs
-                connect(InetSocketAddress(host, port), timeoutMs)
-            }
-            socket = tcp
-            input = tcp.getInputStream()
-            output = tcp.getOutputStream()
+        val candidatePorts = listOf(port, 35000, 23).distinct()
+        var connectedSocket: Socket? = null
+        var connectedPort = port
+        var lastError: Exception? = null
 
-            // Initialize STN2255 / ELM327 for BMW F-Series / E-Series D-CAN (500kbps)
-            sendAtCommand("ATZ")
+        val wifiBound = context != null && WifiNetworkBinder.findWifiNetwork(context) != null
+        onAtLog("WIFI-BIND: ${if (wifiBound) "Wi-Fi ağına kilitlendi" else "Varsayılan ağ kullanılıyor"}")
+
+        for (tryPort in candidatePorts) {
+            try {
+                val s = WifiNetworkBinder.createSocket(context).apply {
+                    tcpNoDelay = true
+                    soTimeout = timeoutMs
+                    connect(InetSocketAddress(host, tryPort), timeoutMs)
+                }
+                connectedSocket = s
+                connectedPort = tryPort
+                break
+            } catch (ex: Exception) {
+                lastError = ex
+                onAtLog("TCP $host:$tryPort başarısız: ${ex.localizedMessage ?: "Bağlantı hatası"}")
+            }
+        }
+
+        if (connectedSocket == null) {
+            val msg = "vLinker BM Wi-Fi ($host:$port) bağlanamadı. " +
+                "1) Telefonu vLinker Wi-Fi ağına bağlayın. " +
+                "2) Gerekirse Mobil Veriyi geçici kapatın. " +
+                "(${lastError?.localizedMessage ?: "Zaman aşımı"})"
+            _connectionState.value = ConnectionState.Error(msg)
+            throw lastError ?: IllegalStateException(msg)
+        }
+
+        try {
+            socket = connectedSocket
+            input = connectedSocket.getInputStream()
+            output = connectedSocket.getOutputStream()
+            onAtLog("TCP bağlı: $host:$connectedPort")
+
+            // Drain any welcome banner
+            delay(150)
+            drainInput()
+
+            // Initialize STN2255 / ELM327 for BMW D-CAN (500kbps)
+            sendAtCommand("ATZ", waitMs = 1200)
             sendAtCommand("ATE0")
             sendAtCommand("ATL0")
             sendAtCommand("ATS0")
@@ -60,13 +96,12 @@ class TcpElmStnTransportAdapter(
             val rv = sendAtCommand("ATRV")
             lastReadVoltage = parseVoltage(rv)
 
-            _connectionState.value = ConnectionState.Connected(adapterType, "$host:$port")
+            _connectionState.value = ConnectionState.Connected(adapterType, "$host:$connectedPort")
         } catch (ex: Exception) {
-            runCatching { socket?.close() }
+            runCatching { connectedSocket.close() }
             socket = null
-            _connectionState.value = ConnectionState.Error(
-                "vLinker BM Wi-Fi bağlantısı kurulamadı ($host:$port): ${ex.localizedMessage ?: "Ağ zaman aşımı"}. Telefonun vLinker Wi-Fi ağına bağlı olduğundan emin olun."
-            )
+            val msg = "vLinker AT başlatma hatası: ${ex.localizedMessage ?: "Cevap yok"}"
+            _connectionState.value = ConnectionState.Error(msg)
             throw ex
         }
     }
@@ -82,7 +117,6 @@ class TcpElmStnTransportAdapter(
     override suspend fun transceive(frame: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hsfz = HsfzFrame.decode(frame)
         val targetEcu = hsfz.targetAddress and 0xFF
-        // BMW F/E-Series functional/physical CAN addressing via 0x6F1 + extended target byte
         sendAtCommand("ATSH6F1")
         sendAtCommand("ATCEA%02X".format(targetEcu))
         sendAtCommand("ATCRA6F1")
@@ -99,17 +133,28 @@ class TcpElmStnTransportAdapter(
         ).encode()
     }
 
-    private fun sendAtCommand(command: String): String {
+    private fun drainInput() {
+        val inp = input ?: return
+        runCatching {
+            while (inp.available() > 0) {
+                val skipBuf = ByteArray(inp.available().coerceAtMost(512))
+                inp.read(skipBuf)
+            }
+        }
+    }
+
+    private fun sendAtCommand(command: String, waitMs: Int = timeoutMs): String {
         val out = output ?: error("vLinker Wi-Fi socket bağlı değil")
         val inp = input ?: error("vLinker Wi-Fi input stream yok")
+        drainInput()
         out.write("$command\r".toByteArray(StandardCharsets.US_ASCII))
         out.flush()
 
         val sb = StringBuilder()
         val buf = ByteArray(512)
-        val deadline = System.currentTimeMillis() + timeoutMs
+        val deadline = System.currentTimeMillis() + waitMs
         while (System.currentTimeMillis() < deadline) {
-            val read = inp.read(buf)
+            val read = runCatching { inp.read(buf) }.getOrDefault(-1)
             if (read <= 0) break
             sb.append(String(buf, 0, read, StandardCharsets.US_ASCII))
             if (sb.contains(">")) break
@@ -139,7 +184,6 @@ class TcpElmStnTransportAdapter(
             }
             val tokens = clean.split(Regex("\\s+"))
                 .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
-            // If raw CAN frame includes header (e.g. 6F1 F4 ...), strip first 2/3 header bytes when appropriate
             val bytes = tokens.map { it.toInt(16).toByte() }.toByteArray()
             return if (bytes.size > 3 && (bytes[0].toInt() and 0xFF) == 0x06 && (bytes[1].toInt() and 0xFF) == 0xF1) {
                 bytes.copyOfRange(2, bytes.size)

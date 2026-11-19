@@ -41,7 +41,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,14 +89,27 @@ fun GarageScreen(
     onRemoveSavedVehicle: (String) -> Unit,
     onNavigateToTab: (Int) -> Unit
 ) {
-    var selectedAdapter by remember(session.selectedAdapter) { mutableStateOf(session.selectedAdapter) }
+    val physicalAdapters = remember { AdapterType.entries.filter { !it.isSimulator } }
+    val simulatorAdapters = remember { AdapterType.entries.filter { it.isSimulator } }
+
+    var isSimulatorMode by remember(session.selectedAdapter) {
+        mutableStateOf(
+            if (session.connectionState is ConnectionState.Connected) session.selectedAdapter.isSimulator else false
+        )
+    }
+    var selectedPhysical by remember { mutableStateOf(AdapterType.VLINKER_BM_WIFI) }
+    var selectedSimulator by remember { mutableStateOf(AdapterType.SIMULATOR_F10) }
     var dropdownExpanded by remember { mutableStateOf(false) }
 
     var vlinkerHost by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST) }
     var vlinkerPort by remember { mutableStateOf(TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT.toString()) }
     var enetHost by remember { mutableStateOf(TcpEnetTransportAdapter.DEFAULT_ZGW_HOST) }
+
     val strings = LocalAppStrings.current
     val theme = LocalThemeStyle.current
+
+    val activeChoices = if (isSimulatorMode) simulatorAdapters else physicalAdapters
+    val activeAdapter = if (isSimulatorMode) selectedSimulator else selectedPhysical
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -106,6 +118,37 @@ fun GarageScreen(
     ) {
         item {
             GarageHeroHeader(connectionState = session.connectionState)
+        }
+
+        // BimmerCode-style Connect vs Simulator Primary Mode Buttons
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ModeSelectorCard(
+                    title = "Connect",
+                    subtitle = "vLinker / ENET / BLE",
+                    icon = Icons.Default.Wifi,
+                    selected = !isSimulatorMode,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        isSimulatorMode = false
+                        dropdownExpanded = false
+                    }
+                )
+                ModeSelectorCard(
+                    title = "Simulator",
+                    subtitle = "F10 / F30 / G30 / E90",
+                    icon = Icons.Default.DirectionsCar,
+                    selected = isSimulatorMode,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        isSimulatorMode = true
+                        dropdownExpanded = false
+                    }
+                )
+            }
         }
 
         if (session.vehicleProfile != null && session.connectionState is ConnectionState.Connected) {
@@ -135,7 +178,6 @@ fun GarageScreen(
                             BatterySafetyPill(voltage = profile.batteryVoltage)
                         }
 
-                        // VIN strictly on a single line
                         Text(
                             text = "VIN: ${profile.vin}",
                             fontFamily = FontFamily.Monospace,
@@ -174,7 +216,7 @@ fun GarageScreen(
                             }
                         }
 
-                        if (session.selectedAdapter.name.startsWith("SIMULATOR")) {
+                        if (session.selectedAdapter.isSimulator) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -238,7 +280,7 @@ fun GarageScreen(
             }
         }
 
-        // Connection Hub Card with Translated Dropdown Selector
+        // Adapter or Simulator Selection Hub
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
@@ -247,7 +289,7 @@ fun GarageScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = strings.connectionHubTitle,
+                        text = if (isSimulatorMode) "BMW Araç Simülatörü" else strings.connectionHubTitle,
                         style = MaterialTheme.typography.titleSmall,
                         color = theme.textPrimary,
                         fontWeight = FontWeight.Bold
@@ -258,20 +300,20 @@ fun GarageScreen(
                         onExpandedChange = { dropdownExpanded = !dropdownExpanded }
                     ) {
                         OutlinedTextField(
-                            value = strings.adapterTitle(selectedAdapter),
+                            value = strings.adapterTitle(activeAdapter),
                             onValueChange = {},
                             readOnly = true,
                             singleLine = true,
                             label = { Text(strings.adapterDropdownLabel, maxLines = 1) },
                             supportingText = {
-                                Text(strings.adapterDesc(selectedAdapter), color = theme.primaryBright, fontSize = 11.sp)
+                                Text(strings.adapterDesc(activeAdapter), color = theme.primaryBright, fontSize = 11.sp)
                             },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = when {
-                                        selectedAdapter == AdapterType.VLINKER_BM_WIFI -> Icons.Default.Wifi
-                                        selectedAdapter.name.startsWith("SIMULATOR") -> Icons.Default.DirectionsCar
+                                        activeAdapter == AdapterType.VLINKER_BM_WIFI -> Icons.Default.Wifi
+                                        activeAdapter.isSimulator -> Icons.Default.DirectionsCar
                                         else -> Icons.Default.Cable
                                     },
                                     contentDescription = null,
@@ -288,11 +330,7 @@ fun GarageScreen(
                             onDismissRequest = { dropdownExpanded = false },
                             modifier = Modifier.background(theme.cardElevated)
                         ) {
-                            AdapterType.entries.forEachIndexed { idx, adapter ->
-                                val isSim = adapter.name.startsWith("SIMULATOR")
-                                if (idx > 0 && isSim && !AdapterType.entries[idx - 1].name.startsWith("SIMULATOR")) {
-                                    HorizontalDivider(color = theme.outline)
-                                }
+                            activeChoices.forEach { adapter ->
                                 DropdownMenuItem(
                                     text = {
                                         Column {
@@ -301,7 +339,7 @@ fun GarageScreen(
                                         }
                                     },
                                     onClick = {
-                                        selectedAdapter = adapter
+                                        if (isSimulatorMode) selectedSimulator = adapter else selectedPhysical = adapter
                                         dropdownExpanded = false
                                     }
                                 )
@@ -309,93 +347,115 @@ fun GarageScreen(
                         }
                     }
 
-                    when (selectedAdapter) {
-                        AdapterType.VLINKER_BM_WIFI -> {
-                            Box(
+                    if (!isSimulatorMode) {
+                        when (activeAdapter) {
+                            AdapterType.VLINKER_BM_WIFI -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(theme.primary.copy(alpha = 0.14f))
+                                        .padding(10.dp)
+                                ) {
+                                    Text(
+                                        text = "Vgate vLinker BM Wi-Fi: 'vLinker-BM' Wi-Fi ağına bağlanın (192.168.0.10:35000). Otomatik Wi-Fi soket kilidi aktiftir.",
+                                        color = theme.primaryBright,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedTextField(
+                                        value = vlinkerHost,
+                                        onValueChange = { vlinkerHost = it },
+                                        label = { Text("IP") },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(0.65f)
+                                    )
+                                    OutlinedTextField(
+                                        value = vlinkerPort,
+                                        onValueChange = { vlinkerPort = it.filter { c -> c.isDigit() } },
+                                        label = { Text("Port") },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(0.35f)
+                                    )
+                                }
+                            }
+
+                            AdapterType.ENET_WIFI, AdapterType.ENET_USB -> {
+                                OutlinedTextField(
+                                    value = enetHost,
+                                    onValueChange = { enetHost = it },
+                                    label = { Text("Gateway IP (169.254.0.1)") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            else -> Unit
+                        }
+
+                        if (session.discoveredGateways.isNotEmpty() || session.discoveredBleDevices.isNotEmpty() || session.discoveredUsbDevices.isNotEmpty()) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(theme.primary.copy(alpha = 0.14f))
-                                    .padding(10.dp)
+                                    .background(theme.cardElevated)
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = "Vgate vLinker BM Wi-Fi: 'vLinker-BM' Wi-Fi (192.168.0.10:35000)",
-                                    color = theme.primaryBright,
-                                    fontSize = 11.sp
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
-                                    value = vlinkerHost,
-                                    onValueChange = { vlinkerHost = it },
-                                    label = { Text("IP") },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(0.65f)
-                                )
-                                OutlinedTextField(
-                                    value = vlinkerPort,
-                                    onValueChange = { vlinkerPort = it.filter { c -> c.isDigit() } },
-                                    label = { Text("Port") },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(0.35f)
-                                )
+                                Text(strings.discoveredDevicesTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                session.discoveredGateways.forEach { gw ->
+                                    Text(
+                                        text = "• ENET Gateway: ${gw.ipAddress} ${gw.vin?.let { "($it)" } ?: ""}",
+                                        color = theme.textPrimary,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.clickable {
+                                            enetHost = gw.ipAddress
+                                            selectedPhysical = AdapterType.ENET_WIFI
+                                        }
+                                    )
+                                }
+                                session.discoveredBleDevices.forEach { ble ->
+                                    val active = session.selectedBleAddress == ble.address
+                                    Text(
+                                        text = "• BLE: ${ble.name} (${ble.address}) ${if (active) "[OK]" else ""}",
+                                        color = if (active) StatusGreen else theme.textPrimary,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.clickable {
+                                            onSelectBleDevice(ble.address)
+                                            selectedPhysical = AdapterType.BLE_OBD
+                                        }
+                                    )
+                                }
+                                session.discoveredUsbDevices.forEach { usb ->
+                                    Text(
+                                        text = "• USB: ${usb.productName} (VID:0x%04X)".format(usb.vendorId),
+                                        color = theme.textPrimary,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.clickable { selectedPhysical = AdapterType.USB_KDCAN }
+                                    )
+                                }
                             }
                         }
 
-                        AdapterType.ENET_WIFI, AdapterType.ENET_USB -> {
-                            OutlinedTextField(
-                                value = enetHost,
-                                onValueChange = { enetHost = it },
-                                label = { Text("Gateway IP (169.254.0.1)") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        else -> Unit
-                    }
-
-                    if (session.discoveredGateways.isNotEmpty() || session.discoveredBleDevices.isNotEmpty() || session.discoveredUsbDevices.isNotEmpty()) {
-                        Column(
+                        OutlinedButton(
+                            onClick = onScanHardware,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(theme.cardElevated)
-                                .padding(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.6f))
                         ) {
-                            Text(strings.discoveredDevicesTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            session.discoveredGateways.forEach { gw ->
-                                Text(
-                                    text = "• ENET Gateway: ${gw.ipAddress} ${gw.vin?.let { "($it)" } ?: ""}",
-                                    color = theme.textPrimary,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.clickable {
-                                        enetHost = gw.ipAddress
-                                        selectedAdapter = AdapterType.ENET_WIFI
-                                    }
-                                )
-                            }
-                            session.discoveredBleDevices.forEach { ble ->
-                                val active = session.selectedBleAddress == ble.address
-                                Text(
-                                    text = "• BLE: ${ble.name} (${ble.address}) ${if (active) "[OK]" else ""}",
-                                    color = if (active) StatusGreen else theme.textPrimary,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.clickable {
-                                        onSelectBleDevice(ble.address)
-                                        selectedAdapter = AdapterType.BLE_OBD
-                                    }
-                                )
-                            }
-                            session.discoveredUsbDevices.forEach { usb ->
-                                Text(
-                                    text = "• USB: ${usb.productName} (VID:0x%04X)".format(usb.vendorId),
-                                    color = theme.textPrimary,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.clickable { selectedAdapter = AdapterType.USB_KDCAN }
-                                )
-                            }
+                            Icon(Icons.Default.Search, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = strings.scanHardwareBtn,
+                                fontSize = 13.sp,
+                                color = theme.primaryBright,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
                         }
                     }
 
@@ -414,41 +474,21 @@ fun GarageScreen(
                         }
                     }
 
-                    OutlinedButton(
-                        onClick = onScanHardware,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.6f))
-                    ) {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = strings.scanHardwareBtn,
-                            fontSize = 13.sp,
-                            color = theme.primaryBright,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-
                     val isConnecting = session.connectionState is ConnectionState.Connecting
                     Button(
                         onClick = {
-                            when (selectedAdapter) {
+                            when (activeAdapter) {
                                 AdapterType.VLINKER_BM_WIFI -> onConnect(
-                                    selectedAdapter,
+                                    activeAdapter,
                                     vlinkerHost.trim(),
                                     vlinkerPort.toIntOrNull() ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT
                                 )
                                 AdapterType.ENET_WIFI, AdapterType.ENET_USB -> onConnect(
-                                    selectedAdapter,
+                                    activeAdapter,
                                     enetHost.trim(),
                                     TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
                                 )
-                                else -> onConnect(selectedAdapter, "", null)
+                                else -> onConnect(activeAdapter, "", null)
                             }
                         },
                         enabled = !isConnecting,
@@ -470,11 +510,7 @@ fun GarageScreen(
                             Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = if (session.connectionState is ConnectionState.Connected) {
-                                    strings.reconnectBtn
-                                } else {
-                                    strings.connectVehicleBtn
-                                },
+                                text = if (isSimulatorMode) "Simülatörü Başlat" else strings.connectVehicleBtn,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false
@@ -485,7 +521,6 @@ fun GarageScreen(
             }
         }
 
-        // Saved Vehicles / Garage Multi-VIN History
         if (session.savedVehicles.isNotEmpty()) {
             item {
                 Text(
@@ -498,9 +533,16 @@ fun GarageScreen(
             items(session.savedVehicles, key = { it.vin }) { saved ->
                 Card(
                     modifier = Modifier.clickable {
-                        selectedAdapter = AdapterType.entries.firstOrNull { it.displayName == saved.adapterName }
+                        val matched = AdapterType.entries.firstOrNull { it.displayName == saved.adapterName }
                             ?: AdapterType.SIMULATOR_F10
-                        onConnect(selectedAdapter, "", null)
+                        if (matched.isSimulator) {
+                            isSimulatorMode = true
+                            selectedSimulator = matched
+                        } else {
+                            isSimulatorMode = false
+                            selectedPhysical = matched
+                        }
+                        onConnect(matched, "", null)
                     },
                     colors = CardDefaults.cardColors(containerColor = theme.card),
                     border = BorderStroke(1.dp, theme.outline),
@@ -523,6 +565,46 @@ fun GarageScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeSelectorCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val theme = LocalThemeStyle.current
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) theme.primary.copy(alpha = 0.22f) else theme.card
+        ),
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) theme.primaryBright else theme.outline
+        ),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) theme.primaryBright else theme.textSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+            Column {
+                Text(title, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
+                Text(subtitle, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

@@ -117,6 +117,7 @@ class BimmerRepository(
         activeTransport = when (adapterType) {
             AdapterType.VLINKER_BM_WIFI -> TcpElmStnTransportAdapter(
                 adapterType = adapterType,
+                context = appContext,
                 host = customHost.ifBlank { TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST },
                 port = customPort ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT,
                 onAtLog = { msg -> udsClient.logInfo("AT", EcuAddress.ZGW_BDC, msg) }
@@ -131,6 +132,7 @@ class BimmerRepository(
             AdapterType.ENET_WIFI,
             AdapterType.ENET_USB -> TcpEnetTransportAdapter(
                 adapterType = adapterType,
+                context = appContext,
                 host = customHost.ifBlank { TcpEnetTransportAdapter.DEFAULT_ZGW_HOST },
                 port = customPort ?: TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
             )
