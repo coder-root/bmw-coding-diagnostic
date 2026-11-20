@@ -84,6 +84,24 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.3.0",
+            versionName = "1.3.0",
+            title = "BMW Expert PRO v1.3.0 — Ayrı Canlı/Servis Ekranları, Toplu Kodlama Güvenliği ve F10 528i Simülasyonu",
+            changelog = """
+                • Canlı Veri (Live) ve Servis & Bakım (Service) bağımsız iki ekrana ve sekmesine ayrıldı
+                • Sensör özelleştirme diyaloğundaki kapanma sorunu çözüldü
+                • Çoklu parametre seçimi ve tek tıkla toplu kodlama (Batch Coding) mimarisi
+                • Kodlama öncesi akü voltaj kontrolü (>=12.2V) ve onay kutusu içeren güvenlik onay mekanizması
+                • BMW F10 528i (N20B20 Benzinli DME MEVD1724) simülatör profili ve benzinli telemetri PID'leri
+                • Çevrimdışı arıza analizinde arıza kontrolü durum yazıları modül başlığı altına taşındı
+                • Cross-ECU km doğrulama filtreleri kompakt dropdown içine toplandı, Clear All butonu düzenlendi
+                • Tüm diller (EN, TR, AZ, RU) için tam yerelleştirme ve UTF-8 karakter kodlama garantisi
+            """.trimIndent(),
+            publishedDate = "20.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.3.0/BMW_Expert_PRO_1.3.0.apk",
+            apkSizeBytes = 1652153L
+        ),
+        AppReleaseInfo(
             tagName = "v1.2.0",
             versionName = "1.2.0",
             title = "BMW Expert PRO v1.2.0 — BimmerCode & E-Sys CAFD Entegrasyonu ve SALAPA Veritabanı",

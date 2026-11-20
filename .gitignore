@@ -17,3 +17,5 @@ keystore.properties
 *.jks
 *.keystore
 *.apk
+!BMW_Expert_PRO_*.apk
+!BMW.Expert.PRO.*.apk
