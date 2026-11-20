@@ -20,8 +20,8 @@ android {
     applicationId = "com.punhanaghayev.bimmerpro"
     minSdk = 26
     targetSdk = 36
-    versionCode = 8
-    versionName = "1.2.0"
+    versionCode = 9
+    versionName = "1.3.0"
   }
 
   signingConfigs {
@@ -110,4 +110,8 @@ dependencies {
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
   implementation(libs.kotlinx.serialization.json)
+}
+
+tasks.withType<JavaCompile>().configureEach {
+  options.encoding = "UTF-8"
 }

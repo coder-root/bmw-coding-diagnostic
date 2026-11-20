@@ -35,6 +35,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -81,6 +82,7 @@ fun CodingScreen(
     session: BimmerSessionState,
     onApplyPreset: (String, Int) -> Unit,
     onApplyCafd: (String, String) -> Unit,
+    onApplyBatchCoding: (Map<String, Int>, Map<String, String>) -> Unit = { _, _ -> },
     onRestoreBackup: (String) -> Unit,
     onCreateFullNcdSnapshot: () -> Unit,
     onExportBackupsJson: () -> Unit,
@@ -111,6 +113,10 @@ fun CodingScreen(
     var newVoDesc by remember { mutableStateOf("") }
     var pendingPresetDiff by remember { mutableStateOf<Pair<CodingPreset, Int>?>(null) }
     var pendingCafdDiff by remember { mutableStateOf<Pair<CafdParameter, String>?>(null) }
+
+    var stagedPresets by remember { mutableStateOf(mapOf<String, Int>()) }
+    var stagedCafds by remember { mutableStateOf(mapOf<String, String>()) }
+    var showSafetyDialog by remember { mutableStateOf(false) }
 
     pendingPresetDiff?.let { (preset, targetIdx) ->
         val beforeLabel = preset.options.getOrNull(preset.currentOptionIndex) ?: "-"
@@ -194,6 +200,89 @@ fun CodingScreen(
 
     val voltageSafe = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE
 
+    if (showSafetyDialog) {
+        var safetyConfirmed by remember { mutableStateOf(false) }
+        val totalStaged = stagedPresets.size + stagedCafds.size
+        AlertDialog(
+            onDismissRequest = { showSafetyDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        Icons.Default.Security,
+                        contentDescription = null,
+                        tint = if (voltageSafe) theme.primaryBright else StatusRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(strings.confirmCodingSafetyTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (!voltageSafe) {
+                        Text(
+                            text = strings.batteryLockedBanner.format(profile.batteryVoltage),
+                            color = StatusRed,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        Text(
+                            text = "Akü Voltajı: %.1f V (GÜVENLİ)".format(profile.batteryVoltage),
+                            color = StatusGreen,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Text(
+                        text = strings.confirmCodingSafetyWarning,
+                        color = theme.textSecondary,
+                        fontSize = 12.sp
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(theme.cardElevated)
+                            .clickable { safetyConfirmed = !safetyConfirmed }
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = safetyConfirmed,
+                            onCheckedChange = { safetyConfirmed = it }
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = strings.confirmCodingCheckbox,
+                            color = theme.textPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val pCopy = stagedPresets
+                        val cCopy = stagedCafds
+                        stagedPresets = emptyMap()
+                        stagedCafds = emptyMap()
+                        showSafetyDialog = false
+                        onApplyBatchCoding(pCopy, cCopy)
+                    },
+                    enabled = voltageSafe && safetyConfirmed && totalStaged > 0,
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                ) {
+                    Text(strings.codeVehicleBatchBtn)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSafetyDialog = false }) { Text(strings.cancelBtn) }
+            }
+        )
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -232,7 +321,7 @@ fun CodingScreen(
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -330,11 +419,18 @@ fun CodingScreen(
                                     preset.targetEcu.contains(easySearchQuery, ignoreCase = true))
                         }
                         items(filteredPresets, key = { it.id }) { preset ->
-                            PresetCodingCard(preset = preset, enabled = voltageSafe, onSelectOption = { idx ->
-                                if (idx != preset.currentOptionIndex) {
-                                    pendingPresetDiff = preset to idx
+                            PresetCodingCard(
+                                preset = preset,
+                                stagedIndex = stagedPresets[preset.id],
+                                enabled = voltageSafe,
+                                onSelectOption = { idx ->
+                                    stagedPresets = if (idx == preset.currentOptionIndex) {
+                                        stagedPresets - preset.id
+                                    } else {
+                                        stagedPresets + (preset.id to idx)
+                                    }
                                 }
-                            })
+                            )
                         }
                     }
                 }
@@ -389,11 +485,18 @@ fun CodingScreen(
                                     param.cafdFile.contains(searchQuery, ignoreCase = true))
                         }
                         items(filtered, key = { it.id }) { param ->
-                            ExpertCafdCard(param = param, enabled = voltageSafe, onApply = { optLabel ->
-                                if (optLabel != param.selectedOptionLabel) {
-                                    pendingCafdDiff = param to optLabel
+                            ExpertCafdCard(
+                                param = param,
+                                stagedOption = stagedCafds[param.id],
+                                enabled = voltageSafe,
+                                onApply = { optLabel ->
+                                    stagedCafds = if (optLabel == param.selectedOptionLabel) {
+                                        stagedCafds - param.id
+                                    } else {
+                                        stagedCafds + (param.id to optLabel)
+                                    }
                                 }
-                            })
+                            )
                         }
                     }
                 }
@@ -544,6 +647,52 @@ fun CodingScreen(
                 }
             }
         }
+
+        val totalStaged = stagedPresets.size + stagedCafds.size
+        if (totalStaged > 0) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.cardElevated),
+                border = BorderStroke(1.5.dp, theme.primaryBright),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.stagedChangesTitle.format(totalStaged),
+                            fontWeight = FontWeight.Bold,
+                            color = theme.primaryBright,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = strings.discardStagedBtn,
+                            color = StatusRed,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable {
+                                stagedPresets = emptyMap()
+                                stagedCafds = emptyMap()
+                            }
+                        )
+                    }
+                    Button(
+                        onClick = { showSafetyDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = theme.primary),
+                        modifier = Modifier.height(42.dp)
+                    ) {
+                        Icon(Icons.Default.Memory, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(strings.codeVehicleBatchBtn, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -551,13 +700,21 @@ fun CodingScreen(
 @Composable
 private fun PresetCodingCard(
     preset: CodingPreset,
+    stagedIndex: Int?,
     enabled: Boolean,
     onSelectOption: (Int) -> Unit
 ) {
     val theme = LocalThemeStyle.current
+    val effectiveIndex = stagedIndex ?: preset.currentOptionIndex
+    val isStaged = stagedIndex != null && stagedIndex != preset.currentOptionIndex
     Card(
         colors = CardDefaults.cardColors(containerColor = theme.card),
-        border = BorderStroke(1.dp, if (preset.isLockedBySecureCoding) StatusAmber.copy(alpha = 0.5f) else theme.outline),
+        border = BorderStroke(
+            1.dp,
+            if (isStaged) theme.primaryBright
+            else if (preset.isLockedBySecureCoding) StatusAmber.copy(alpha = 0.5f)
+            else theme.outline
+        ),
         shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -567,7 +724,16 @@ private fun PresetCodingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("${preset.targetEcu} • ${preset.category.label}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                if (preset.isLockedBySecureCoding) {
+                if (isStaged) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(theme.primaryBright.copy(alpha = 0.2f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text("SEÇİLDİ", color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                } else if (preset.isLockedBySecureCoding) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Lock, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
@@ -579,10 +745,16 @@ private fun PresetCodingCard(
             Text(preset.description, color = theme.textSecondary, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 preset.options.forEachIndexed { idx, label ->
+                    val selected = effectiveIndex == idx
                     FilterChip(
-                        selected = preset.currentOptionIndex == idx,
+                        selected = selected,
                         onClick = { if (enabled) onSelectOption(idx) },
-                        label = { Text(label, fontSize = 11.sp) }
+                        label = {
+                            Text(
+                                text = if (selected && isStaged) "$label (Bekliyor)" else label,
+                                fontSize = 11.sp
+                            )
+                        }
                     )
                 }
             }
@@ -594,24 +766,43 @@ private fun PresetCodingCard(
 @Composable
 private fun ExpertCafdCard(
     param: CafdParameter,
+    stagedOption: String?,
     enabled: Boolean,
     onApply: (String) -> Unit
 ) {
     val theme = LocalThemeStyle.current
     val strings = LocalAppStrings.current
+    val effectiveOption = stagedOption ?: param.selectedOptionLabel
+    val isStaged = stagedOption != null && stagedOption != param.selectedOptionLabel
     Card(
         colors = CardDefaults.cardColors(containerColor = theme.card),
-        border = BorderStroke(1.dp, theme.outline)
+        border = BorderStroke(1.dp, if (isStaged) theme.primaryBright else theme.outline)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = "${param.ecuName} • ${param.cafdFile}",
-                color = theme.primaryBright,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${param.ecuName} • ${param.cafdFile}",
+                    color = theme.primaryBright,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (isStaged) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(theme.primaryBright.copy(alpha = 0.2f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text("SEÇİLDİ", color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
             Text(
                 text = "Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask),
                 color = theme.textSecondary,
@@ -623,14 +814,19 @@ private fun ExpertCafdCard(
             Text("${strings.currentValueLabel} ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 param.availableOptions.keys.forEach { optionLabel ->
+                    val isSelected = effectiveOption == optionLabel
                     OutlinedButton(
                         onClick = { if (enabled) onApply(optionLabel) },
                         border = BorderStroke(
                             1.dp,
-                            if (param.selectedOptionLabel == optionLabel) theme.primaryBright else theme.outline
+                            if (isSelected) theme.primaryBright else theme.outline
                         )
                     ) {
-                        Text(optionLabel, fontSize = 11.sp, color = theme.textPrimary)
+                        Text(
+                            text = if (isSelected && isStaged) "$optionLabel ${strings.stagedOptionPending}" else optionLabel,
+                            fontSize = 11.sp,
+                            color = if (isSelected) theme.primaryBright else theme.textPrimary
+                        )
                     }
                 }
             }

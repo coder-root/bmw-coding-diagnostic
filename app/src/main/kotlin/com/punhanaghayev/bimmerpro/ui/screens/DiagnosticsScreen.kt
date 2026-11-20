@@ -20,9 +20,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
@@ -33,6 +35,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -219,7 +223,7 @@ fun DiagnosticsScreen(
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
@@ -227,18 +231,24 @@ fun DiagnosticsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = theme.textPrimary,
                                 fontSize = 14.sp,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                modifier = Modifier.weight(1f, fill = false)
                             )
-                            Text(
-                                text = "${healthReport.overallScore}/100",
-                                color = overallColor,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 16.sp,
-                                maxLines = 1,
-                                softWrap = false
-                            )
+                            Spacer(Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(overallColor.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "${healthReport.overallScore} / 100",
+                                    color = overallColor,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                         healthReport.subsystemScores.forEach { sub ->
                             val subColor = when {
@@ -246,40 +256,37 @@ fun DiagnosticsScreen(
                                 sub.scorePercent >= 65 -> StatusAmber
                                 else -> StatusRed
                             }
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = sub.name,
-                                        color = theme.textPrimary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = "${sub.scorePercent}% • ${sub.note}",
-                                        color = subColor,
-                                        fontSize = 11.sp,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
+                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text(
+                                    text = sub.localizedName(strings),
+                                    color = theme.textPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${sub.scorePercent}% • ${sub.localizedNote(strings)}",
+                                    color = subColor,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
                                 LinearProgressIndicator(
                                     progress = { (sub.scorePercent / 100f).coerceIn(0f, 1f) },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(5.dp),
                                     color = subColor,
                                     trackColor = theme.outline.copy(alpha = 0.35f)
                                 )
                             }
                         }
-                        healthReport.recommendations.forEach { rec ->
-                            Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
+                        if (healthReport.recommendationItems.isNotEmpty()) {
+                            healthReport.recommendationItems.forEach { recItem ->
+                                Text("• ${recItem.localized(strings)}", color = theme.textSecondary, fontSize = 11.sp)
+                            }
+                        } else {
+                            healthReport.recommendations.forEach { rec ->
+                                Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
+                            }
                         }
                     }
                 }
@@ -305,10 +312,10 @@ fun DiagnosticsScreen(
                         Spacer(Modifier.width(8.dp))
                         Column {
                             Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
-                            Text(mv.status.label, color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            Text(mv.status.localized(strings), color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         }
                     }
-                    Text(mv.summary, color = theme.textSecondary, fontSize = 12.sp)
+                    Text(mv.localizedSummary(strings), color = theme.textSecondary, fontSize = 12.sp)
                     mv.readings.forEach { reading ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -328,27 +335,58 @@ fun DiagnosticsScreen(
         }
 
         item {
+            var filterDropdownExpanded by remember { mutableStateOf(false) }
+            val currentFilterLabel = when (filterMode) {
+                DtcFilterMode.ALL -> strings.filterAll
+                DtcFilterMode.ACTIVE_AND_WARN -> strings.filterWarn
+                DtcFilterMode.SHADOW_ONLY -> strings.filterShadow
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DtcFilterMode.entries.forEach { mode ->
-                        val chipLabel = when (mode) {
-                            DtcFilterMode.ALL -> strings.filterAll
-                            DtcFilterMode.ACTIVE_AND_WARN -> strings.filterWarn
-                            DtcFilterMode.SHADOW_ONLY -> strings.filterShadow
+                Box {
+                    OutlinedButton(
+                        onClick = { filterDropdownExpanded = true },
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(currentFilterLabel, fontSize = 12.sp, maxLines = 1)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                    DropdownMenu(
+                        expanded = filterDropdownExpanded,
+                        onDismissRequest = { filterDropdownExpanded = false }
+                    ) {
+                        DtcFilterMode.entries.forEach { mode ->
+                            val label = when (mode) {
+                                DtcFilterMode.ALL -> strings.filterAll
+                                DtcFilterMode.ACTIVE_AND_WARN -> strings.filterWarn
+                                DtcFilterMode.SHADOW_ONLY -> strings.filterShadow
+                            }
+                            DropdownMenuItem(
+                                text = { Text(label, fontSize = 12.sp) },
+                                onClick = {
+                                    filterMode = mode
+                                    filterDropdownExpanded = false
+                                }
+                            )
                         }
-                        FilterChip(
-                            selected = filterMode == mode,
-                            onClick = { filterMode = mode },
-                            label = { Text(chipLabel, fontSize = 11.sp) }
-                        )
                     }
                 }
+
                 if (session.dtcs.isNotEmpty()) {
-                    TextButton(onClick = { showClearDialog = true }) {
+                    OutlinedButton(
+                        onClick = { showClearDialog = true },
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusRed),
+                        border = BorderStroke(1.dp, StatusRed.copy(alpha = 0.6f))
+                    ) {
                         Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = StatusRed, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(strings.clearAllDtcBtn, color = StatusRed, fontSize = 12.sp, maxLines = 1, softWrap = false)

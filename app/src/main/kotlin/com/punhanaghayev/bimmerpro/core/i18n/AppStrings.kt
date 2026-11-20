@@ -190,6 +190,50 @@ data class AppStrings(
     val operationFailedTitle: String,
     val operationDoneBtn: String,
 
+    val tabLive: String,
+    val tabService: String,
+    val quickLive: String,
+    val quickService: String,
+    val exportCsvBtn: String,
+    val stagedChangesTitle: String,
+    val codeVehicleBatchBtn: String,
+    val confirmCodingSafetyTitle: String,
+    val confirmCodingSafetyWarning: String,
+    val confirmCodingCheckbox: String,
+    val discardStagedBtn: String,
+    val simVoltageTestLabel: String,
+    val tamperVerified: String,
+    val tamperMinorDrift: String,
+    val tamperSuspicious: String,
+    val dtcFilterDropdownLabel: String,
+    val subsystemEngineTurbo: String,
+    val subsystemDpfExhaust: String,
+    val subsystemZf8: String,
+    val subsystemBatteryIbs: String,
+    val healthNominal: String,
+    val healthFaultCheck: String,
+    val healthDpfClean: String,
+    val healthDpfHigh: String,
+    val selectBatteryCapacityTitle: String,
+    val ibsCapacityResetPrompt: String,
+    val injectorImaDialogTitle: String,
+    val injectorImaInputLabel: String,
+    val writeDmeBtn: String,
+    val writeServiceHistoryTitle: String,
+    val dealerCodeLabel: String,
+    val socLabel: String,
+    val sohLabel: String,
+    val terminalVoltageLabel: String,
+    val leadAcidLabel: String,
+    val cylinderPrefix: String,
+    val stagedOptionPending: String,
+    val zfClutchDevLabel: String,
+    val recCriticalDtcs: String,
+    val recWarningDtcs: String,
+    val recDpfSootHigh: String,
+    val recBatteryLow: String,
+    val recHealthy: String,
+
     val language: AppLanguage
 ) {
     fun adapterTitle(type: AdapterType): String = when (language) {
@@ -200,6 +244,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
             AdapterType.USB_KDCAN -> "USB OTG K+DCAN Kabel"
             AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulyasiyası"
+            AdapterType.SIMULATOR_F10_528I -> "BMW F10 528i (N20) Simulyasiyası"
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulyasiyası"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulyasiyası"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulyasiyası"
@@ -213,6 +258,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
             AdapterType.USB_KDCAN -> "USB OTG K+DCAN Cable"
             AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulation"
+            AdapterType.SIMULATOR_F10_528I -> "BMW F10 528i (N20 Petrol) Simulation"
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulation"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulation"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulation"
@@ -225,6 +271,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
             AdapterType.USB_KDCAN -> "Кабель USB OTG K+DCAN"
             AdapterType.SIMULATOR_F10 -> "Симуляция BMW F10 520d"
+            AdapterType.SIMULATOR_F10_528I -> "Симуляция BMW F10 528i (N20)"
             AdapterType.SIMULATOR_F30 -> "Симуляция BMW F30 328i"
             AdapterType.SIMULATOR_G30 -> "Симуляция BMW G30 530i"
             AdapterType.SIMULATOR_G20 -> "Симуляция BMW G20 M340i"
@@ -240,6 +287,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "CAN üzərindən ISO-TP (BLE GATT)"
             AdapterType.USB_KDCAN -> "E-Seriyası K-Line / D-CAN"
             AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F10_528I -> "Virtual HSFZ / ENET + N20 Benzin"
             AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
@@ -253,6 +301,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "ISO-TP over CAN (BLE GATT)"
             AdapterType.USB_KDCAN -> "E-Series K-Line / D-CAN"
             AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F10_528I -> "Virtual HSFZ / ENET + N20 Petrol"
             AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
@@ -265,6 +314,7 @@ data class AppStrings(
             AdapterType.BLE_OBD -> "ISO-TP по CAN (BLE GATT)"
             AdapterType.USB_KDCAN -> "E-серия K-Line / D-CAN"
             AdapterType.SIMULATOR_F10 -> "Виртуальный HSFZ / ENET + UDS"
+            AdapterType.SIMULATOR_F10_528I -> "Виртуальный HSFZ / ENET + N20 Бензин"
             AdapterType.SIMULATOR_F30 -> "Виртуальный HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Виртуальный DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Виртуальный DoIP / B58 + iDrive 7"

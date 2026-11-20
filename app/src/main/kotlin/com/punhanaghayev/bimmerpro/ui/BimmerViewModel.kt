@@ -160,6 +160,31 @@ class BimmerViewModel(
         }
     }
 
+    fun applyBatchCoding(presets: Map<String, Int>, cafds: Map<String, String>) {
+        viewModelScope.launch {
+            val ctx = getApplication<Application>()
+            val total = presets.size + cafds.size
+            if (total == 0) return@launch
+            CodingSessionService.start(ctx, "Araca $total adet kodlama yazılıyor...")
+            var successCount = 0
+            try {
+                for ((presetId, newIndex) in presets) {
+                    val res = repository.applyPresetCoding(presetId, newIndex)
+                    if (res.isSuccess) successCount++
+                }
+                for ((paramId, optLabel) in cafds) {
+                    val res = repository.applyCafdParameter(paramId, optLabel)
+                    if (res.isSuccess) successCount++
+                }
+                _uiEvents.emit(UiEvent.Snackbar("$successCount / $total kodlama başarıyla uygulandı."))
+            } catch (e: Exception) {
+                _uiEvents.emit(UiEvent.Snackbar("Kodlama sırasında hata: ${e.message}"))
+            } finally {
+                CodingSessionService.stop(ctx)
+            }
+        }
+    }
+
     fun applyCafdParameter(paramId: String, optionLabel: String) {
         viewModelScope.launch {
             val ctx = getApplication<Application>()

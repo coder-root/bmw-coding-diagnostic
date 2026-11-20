@@ -22,6 +22,7 @@ enum class AdapterType(
     BLE_OBD("OBDLink CX / UniCarScan BLE", "ISO-TP over CAN (BLE GATT)", false),
     USB_KDCAN("USB OTG K+DCAN Kablo", "E-Series K-Line / D-CAN", false),
     SIMULATOR_F10("BMW F10 520d Simülasyonu", "Virtual HSFZ / ENET + UDS", true),
+    SIMULATOR_F10_528I("BMW F10 528i Simülasyonu", "Virtual HSFZ / ENET + N20 Benzin", true),
     SIMULATOR_F30("BMW F30 328i Simülasyonu", "Virtual HSFZ / ENET + N20", true),
     SIMULATOR_G30("BMW G30 530i Simülasyonu", "Virtual DoIP / HSFZ + Secure Coding Check", true),
     SIMULATOR_G20("BMW G20 M340i Simülasyonu", "Virtual DoIP / B58 + iDrive 7", true),

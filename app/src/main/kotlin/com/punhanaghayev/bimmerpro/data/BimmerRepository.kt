@@ -182,6 +182,7 @@ class BimmerRepository(
             )
 
             AdapterType.SIMULATOR_F10,
+            AdapterType.SIMULATOR_F10_528I,
             AdapterType.SIMULATOR_F30,
             AdapterType.SIMULATOR_G30,
             AdapterType.SIMULATOR_G20,

@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -170,5 +171,18 @@ class ProtocolAndSafetyTest {
         val result = repo.applyCafdParameter(firstCafd.id, nextOpt)
         assertTrue(result.isSuccess)
         assertEquals(nextOpt, repo.session.value.cafdParameters.first { it.id == firstCafd.id }.selectedOptionLabel)
+    }
+
+    @Test
+    fun `f10 528i simulator initializes petrol n20 profile and mevd1724 ecus`() = runTest {
+        val repo = BimmerRepository()
+        repo.connect(AdapterType.SIMULATOR_F10_528I)
+        val profile = repo.session.value.vehicleProfile
+        assertNotNull(profile)
+        assertEquals("WBAXG51050D518420", profile?.vin)
+        assertTrue(profile?.modelDisplayName?.contains("528i") == true)
+        assertTrue(profile?.engineCode?.contains("N20") == true)
+        assertTrue(repo.session.value.ecus.any { it.shortName == "MEVD1724" })
+        assertTrue(repo.session.value.serviceRoutines.isNotEmpty())
     }
 }

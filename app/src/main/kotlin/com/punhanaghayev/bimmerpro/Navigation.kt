@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,7 +86,8 @@ import com.punhanaghayev.bimmerpro.ui.screens.CodingScreen
 import com.punhanaghayev.bimmerpro.ui.screens.DeveloperScreen
 import com.punhanaghayev.bimmerpro.ui.screens.DiagnosticsScreen
 import com.punhanaghayev.bimmerpro.ui.screens.GarageScreen
-import com.punhanaghayev.bimmerpro.ui.screens.LiveServiceScreen
+import com.punhanaghayev.bimmerpro.ui.screens.LiveScreen
+import com.punhanaghayev.bimmerpro.ui.screens.ServiceScreen
 import com.punhanaghayev.bimmerpro.ui.screens.PacketInspectorScreen
 import com.punhanaghayev.bimmerpro.ui.screens.SavedVehiclesScreen
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
@@ -96,17 +98,18 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
 enum class BimmerTab(val icon: ImageVector) {
     GARAGE(Icons.Default.DirectionsCar),
-    // Swapped per user request: Diagnostics uses Build/Wrench, Coding uses Memory/Chip
     DIAGNOSTICS(Icons.Default.Build),
     CODING(Icons.Default.Memory),
-    LIVE_SERVICE(Icons.Default.Speed),
+    LIVE(Icons.Default.Speed),
+    SERVICE(Icons.Default.Tune),
     DEVELOPER(Icons.Default.Settings);
 
     fun label(strings: AppStrings): String = when (this) {
         GARAGE -> strings.tabGarage
         DIAGNOSTICS -> strings.tabDiagnostics
         CODING -> strings.tabCoding
-        LIVE_SERVICE -> strings.tabLiveService
+        LIVE -> strings.tabLive
+        SERVICE -> strings.tabService
         DEVELOPER -> strings.tabDeveloper
     }
 }
@@ -139,7 +142,7 @@ fun MainNavigation(
         } else if (session.connectionPurpose == ConnectionPurpose.CODING) {
             listOf(BimmerTab.GARAGE, BimmerTab.CODING, BimmerTab.DEVELOPER)
         } else {
-            listOf(BimmerTab.GARAGE, BimmerTab.DIAGNOSTICS, BimmerTab.LIVE_SERVICE, BimmerTab.DEVELOPER)
+            listOf(BimmerTab.GARAGE, BimmerTab.DIAGNOSTICS, BimmerTab.LIVE, BimmerTab.SERVICE, BimmerTab.DEVELOPER)
         }
     }
 
@@ -466,8 +469,9 @@ fun MainNavigation(
                                     activeTab = when (tabIndex) {
                                         1 -> BimmerTab.DIAGNOSTICS
                                         2 -> BimmerTab.CODING
-                                        3 -> BimmerTab.LIVE_SERVICE
-                                        4 -> BimmerTab.DEVELOPER
+                                        3 -> BimmerTab.LIVE
+                                        4 -> BimmerTab.SERVICE
+                                        5 -> BimmerTab.DEVELOPER
                                         else -> BimmerTab.GARAGE
                                     }
                                 }
@@ -487,6 +491,7 @@ fun MainNavigation(
                                 session = session,
                                 onApplyPreset = viewModel::applyPresetCoding,
                                 onApplyCafd = viewModel::applyCafdParameter,
+                                onApplyBatchCoding = viewModel::applyBatchCoding,
                                 onRestoreBackup = viewModel::restoreBackup,
                                 onCreateFullNcdSnapshot = viewModel::createFullNcdSnapshot,
                                 onExportBackupsJson = { viewModel.exportBackupsJson(context) },
@@ -495,7 +500,7 @@ fun MainNavigation(
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
 
-                            BimmerTab.LIVE_SERVICE -> LiveServiceScreen(
+                            BimmerTab.LIVE -> LiveScreen(
                                 session = session,
                                 isLiveStreamRunning = isLiveRunning,
                                 availableLiveChannels = viewModel.availableLiveChannels(),
@@ -504,6 +509,11 @@ fun MainNavigation(
                                 onExportCsv = { viewModel.exportTelemetryCsv(context) },
                                 onSetSelectedPids = viewModel::setSelectedLivePids,
                                 onMoveLiveChannel = viewModel::moveLiveChannel,
+                                onGoToGarage = { activeTab = BimmerTab.GARAGE }
+                            )
+
+                            BimmerTab.SERVICE -> ServiceScreen(
+                                session = session,
                                 onExecuteRoutine = viewModel::executeServiceRoutine,
                                 onRunActuatorTest = viewModel::runActuatorTest,
                                 onWriteServiceHistory = viewModel::writeServiceHistory,

@@ -46,6 +46,7 @@ data class SimulatedVehicleBundle(
 object BmwSimulatorCatalog {
 
     fun buildBundle(adapterType: AdapterType): SimulatedVehicleBundle = when (adapterType) {
+        AdapterType.SIMULATOR_F10_528I -> buildF10528iBundle()
         AdapterType.SIMULATOR_F30 -> buildF30Bundle()
         AdapterType.SIMULATOR_G30 -> buildG30Bundle()
         AdapterType.SIMULATOR_G20 -> buildG20Bundle()
@@ -162,6 +163,129 @@ object BmwSimulatorCatalog {
             serviceHistory = listOf(
                 ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
                 ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
+            )
+        )
+    }
+
+    private fun buildF10528iBundle(): SimulatedVehicleBundle {
+        val readings = listOf(
+            MileageModuleReading("CAS4 (Karosseri)", 132_850),
+            MileageModuleReading("KOMBI (Gösterge)", 132_850),
+            MileageModuleReading("MEVD1724 (DME Benzin)", 132_844, engineHours = 2_890),
+            MileageModuleReading("EGS (ZF 8HP)", 132_848)
+        )
+        val profile = VehicleProfile(
+            vin = "WBAXG51050D518420",
+            chassis = BmwChassis.F10,
+            modelDisplayName = "BMW 528i Sedan (F10 N20)",
+            engineCode = "N20B20A (245 PS / 350 Nm Benzin)",
+            productionYear = 2013,
+            iLevel = "F010-19-07-530",
+            factoryILevel = "F010-13-03-500",
+            typeCode = "XG51",
+            productionDate = "14.05.2013",
+            paintCode = "A52 Spacegrau Metallic",
+            upholsteryCode = "LCDF Dakota Leather Venetobeige",
+            batteryVoltage = 12.6,
+            odometerKm = 132_850,
+            faOptions = listOf(
+                VehicleOrderOption("1CC", "Otomatik Start/Stop Fonksiyonu (Auto Start/Stop)"),
+                VehicleOrderOption("205", "Steptronic 8 İleri Otomatik Şanzıman"),
+                VehicleOrderOption("248", "Direksiyon Simidi Isıtma"),
+                VehicleOrderOption("255", "Spor Deri Direksiyon"),
+                VehicleOrderOption("403", "Cam Açılır Tavan (Sunroof)"),
+                VehicleOrderOption("430", "İç ve Dış Otomatik Kararan Elektrokrom Aynalar"),
+                VehicleOrderOption("456", "Konfor Koltuklar, Elektrikli Hafızalı"),
+                VehicleOrderOption("508", "Park Mesafe Kontrolü (PDC Ön/Arka)"),
+                VehicleOrderOption("522", "Bi-Xenon Farlar"),
+                VehicleOrderOption("534", "Gelişmiş 2 Bölgeli Otomatik Klima"),
+                VehicleOrderOption("609", "Navigasyon Sistemi Professional (HU_NBT)"),
+                VehicleOrderOption("676", "HiFi Hoparlör Ses Sistemi")
+            ),
+            mileageVerification = MileageVerificationResult(
+                readings = readings,
+                maxDifferenceKm = 6,
+                status = TamperStatus.VERIFIED,
+                summary = "Tüm 4 ana kontrol ünitesi tutarlı (±6 km senkronizasyon)"
+            )
+        )
+
+        val ecus = listOf(
+            EcuModule(EcuAddress.FEM_CAS, "CAS4", "Car Access System 4", "HW-06", "SW-4.82", "CAFD_0000000F_005_025", CodingCapability.FULL_FDL_AND_VO, 0, 0, 132_850),
+            EcuModule(EcuAddress.DME_DDE, "MEVD1724", "DME Motor Yönetimi (N20 TwinPower Turbo)", "HW-12", "SW-9.10", null, CodingCapability.FDL_ONLY, 2, 0, 132_844),
+            EcuModule(EcuAddress.EGS, "EGS", "Elektronik Şanzıman Yönetimi (ZF 8HP45)", "HW-04", "SW-3.20", null, CodingCapability.FDL_ONLY, 0, 0, 132_848),
+            EcuModule(EcuAddress.DSC, "DSC", "Dinamik Denge Kontrolü", "HW-05", "SW-2.40", "CAFD_0000040F_002_012", CodingCapability.FULL_FDL_AND_VO, 0, 0),
+            EcuModule(0x30, "EPS", "Elektronik Güç Destekli Direksiyon", "HW-03", "SW-1.90", null, CodingCapability.FDL_ONLY, 0, 0),
+            EcuModule(EcuAddress.KOMBI, "KOMBI", "Gösterge Tablosu", "HW-08", "SW-6.50", "CAFD_000009C8_006_003", CodingCapability.FULL_FDL_AND_VO, 0, 0, 132_850),
+            EcuModule(EcuAddress.HU_MEDIA, "HU_NBT", "Headunit High Professional", "HW-10", "SW-18.04", "CAFD_00000DED_003_013", CodingCapability.FULL_FDL_AND_VO, 0, 1),
+            EcuModule(EcuAddress.IHKA, "IHKA", "Entegre Otomatik Isıtma/Klima", "HW-04", "SW-2.80", "CAFD_000016EE_001_004", CodingCapability.FULL_FDL_AND_VO, 0, 0),
+            EcuModule(0x72, "FRM", "Ayak Bölmesi Modülü (Footwell Module 3)", "HW-07", "SW-5.12", "CAFD_0000067B_001_002", CodingCapability.FULL_FDL_AND_VO, 0, 0),
+            EcuModule(EcuAddress.ZGW_BDC, "ZGW", "Merkezi Ağ Geçidi (Central Gateway)", "HW-02", "SW-1.40", null, CodingCapability.FDL_ONLY, 0, 0)
+        )
+
+        val dtcs = listOf(
+            DtcFault(
+                id = "d1_528",
+                code = "120308",
+                ecuAddress = EcuAddress.DME_DDE,
+                ecuName = "MEVD1724 (DME)",
+                title = "Şarj Basıncı Kontrolü: Basınç Çok Düşük (Boost Pressure Low)",
+                technicalDetail = "İstenen basınç ile ölçülen basınç sapması > 350 mbar (N20 Diverter valf kontrolü).",
+                severity = DtcSeverity.WARNING,
+                status = DtcStatus.STORED,
+                freezeFrame = FreezeFrameData(132_400, 13.8, 92, 2850, 2),
+                istaGuidance = "1) Diverter valf (hava tahliye) diyaframında yırtık kontrolü yapın.\n2) Elektronik wastegate aktüatör kolunun hareket serbestliğini doğrulayın."
+            ),
+            DtcFault(
+                id = "d2_528",
+                code = "101F01",
+                ecuAddress = EcuAddress.DME_DDE,
+                ecuName = "MEVD1724 (DME)",
+                title = "Gaz Kelebeği Açısı — Emme Manifoldu Mutlak Basıncı Tutarsızlığı",
+                technicalDetail = "Hava kütlesi hesaplama modeli ile MAP sensörü okuması arasında sapma.",
+                severity = DtcSeverity.WARNING,
+                status = DtcStatus.STORED,
+                freezeFrame = FreezeFrameData(132_750, 13.9, 96, 1200, 1),
+                istaGuidance = "1) Emme manifoldu ve intercooler boru bağlantılarında duman testi ile hava kaçağı arayın.\n2) Gaz kelebeği gövdesi karbon temizliği yapın."
+            ),
+            DtcFault(
+                id = "d3_528",
+                code = "B7F805",
+                ecuAddress = EcuAddress.HU_MEDIA,
+                ecuName = "HU_NBT",
+                title = "USB Bağlantı Soketi 1 İletişim Hatası",
+                technicalDetail = "Kolçak içi USB arabiriminde geçici hat kesintisi kaydedildi.",
+                severity = DtcSeverity.SHADOW,
+                status = DtcStatus.STORED,
+                freezeFrame = FreezeFrameData(131_900, 12.5, 78, 0, 4),
+                istaGuidance = "Gölge arıza kaydı — doğrudan işlevsel arıza yoksa silinebilir."
+            )
+        )
+
+        return SimulatedVehicleBundle(
+            profile = profile,
+            ecus = ecus,
+            dtcs = dtcs,
+            presets = defaultPresets(isGSeries = false),
+            cafdParameters = defaultCafdParameters(isGSeries = false),
+            liveChannels = defaultLiveChannels(isDiesel = false),
+            serviceRoutines = defaultServiceRoutines(isDiesel = false),
+            serviceHistory = listOf(
+                ServiceHistoryRecord("sh1_528", "18.05.2025", 128_400, "Borusan Oto İstinye (01020)", listOf("Motor Yağı 5W-30", "Buji Seti (4x)", "Mikrofiltre")),
+                ServiceHistoryRecord("sh2_528", "12.04.2024", 115_200, "Kosifler Oto (02140)", listOf("Motor Yağı", "Fren Hidroliği", "Hava Filtresi"))
+            ),
+            zfAdaptations = listOf(
+                ZfClutchAdaptation("Kavrama A (Clutch A)", 12, 4),
+                ZfClutchAdaptation("Kavrama B (Clutch B)", -18, 8),
+                ZfClutchAdaptation("Kavrama C (Clutch C)", 32, -2),
+                ZfClutchAdaptation("Kavrama D (Clutch D)", 4, 1),
+                ZfClutchAdaptation("Kavrama E (Clutch E)", -8, 6)
+            ),
+            injectorCodes = listOf(
+                InjectorCalibration(1, "582218"),
+                InjectorCalibration(2, "579214"),
+                InjectorCalibration(3, "584220"),
+                InjectorCalibration(4, "580216")
             )
         )
     }

@@ -72,7 +72,13 @@ data class VehicleOrderOption(
 enum class TamperStatus(val label: String) {
     VERIFIED("Doğrulandı (Modüller Tutarlı)"),
     MINOR_DRIFT("Normal Sapma (< 150 km)"),
-    SUSPICIOUS_MISMATCH("KM Uyumsuzluğu Tespit Edildi!")
+    SUSPICIOUS_MISMATCH("KM Uyumsuzluğu Tespit Edildi!");
+
+    fun localized(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (this) {
+        VERIFIED -> strings.tamperVerified
+        MINOR_DRIFT -> strings.tamperMinorDrift
+        SUSPICIOUS_MISMATCH -> strings.tamperSuspicious
+    }
 }
 
 data class MileageModuleReading(
@@ -86,7 +92,17 @@ data class MileageVerificationResult(
     val maxDifferenceKm: Int,
     val status: TamperStatus,
     val summary: String
-)
+) {
+    fun localizedSummary(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (status) {
+        TamperStatus.VERIFIED -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "All ${readings.size} primary control units consistent (±$maxDifferenceKm km)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Bütün ${readings.size} əsas idarəetmə bloku uyğundur (±$maxDifferenceKm km)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Все ${readings.size} блока управления согласованы (±$maxDifferenceKm км)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> summary
+        }
+        else -> summary
+    }
+}
 
 data class VehicleProfile(
     val vin: String,
@@ -167,7 +183,113 @@ data class ServiceRoutine(
     val routineId: Int,
     val description: String,
     val warningNote: String
-)
+) {
+    fun localizedTitle(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
+        ServiceRoutineType.BATTERY_REGISTRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Battery Registration & Capacity (IBS)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Akkumulyator Qeydiyyatı & Tutum (IBS)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Регистрация АКБ и профиля (IBS)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.DPF_REGENERATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Trigger Forced DPF Regeneration"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Məcburi DPF Rejenerasiyasını Başlat"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Запуск принудительной регенерации DPF"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.EPB_SERVICE_MODE -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "EPB Parking Brake Service Mode"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Elektron Əyləc (EPB) Servis Rejimi"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сервисный режим стояночного тормоза (EPB)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.CBS_OIL_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "CBS Maintenance Reset (Oil / Brake)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "CBS Servis Sıfırlama (Yağ / Əyləc)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс ТО CBS (Масло / Тормоза)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.EXHAUST_VALVE_OPEN -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Exhaust Flap Actuation (Open / OEM)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Qaz Qapağının İdarəsi (Açıq / Zavod)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Управление заслонкой выхлопа (Открыть / Завод)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.STEERING_ANGLE_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Steering Angle Sensor Calibration (LWS)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sükan Bucağı Sensorunun Kalibrasiyası"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Калибровка датчика угла руля (LWS)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+    }
+
+    fun localizedDescription(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
+        ServiceRoutineType.BATTERY_REGISTRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Resets alternator charging curve after battery replacement (e.g. 90Ah AGM)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Yeni akkumulyatordan sonra şarj profilini sıfırlayır (Məs. 90Ah AGM)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс профиля зарядки после замены АКБ (напр. 90Ah AGM)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.DPF_REGENERATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Requests soot burn-off regeneration cycle in DPF filter during driving."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sürüş zamanı DPF hissi filtrində qurumun yandırılmasını aktivləşdirir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Запрос цикла прожига сажевого фильтра во время движения."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.EPB_SERVICE_MODE -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Retracts rear caliper EMF actuator pistons for brake pad replacement."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Arxa əyləc bəndlərini dəyişmək üçün kaliper porşenini geri çəkir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Разведение суппортов для замены задних тормозных колодок."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.CBS_OIL_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Resets iDrive service counter and writes log to digital service history."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "iDrive servis sayğacını sıfırlayır və rəqəmsal tarixçəyə qeyd edir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс сервисного интервала iDrive и запись в историю обслуживания."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        else -> description
+    }
+
+    fun localizedWarning(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
+        ServiceRoutineType.BATTERY_REGISTRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Selecting incorrect battery capacity or chemistry may cause premature battery failure."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Səhv akkumulyator növü/tutumu seçilərsə akkumulyator tez sıradan çıxa bilər."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Неверный выбор типа или емкости АКБ может привести к преждевременному износу."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.DPF_REGENERATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Fuel level must be > 1/4, coolant temp > 75°C, and no critical engine errors present."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Yanacaq > 1/4 olmalı, soyutma mayesi > 75°C və kritik mühərrik xətası olmamalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Уровень топлива > 1/4, темп. охлаждающей жидкости > 75°C, отсутствие критических ошибок."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.EPB_SERVICE_MODE -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Vehicle must be parked on level ground with wheel chocks applied."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Avtomobil düz yerdə və təkər dayaqları qoyulmuş olmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Автомобиль должен стоять на ровной поверхности с противооткатными упорами."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.CBS_OIL_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Reset only after physical maintenance service has been performed."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Yalnız xidmət işi faktiki başa çatdıqdan sonra sıfırlayın."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сбрасывайте только после фактического выполнения техобслуживания."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.EXHAUST_VALVE_OPEN -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Ignition must be ON (PAD mode) or engine idling."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Açar açıq (PAD rejimi) və ya mühərrik rölantidə olmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Зажигание должно быть включено (режим PAD) или двигатель на холостом ходу."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.STEERING_ANGLE_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Steering wheel must be kept in exact straight-ahead center position."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sükan tam düz vəziyyətdə saxlanılmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Рулевое колесо должно удерживаться строго в центральном положении."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+    }
+}
 
 data class ServiceExecutionResult(
     val success: Boolean,

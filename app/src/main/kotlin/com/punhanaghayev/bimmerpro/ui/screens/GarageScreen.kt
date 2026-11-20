@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -336,7 +337,7 @@ fun GarageScreen(
                                     .padding(10.dp)
                             ) {
                                 Text(
-                                    text = "Simülatör Akü Voltajı Testi: %.1f V (<12.2V kodlamayı kilitler)".format(profile.batteryVoltage),
+                                    text = strings.simVoltageTestLabel.format(profile.batteryVoltage),
                                     color = theme.textSecondary,
                                     fontSize = 11.sp
                                 )
@@ -362,10 +363,17 @@ fun GarageScreen(
                                 )
                                 QuickActionTile(
                                     icon = Icons.Default.Speed,
-                                    title = strings.quickLiveService,
+                                    title = strings.quickLive,
                                     badge = null,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToTab(3) }
+                                )
+                                QuickActionTile(
+                                    icon = Icons.Default.Tune,
+                                    title = strings.quickService,
+                                    badge = null,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToTab(4) }
                                 )
                             } else {
                                 QuickActionTile(
