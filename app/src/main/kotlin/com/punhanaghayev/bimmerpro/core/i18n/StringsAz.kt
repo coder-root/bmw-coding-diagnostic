@@ -159,6 +159,14 @@ object StringsAz {
         updateNowBtn = "İndi Yenilə",
         updateLaterBtn = "Sonra",
 
+        vehicleTechnicalDetailsTitle = "Avtomobil Texniki Məlumatları & I-Level",
+        supportedBmwHeader = "Dəstəklənən BMW",
+        architectureProtocolSubtitle = "Arxitekturası və Protokol Yığını",
+        operationProgressTitle = "Əməliyyat İcra Olunur",
+        operationCompletedTitle = "Əməliyyat Tamamlandı",
+        operationFailedTitle = "Əməliyyat Uğursuz Oldu",
+        operationDoneBtn = "Oldu / Bağla",
+
         language = AppLanguage.AZ
     )
 }

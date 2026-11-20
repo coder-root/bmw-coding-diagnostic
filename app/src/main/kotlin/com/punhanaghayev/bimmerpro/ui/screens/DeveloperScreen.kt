@@ -56,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.BuildConfig
@@ -323,37 +324,52 @@ fun DeveloperScreen(
                         )
                     }
                     HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "${strings.dataPackTitle} ($dtcDictionaryCount)",
+                            color = theme.textPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedButton(
+                            onClick = onDownloadDataPack,
+                            enabled = dataPackStatus !is DataPackStatus.Downloading,
+                            modifier = Modifier.fillMaxWidth().height(42.dp),
+                            shape = RoundedCornerShape(10.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${strings.dataPackTitle} ($dtcDictionaryCount)", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                val (statusText, statusColor) = when (dataPackStatus) {
-                                    DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
-                                    DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
-                                    is DataPackStatus.Applied -> strings.dataPackApplied.format(dataPackStatus.packVersion, dataPackStatus.addedCount, dataPackStatus.updatedAt) to StatusGreen
-                                    is DataPackStatus.UpToDate -> strings.dataPackUpToDate.format(dataPackStatus.packVersion, dataPackStatus.updatedAt, dataPackStatus.totalCount) to StatusGreen
-                                    is DataPackStatus.Error -> dataPackStatus.message to StatusRed
-                                }
-                                Text(statusText, color = statusColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            if (dataPackStatus is DataPackStatus.Downloading) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             }
                             Spacer(Modifier.width(8.dp))
-                            OutlinedButton(
-                                onClick = onDownloadDataPack,
-                                enabled = dataPackStatus !is DataPackStatus.Downloading
-                            ) {
-                                if (dataPackStatus is DataPackStatus.Downloading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
-                                }
-                                Spacer(Modifier.width(6.dp))
-                                Text(strings.dataPackDownloadBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
-                            }
+                            Text(strings.dataPackDownloadBtn, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                         }
+                        val (statusText, statusColor) = when (dataPackStatus) {
+                            DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
+                            DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
+                            is DataPackStatus.Applied -> {
+                                val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
+                                strings.dataPackApplied.format(dataPackStatus.packVersion, dataPackStatus.addedCount, dateClean) to StatusGreen
+                            }
+                            is DataPackStatus.UpToDate -> {
+                                val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
+                                strings.dataPackUpToDate.format(dataPackStatus.packVersion, dateClean, dataPackStatus.totalCount) to StatusGreen
+                            }
+                            is DataPackStatus.Error -> dataPackStatus.message to StatusRed
+                        }
+                        Text(
+                            text = statusText,
+                            color = statusColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
@@ -367,7 +383,10 @@ fun DeveloperScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(strings.supportedArchTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(strings.supportedBmwHeader, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                        Text(strings.architectureProtocolSubtitle, fontWeight = FontWeight.SemiBold, color = theme.primaryBright, fontSize = 12.sp)
+                    }
                     ExposedDropdownMenuBox(
                         expanded = archExpanded,
                         onExpandedChange = { archExpanded = !archExpanded }
@@ -413,7 +432,20 @@ fun DeveloperScreen(
                         SeriesFamily.G_SERIES -> "G30 / G31 (5 Series), G20 / G21 (3 Series), G05 (X5), G01 (X3), G11 (7 Series)"
                         SeriesFamily.I_SERIES -> "I01 (i3), I12 (i8), I20 (iX)"
                     }
-                    Text("${strings.supportedModelsLabel} $seriesSummary", color = theme.textPrimary, fontSize = 12.sp)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = strings.supportedModelsLabel,
+                            color = theme.textSecondary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = seriesSummary,
+                            color = theme.textPrimary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
                     matchingModels.forEach { chassis ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -453,7 +485,7 @@ fun DeveloperScreen(
                         onExpandedChange = { changelogExpanded = !changelogExpanded }
                     ) {
                         OutlinedTextField(
-                            value = "${selectedRelease.tagName} • ${selectedRelease.publishedDate}",
+                            value = "${selectedRelease.tagName} • ${selectedRelease.publishedDate.substringBefore(" ")}",
                             onValueChange = {},
                             readOnly = true,
                             singleLine = true,
@@ -471,7 +503,7 @@ fun DeveloperScreen(
                             changelogList.forEach { rel ->
                                 DropdownMenuItem(
                                     text = {
-                                        Text("${rel.tagName} • ${rel.publishedDate}", color = theme.textPrimary)
+                                        Text("${rel.tagName} • ${rel.publishedDate.substringBefore(" ")}", color = theme.textPrimary)
                                     },
                                     onClick = {
                                         selectedReleaseTag = rel.tagName
@@ -495,7 +527,7 @@ fun DeveloperScreen(
                         ) {
                             Text(selectedRelease.tagName, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
-                        Text(selectedRelease.publishedDate, color = theme.textSecondary, fontSize = 11.sp)
+                        Text(selectedRelease.publishedDate.substringBefore(" "), color = theme.textSecondary, fontSize = 11.sp)
                     }
                     Text(selectedRelease.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     Text(selectedRelease.changelog, color = theme.textSecondary, fontSize = 12.sp, lineHeight = 18.sp)

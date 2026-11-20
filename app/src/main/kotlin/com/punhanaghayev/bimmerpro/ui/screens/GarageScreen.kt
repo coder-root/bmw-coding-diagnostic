@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Search
@@ -161,23 +162,14 @@ fun GarageScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(
+                        Text(
+                            text = profile.modelDisplayName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textPrimary,
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = profile.modelDisplayName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = theme.textPrimary,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            BatterySafetyPill(voltage = profile.batteryVoltage)
-                        }
+                            maxLines = 2
+                        )
 
                         Text(
                             text = "VIN: ${profile.vin}",
@@ -190,33 +182,83 @@ fun GarageScreen(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        BatterySafetyPill(voltage = profile.batteryVoltage)
+
+                        // Vehicle Technical Information & I-Level (Expandable Show/Hide)
+                        var showVehicleInfo by remember { mutableStateOf(false) }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(theme.cardElevated)
+                                .clickable { showVehicleInfo = !showVehicleInfo }
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            VehicleStatChip(strings.chassisLabel, "${profile.chassis.code} (${profile.chassis.family.label})", Modifier.weight(1f))
-                            VehicleStatChip(strings.engineLabel, profile.engineCode, Modifier.weight(1f))
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            VehicleStatChip(strings.currentILevelLabel, profile.iLevel, Modifier.weight(1f))
-                            VehicleStatChip(strings.mileageLabel, "%,d km".format(profile.odometerKm), Modifier.weight(1f))
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            VehicleStatChip(strings.factoryILevelLabel, profile.factoryILevel, Modifier.weight(1f))
-                            VehicleStatChip(strings.typeProdLabel, "${profile.typeCode} • ${profile.productionDate}", Modifier.weight(1f))
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            VehicleStatChip(strings.paintLabel, profile.paintCode, Modifier.weight(1f))
-                            VehicleStatChip(strings.upholsteryLabel, profile.upholsteryCode, Modifier.weight(1f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = theme.primaryBright,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = strings.vehicleTechnicalDetailsTitle,
+                                        color = theme.primaryBright,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = if (showVehicleInfo) strings.hideBtn else strings.showBtn,
+                                    color = theme.textSecondary,
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                            if (showVehicleInfo) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    VehicleStatChip(strings.chassisLabel, "${profile.chassis.code} (${profile.chassis.family.label})", Modifier.weight(1f))
+                                    VehicleStatChip(strings.engineLabel, profile.engineCode, Modifier.weight(1f))
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    VehicleStatChip(strings.currentILevelLabel, profile.iLevel, Modifier.weight(1f))
+                                    VehicleStatChip(strings.mileageLabel, "%,d km".format(profile.odometerKm), Modifier.weight(1f))
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    VehicleStatChip(strings.factoryILevelLabel, profile.factoryILevel, Modifier.weight(1f))
+                                    VehicleStatChip(strings.typeProdLabel, "${profile.typeCode} • ${profile.productionDate}", Modifier.weight(1f))
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    VehicleStatChip(strings.paintLabel, profile.paintCode, Modifier.weight(1f))
+                                    VehicleStatChip(strings.upholsteryLabel, profile.upholsteryCode, Modifier.weight(1f))
+                                }
+                            }
                         }
 
                         // BimmerCode-style Vehicle Equipment (FA/VO) Overview
@@ -314,14 +356,14 @@ fun GarageScreen(
                                 QuickActionTile(
                                     icon = Icons.Default.Build,
                                     title = strings.quickDiagnostics,
-                                    badge = "${session.dtcs.size} DTC",
+                                    badge = null,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToTab(1) }
                                 )
                                 QuickActionTile(
                                     icon = Icons.Default.Speed,
                                     title = strings.quickLiveService,
-                                    badge = "${session.liveChannels.size} PID",
+                                    badge = null,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToTab(3) }
                                 )
@@ -329,7 +371,7 @@ fun GarageScreen(
                                 QuickActionTile(
                                     icon = Icons.Default.Memory,
                                     title = strings.quickCoding,
-                                    badge = "${session.presets.size} Preset",
+                                    badge = null,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToTab(2) }
                                 )
@@ -379,7 +421,7 @@ fun GarageScreen(
                     ) {
                         ModeSelectorCard(
                             title = strings.purposeDiagnosticsLabel,
-                            subtitle = strings.purposeDiagnosticsSub,
+                            subtitle = null,
                             icon = Icons.Default.Build,
                             selected = selectedPurpose == ConnectionPurpose.DIAGNOSTICS,
                             modifier = Modifier.weight(1f),
@@ -387,7 +429,7 @@ fun GarageScreen(
                         )
                         ModeSelectorCard(
                             title = strings.purposeCodingLabel,
-                            subtitle = strings.purposeCodingSub,
+                            subtitle = null,
                             icon = Icons.Default.Memory,
                             selected = selectedPurpose == ConnectionPurpose.CODING,
                             modifier = Modifier.weight(1f),
@@ -628,7 +670,7 @@ fun GarageScreen(
 @Composable
 private fun ModeSelectorCard(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     icon: ImageVector,
     selected: Boolean,
     modifier: Modifier = Modifier,
@@ -647,7 +689,7 @@ private fun ModeSelectorCard(
         shape = RoundedCornerShape(14.dp)
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = if (subtitle != null) 12.dp else 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -655,11 +697,27 @@ private fun ModeSelectorCard(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (selected) theme.primaryBright else theme.textSecondary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
-            Column {
-                Text(title, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
-                Text(subtitle, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Column(modifier = Modifier.weight(1f, fill = false)) {
+                Text(
+                    text = title,
+                    color = theme.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        color = theme.textSecondary,
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
@@ -738,32 +796,34 @@ private fun VehicleStatChip(label: String, value: String, modifier: Modifier = M
 private fun QuickActionTile(
     icon: ImageVector,
     title: String,
-    badge: String,
+    badge: String? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val theme = LocalThemeStyle.current
     Column(
         modifier = modifier
-            .height(82.dp)
+            .height(72.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(theme.cardElevated)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(22.dp))
         Spacer(Modifier.height(4.dp))
         Text(
             text = title,
             color = theme.textPrimary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
             maxLines = 1,
             softWrap = false,
             overflow = TextOverflow.Ellipsis
         )
-        Text(badge, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1)
+        if (!badge.isNullOrBlank()) {
+            Text(badge, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1)
+        }
     }
 }

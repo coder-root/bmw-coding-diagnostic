@@ -159,6 +159,14 @@ object StringsRu {
         updateNowBtn = "Обновить сейчас",
         updateLaterBtn = "Позже",
 
+        vehicleTechnicalDetailsTitle = "Технические данные автомобиля & I-Level",
+        supportedBmwHeader = "Поддерживаемые BMW",
+        architectureProtocolSubtitle = "Архитектура и протоколы",
+        operationProgressTitle = "Выполняется операция",
+        operationCompletedTitle = "Операция завершена",
+        operationFailedTitle = "Операция не удалась",
+        operationDoneBtn = "Готово / Закрыть",
+
         language = AppLanguage.RU
     )
 }

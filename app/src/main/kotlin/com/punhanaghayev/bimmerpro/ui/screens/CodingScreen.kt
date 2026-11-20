@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -597,28 +598,21 @@ private fun ExpertCafdCard(
         border = BorderStroke(1.dp, theme.outline)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${param.ecuName} • ${param.cafdFile}",
-                    color = theme.primaryBright,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask),
-                    color = theme.textSecondary,
-                    fontSize = 10.sp,
-                    maxLines = 1,
-                    softWrap = false
-                )
-            }
+            Text(
+                text = "${param.ecuName} • ${param.cafdFile}",
+                color = theme.primaryBright,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask),
+                color = theme.textSecondary,
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+                maxLines = 1
+            )
             Text("${param.section} -> ${param.functionName}", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             Text("${strings.currentValueLabel} ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

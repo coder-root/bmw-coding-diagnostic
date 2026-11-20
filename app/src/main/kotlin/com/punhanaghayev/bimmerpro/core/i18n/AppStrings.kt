@@ -182,6 +182,14 @@ data class AppStrings(
     val updateNowBtn: String,
     val updateLaterBtn: String,
 
+    val vehicleTechnicalDetailsTitle: String,
+    val supportedBmwHeader: String,
+    val architectureProtocolSubtitle: String,
+    val operationProgressTitle: String,
+    val operationCompletedTitle: String,
+    val operationFailedTitle: String,
+    val operationDoneBtn: String,
+
     val language: AppLanguage
 ) {
     fun adapterTitle(type: AdapterType): String = when (language) {

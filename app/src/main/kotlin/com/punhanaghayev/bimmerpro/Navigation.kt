@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Memory
@@ -26,8 +29,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,8 +60,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,6 +75,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.HardwarePermissionHelper
 import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
+import com.punhanaghayev.bimmerpro.data.ActiveOperationState
 import com.punhanaghayev.bimmerpro.data.ConnectionPurpose
 import com.punhanaghayev.bimmerpro.ui.BimmerViewModel
 import com.punhanaghayev.bimmerpro.ui.UiEvent
@@ -80,8 +88,11 @@ import com.punhanaghayev.bimmerpro.ui.screens.GarageScreen
 import com.punhanaghayev.bimmerpro.ui.screens.LiveServiceScreen
 import com.punhanaghayev.bimmerpro.ui.screens.PacketInspectorScreen
 import com.punhanaghayev.bimmerpro.ui.screens.SavedVehiclesScreen
+import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerProTheme
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
+import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
+import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
 enum class BimmerTab(val icon: ImageVector) {
     GARAGE(Icons.Default.DirectionsCar),
@@ -295,6 +306,16 @@ fun MainNavigation(
                             Text(strings.updateLaterBtn)
                         }
                     }
+                )
+            }
+
+            val activeOp = session.activeOperation
+            if (activeOp != null && activeOp.inProgress) {
+                OperationProgressDialog(
+                    operation = activeOp,
+                    strings = strings,
+                    theme = theme,
+                    onDismiss = viewModel::dismissActiveOperation
                 )
             }
 
@@ -513,4 +534,109 @@ fun MainNavigation(
             }
         }
     }
+}
+
+@Composable
+private fun OperationProgressDialog(
+    operation: ActiveOperationState,
+    strings: AppStrings,
+    theme: AppThemeStyle,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            if (operation.isCompleted) onDismiss()
+        },
+        properties = DialogProperties(
+            dismissOnBackPress = operation.isCompleted,
+            dismissOnClickOutside = operation.isCompleted
+        ),
+        title = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = operation.title.ifBlank { strings.operationProgressTitle },
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = theme.textPrimary
+                )
+                MSportAccentStrip()
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (!operation.isCompleted) {
+                    CircularProgressIndicator(
+                        progress = { operation.progress.coerceIn(0f, 1f) },
+                        modifier = Modifier.size(54.dp),
+                        color = theme.primaryBright,
+                        strokeWidth = 4.dp,
+                        trackColor = theme.outline.copy(alpha = 0.3f)
+                    )
+                    Text(
+                        text = "${(operation.progress.coerceIn(0f, 1f) * 100).toInt()}%",
+                        color = theme.primaryBright,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (operation.isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                        contentDescription = null,
+                        tint = if (operation.isSuccess) StatusGreen else StatusRed,
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = operation.currentStep,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (operation.isCompleted && !operation.isSuccess) StatusRed else theme.textPrimary,
+                        textAlign = TextAlign.Center
+                    )
+                    if (operation.details.isNotBlank()) {
+                        Text(
+                            text = operation.details,
+                            fontSize = 12.sp,
+                            color = theme.textSecondary,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 16.sp
+                        )
+                    }
+                    if (operation.errorMessage != null) {
+                        Text(
+                            text = operation.errorMessage,
+                            fontSize = 11.sp,
+                            color = StatusRed,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (operation.isCompleted) {
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (operation.isSuccess) theme.primary else StatusRed
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.operationDoneBtn)
+                }
+            }
+        }
+    )
 }

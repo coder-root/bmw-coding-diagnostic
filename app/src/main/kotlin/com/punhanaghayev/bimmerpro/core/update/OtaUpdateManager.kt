@@ -84,6 +84,24 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.1",
+            versionName = "1.1.1",
+            title = "BMW Expert PRO v1.1.1 — İlerleme HUD, Garage ve UI Optimizasyonları",
+            changelog = """
+                • Kodlama ve Diagnostik gerçek zamanlı ilerleme/bekleme HUD diyaloğu (adım adım ECU ve UDS gösterimi)
+                • Garage ekranında araç teknik bilgileri açılır/kapanır (Show/Hide) kartı
+                • Akü voltajı göstergesi VIN altına taşındı, model başlığı tam genişliğe kavuştu
+                • Diagnostics ve Coding seçim butonları netleştirildi, alt açıklamalar kaldırıldı
+                • Expert CAFD kartlarında Offset ve Mask bilgisi CAFD dosyası altına taşındı
+                • Supported BMW başlığı ve modeller listesi hiyerarşisi yeniden düzenlendi
+                • Sürüm geçmişi ve DTC paketi tarih gösteriminden saat kaldırıldı (sadece dd.MM.yyyy)
+                • Offline DTC Veri Paketi indirme butonu tam genişliğe alındı ve durum rozeti tek satır yapıldı
+            """.trimIndent(),
+            publishedDate = "20.11.2026",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.0",
             versionName = "1.1.0",
             title = "BMW Expert PRO v1.1.0 — Modüler i18n, Oturum Seçimi, Read-Verify & Replay",
@@ -95,7 +113,7 @@ object OtaUpdateManager {
                 • Ayrı Paket İnceleyici ve Kayıtlı Araçlar ekranları + Kırmızı, Beyaz, Siyah temalar
                 • Gerçek Gateway I-Level (0xF150), CAFD Read-Modify-Write-Verify, STN adaptif zamanlama ve DTC DataPack durumu
             """.trimIndent(),
-            publishedDate = "20.11.2026 08:30",
+            publishedDate = "20.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         ),
@@ -111,7 +129,7 @@ object OtaUpdateManager {
                 • Çevrimdışı Hata Analiz Motoru (alt sistem sağlık puanları + kestirimci bakım önerileri)
                 • On-demand indirilebilir DTC Veri Paketi (DataPackDownloader) & .txt ham trace dışa aktarma
             """.trimIndent(),
-            publishedDate = "20.11.2026 07:45",
+            publishedDate = "20.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         ),
@@ -124,7 +142,7 @@ object OtaUpdateManager {
                 • VoDependencyMapper: FA/VO opsiyon eklemede etkilenecek tüm ECU'ları otomatik hesaplama ve kodlama
                 • Kwp2000Codec: E-Serisi (E60/E90/E70) KWP2000 hata & yerel veri çözümleyici
             """.trimIndent(),
-            publishedDate = "20.11.2026 07:20",
+            publishedDate = "20.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         ),
@@ -138,7 +156,7 @@ object OtaUpdateManager {
                 • BimmerTool tarzı Trouble Code Sözlüğü & Anlık Hex DTC Arama
                 • GitHub Release APK dosyaları "BMW Expert PRO <sürüm>.apk" formatında yayınlandı
             """.trimIndent(),
-            publishedDate = "19.11.2026 08:40",
+            publishedDate = "19.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         ),
@@ -152,7 +170,7 @@ object OtaUpdateManager {
                 • UDS 0x2F Aktüatör & Parça Testleri (Radyatör Fanı, Yakıt Pompası, Egzoz Flapı, İbre Sweep, Angel Eyes)
                 • IBS Akü Sağlığı (SOC/SOH) ve son 5 günlük akü grafiği
             """.trimIndent(),
-            publishedDate = "19.11.2026 08:30",
+            publishedDate = "19.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         ),
@@ -168,7 +186,7 @@ object OtaUpdateManager {
                 • Canlı Telemetri, M-Sport Kadran, 0-100 km/h Ölçer, ZF8 Adaptasyon, Enjektör IMA & iDrive Servis Geçmişi
                 • 4 Dil (AZ / TR / EN / RU), 5 Tema ve GitHub Releases OTA Güncelleme
             """.trimIndent(),
-            publishedDate = "19.11.2026 08:20",
+            publishedDate = "19.11.2026",
             apkDownloadUrl = null,
             apkSizeBytes = 0L
         )
@@ -181,7 +199,7 @@ object OtaUpdateManager {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
             val parsed = parser.parse(isoString) ?: return@runCatching isoString.take(10)
-            SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(parsed)
+            SimpleDateFormat("dd.MM.yyyy", Locale.US).format(parsed)
         }.getOrElse {
             // Fallback for YYYY-MM-DD
             val parts = isoString.take(10).split("-")

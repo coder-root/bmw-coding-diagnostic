@@ -280,6 +280,10 @@ class BimmerViewModel(
         repository.clearProtocolLogs()
     }
 
+    fun dismissActiveOperation() {
+        repository.dismissActiveOperation()
+    }
+
     fun scanHardware() {
         viewModelScope.launch {
             repository.scanHardware()

@@ -159,6 +159,14 @@ object StringsEn {
         updateNowBtn = "Update Now",
         updateLaterBtn = "Later",
 
+        vehicleTechnicalDetailsTitle = "Vehicle Technical Specifications & I-Level",
+        supportedBmwHeader = "Supported BMW",
+        architectureProtocolSubtitle = "Architecture & Protocol Stack",
+        operationProgressTitle = "Operation in Progress",
+        operationCompletedTitle = "Operation Completed",
+        operationFailedTitle = "Operation Failed",
+        operationDoneBtn = "Done / Close",
+
         language = AppLanguage.EN
     )
 }

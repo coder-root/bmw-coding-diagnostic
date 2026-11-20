@@ -44,7 +44,7 @@ class OtaUpdateManagerTest {
         val releases = OtaUpdateManager.parseReleases(sampleJson)
         assertEquals(1, releases.size)
         assertEquals("1.1.0", releases.first().versionName)
-        assertTrue(Regex("\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}").matches(releases.first().publishedDate))
+        assertTrue(Regex("\\d{2}\\.\\d{2}\\.\\d{4}").matches(releases.first().publishedDate))
         assertTrue(releases.first().apkDownloadUrl?.endsWith(".apk") == true)
     }
 }

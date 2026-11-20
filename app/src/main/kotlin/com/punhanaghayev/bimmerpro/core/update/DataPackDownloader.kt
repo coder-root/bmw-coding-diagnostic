@@ -77,7 +77,7 @@ object DataPackDownloader {
     }
 
     fun saveCachedMeta(filesDir: File, packVersion: String, totalCount: Int): DataPackMeta {
-        val stamp = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
+        val stamp = SimpleDateFormat("dd.MM.yyyy", Locale.US).format(Date())
         val meta = DataPackMeta(packVersion = packVersion, entryCount = totalCount, updatedAt = stamp)
         val dir = File(filesDir, "datapacks").apply { mkdirs() }
         File(dir, "pack_meta.json").writeText(json.encodeToString(meta))

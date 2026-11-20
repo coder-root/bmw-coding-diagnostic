@@ -159,6 +159,14 @@ object StringsTr {
         updateNowBtn = "Şimdi Güncelle",
         updateLaterBtn = "Daha Sonra",
 
+        vehicleTechnicalDetailsTitle = "Araç Teknik Bilgileri & I-Level",
+        supportedBmwHeader = "Desteklenen BMW",
+        architectureProtocolSubtitle = "Mimarisi & Protokol Yığını",
+        operationProgressTitle = "İşlem Yürütülüyor",
+        operationCompletedTitle = "İşlem Tamamlandı",
+        operationFailedTitle = "İşlem Başarısız",
+        operationDoneBtn = "Tamam / Kapat",
+
         language = AppLanguage.TR
     )
 }

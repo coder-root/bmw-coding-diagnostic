@@ -104,7 +104,19 @@ data class BimmerSessionState(
     val discoveredUsbDevices: List<UsbKdcanDeviceInfo> = emptyList(),
     val selectedBleAddress: String? = null,
     val performanceTimer: PerformanceTimerState = PerformanceTimerState(),
-    val savedVehicles: List<SavedVehicleRecord> = emptyList()
+    val savedVehicles: List<SavedVehicleRecord> = emptyList(),
+    val activeOperation: ActiveOperationState? = null
+)
+
+data class ActiveOperationState(
+    val inProgress: Boolean = false,
+    val title: String = "",
+    val currentStep: String = "",
+    val details: String = "",
+    val progress: Float = 0f,
+    val isCompleted: Boolean = false,
+    val isSuccess: Boolean = true,
+    val errorMessage: String? = null
 )
 
 class BimmerRepository(
@@ -373,16 +385,37 @@ class BimmerRepository(
         val ecus = _session.value.ecus
         if (ecus.isEmpty()) return
 
-        _session.update { it.copy(isScanning = true, scanProgress = 0f, scanStatusText = "ECU ağacı taranıyor...") }
+        _session.update {
+            it.copy(
+                isScanning = true,
+                scanProgress = 0f,
+                scanStatusText = "ECU ağacı taranıyor...",
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Diagnostik Taraması",
+                    currentStep = "ECU İletişimi Başlatılıyor...",
+                    details = "${ecus.size} modül sorgulanacak",
+                    progress = 0.05f
+                )
+            )
+        }
         val total = ecus.size.toFloat()
 
         val sim = activeTransport as? SimulatorTransportAdapter
         if (sim != null) {
             ecus.forEachIndexed { index, ecu ->
+                val p = (index + 1) / total
                 _session.update {
                     it.copy(
-                        scanProgress = (index + 1) / total,
-                        scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & KM okunuyor..."
+                        scanProgress = p,
+                        scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & KM okunuyor...",
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Diagnostik Taraması",
+                            currentStep = "[${index + 1}/${ecus.size}] ${ecu.shortName} (${ecu.addressHex})",
+                            details = "UDS 0x19 Arıza Hafızası, SWE ve KM DID okunuyor...",
+                            progress = p
+                        )
                     )
                 }
                 udsClient.sendUds(
@@ -390,7 +423,7 @@ class BimmerRepository(
                     UdsCodec.buildReadDtcByStatusMask(0xFF),
                     "UDS 0x19 Read DTC (${ecu.shortName})"
                 )
-                delay(90)
+                delay(70)
             }
             val refreshedDtcs = sim.currentDtcs()
             val health = OfflineFaultAnalyzer.analyze(
@@ -407,7 +440,16 @@ class BimmerRepository(
                     scanStatusText = "Tarama tamamlandı (${refreshedDtcs.size} kayıt)",
                     dtcs = refreshedDtcs,
                     offlineReport = health,
-                    lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu."
+                    lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu.",
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Diagnostik Taraması",
+                        currentStep = "Tarama Başarıyla Tamamlandı!",
+                        details = "${ecus.size} ECU tarandı, ${refreshedDtcs.size} arıza kaydı tespit edildi.",
+                        progress = 1f,
+                        isCompleted = true,
+                        isSuccess = true
+                    )
                 )
             }
             return
@@ -420,10 +462,18 @@ class BimmerRepository(
         val updatedEcus = mutableListOf<EcuModule>()
         val mileageReadings = mutableListOf<MileageModuleReading>()
         ecus.forEachIndexed { index, ecu ->
+            val p = (index + 1) / total
             _session.update {
                 it.copy(
-                    scanProgress = (index + 1) / total,
-                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & SVT sorgulanıyor..."
+                    scanProgress = p,
+                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & SVT sorgulanıyor...",
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Diagnostik Taraması",
+                        currentStep = "[${index + 1}/${ecus.size}] ${ecu.shortName} (${ecu.addressHex})",
+                        details = "UDS 0x19 Fiziksel DTC, SWE ve KM DID okunuyor...",
+                        progress = p
+                    )
                 )
             }
             val resp = runCatching {
@@ -498,7 +548,16 @@ class BimmerRepository(
                 ecus = updatedEcus.ifEmpty { ecus },
                 dtcs = physicalDtcs,
                 offlineReport = physicalHealth,
-                lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu."
+                lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu.",
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Diagnostik Taraması",
+                    currentStep = "Fiziksel Tarama Tamamlandı!",
+                    details = "${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} arıza kaydı tespit edildi.",
+                    progress = 1f,
+                    isCompleted = true,
+                    isSuccess = true
+                )
             )
         }
     }
@@ -567,19 +626,67 @@ class BimmerRepository(
         val preset = state.presets.firstOrNull { it.id == presetId }
             ?: return Result.failure(IllegalArgumentException("Preset bulunamadı"))
 
-        if (profile.batteryVoltage < MIN_SAFE_CODING_VOLTAGE) {
-            return Result.failure(
-                IllegalStateException(
-                    "Güvenlik Kilidi: Akü voltajı %.1f V (< %.1f V). ECU hasarını önlemek için kodlama durduruldu."
-                        .format(profile.batteryVoltage, MIN_SAFE_CODING_VOLTAGE)
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Kodlama Motoru (Easy Mode)",
+                    currentStep = "Akü Voltajı ve Güvenlik Doğrulanıyor...",
+                    details = "Akü: %.1f V (Gereken: >= %.1f V)".format(profile.batteryVoltage, MIN_SAFE_CODING_VOLTAGE),
+                    progress = 0.20f
                 )
             )
         }
+
+        if (profile.batteryVoltage < MIN_SAFE_CODING_VOLTAGE) {
+            val err = "Güvenlik Kilidi: Akü voltajı %.1f V (< %.1f V). ECU hasarını önlemek için kodlama durduruldu."
+                .format(profile.batteryVoltage, MIN_SAFE_CODING_VOLTAGE)
+            _session.update {
+                it.copy(
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Kodlama Motoru (Easy Mode)",
+                        currentStep = "Kodlama Güvenlik Kilidi",
+                        details = err,
+                        progress = 1f,
+                        isCompleted = true,
+                        isSuccess = false,
+                        errorMessage = err
+                    )
+                )
+            }
+            return Result.failure(IllegalStateException(err))
+        }
         if (isPhysicalWriteBlocked()) {
+            _session.update {
+                it.copy(
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Kodlama Motoru (Easy Mode)",
+                        currentStep = "Fiziksel Güvenli Mod Kilitli",
+                        details = PHYSICAL_SAFE_MODE_MSG,
+                        progress = 1f,
+                        isCompleted = true,
+                        isSuccess = false,
+                        errorMessage = PHYSICAL_SAFE_MODE_MSG
+                    )
+                )
+            }
             return Result.failure(IllegalStateException(PHYSICAL_SAFE_MODE_MSG))
         }
 
         // Create automatic pre-coding backup snapshot
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Kodlama Motoru (Easy Mode)",
+                    currentStep = "Otomatik CAFD Güvenlik Yedeği Alınıyor...",
+                    details = "Modül: ${preset.targetEcu} - ${preset.cafdKey}",
+                    progress = 0.45f
+                )
+            )
+        }
         val snapshot = CodingBackupSnapshot(
             id = "bkp_${System.currentTimeMillis()}",
             timestamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date()),
@@ -590,12 +697,34 @@ class BimmerRepository(
             previousValues = mapOf(presetId to preset.currentOptionIndex)
         )
 
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Kodlama Motoru (Easy Mode)",
+                    currentStep = "UDS 0x10 Kodlama Oturumu Başlatılıyor...",
+                    details = "ECU: ${preset.targetEcu} (0x%02X)".format(preset.targetAddress),
+                    progress = 0.65f
+                )
+            )
+        }
         udsClient.sendUds(
             preset.targetAddress,
             UdsCodec.buildSessionControl(UdsSessionType.CODING),
             "UDS 0x10 Coding Session (${preset.targetEcu})"
         )
 
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Kodlama Motoru (Easy Mode)",
+                    currentStep = "UDS 0x2E FDL Parametresi Yazılıyor & Doğrulanıyor...",
+                    details = "${preset.title} -> ${preset.options[newOptionIndex]}",
+                    progress = 0.85f
+                )
+            )
+        }
         val writeResp = udsClient.sendUds(
             preset.targetAddress,
             UdsCodec.buildWriteDataById(0x3001, byteArrayOf(newOptionIndex.toByte())),
@@ -609,18 +738,42 @@ class BimmerRepository(
                 }
                 val updatedBackups = listOf(snapshot) + state.backups
                 backupStorage?.saveBackups(updatedBackups)
+                val successMsg = "${preset.targetEcu} kodlandı (${preset.options[newOptionIndex]}). Yedek alındı."
                 _session.update {
                     it.copy(
                         presets = updatedPresets,
                         backups = updatedBackups,
-                        lastOperationMessage = "${preset.targetEcu} kodlandı (${preset.options[newOptionIndex]}). Yedek alındı."
+                        lastOperationMessage = successMsg,
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Kodlama Motoru (Easy Mode)",
+                            currentStep = "Kodlama Başarıyla Tamamlandı!",
+                            details = successMsg,
+                            progress = 1.0f,
+                            isCompleted = true,
+                            isSuccess = true
+                        )
                     )
                 }
                 Result.success("Kodlama başarılı")
             }
             is UdsResponse.Negative -> {
                 val msg = "ECU Reddi (NRC 0x%02X): ${writeResp.nrc.description}".format(writeResp.nrc.code)
-                _session.update { it.copy(lastOperationMessage = msg) }
+                _session.update {
+                    it.copy(
+                        lastOperationMessage = msg,
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Kodlama Motoru (Easy Mode)",
+                            currentStep = "Kodlama Reddedildi",
+                            details = msg,
+                            progress = 1.0f,
+                            isCompleted = true,
+                            isSuccess = false,
+                            errorMessage = msg
+                        )
+                    )
+                }
                 Result.failure(IllegalStateException(msg))
             }
         }
@@ -632,13 +785,64 @@ class BimmerRepository(
         val param = state.cafdParameters.firstOrNull { it.id == paramId }
             ?: return Result.failure(IllegalArgumentException("CAFD parametresi bulunamadı"))
 
-        if (profile.batteryVoltage < MIN_SAFE_CODING_VOLTAGE) {
-            return Result.failure(
-                IllegalStateException("Güvenlik Kilidi: Akü voltajı %.1f V (< 12.2 V)!".format(profile.batteryVoltage))
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Expert CAFD/FDL Motoru",
+                    currentStep = "Akü Voltajı ve Güvenlik Doğrulanıyor...",
+                    details = "Akü: %.1f V, Modül: ${param.ecuName}".format(profile.batteryVoltage),
+                    progress = 0.15f
+                )
             )
         }
+
+        if (profile.batteryVoltage < MIN_SAFE_CODING_VOLTAGE) {
+            val err = "Güvenlik Kilidi: Akü voltajı %.1f V (< 12.2 V)!".format(profile.batteryVoltage)
+            _session.update {
+                it.copy(
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Expert CAFD/FDL Motoru",
+                        currentStep = "Voltaj Yetersiz",
+                        details = err,
+                        progress = 1f,
+                        isCompleted = true,
+                        isSuccess = false,
+                        errorMessage = err
+                    )
+                )
+            }
+            return Result.failure(IllegalStateException(err))
+        }
         if (isPhysicalWriteBlocked()) {
+            _session.update {
+                it.copy(
+                    activeOperation = ActiveOperationState(
+                        inProgress = true,
+                        title = "BMW Expert CAFD/FDL Motoru",
+                        currentStep = "Fiziksel Güvenli Mod Kilitli",
+                        details = PHYSICAL_SAFE_MODE_MSG,
+                        progress = 1f,
+                        isCompleted = true,
+                        isSuccess = false,
+                        errorMessage = PHYSICAL_SAFE_MODE_MSG
+                    )
+                )
+            }
             return Result.failure(IllegalStateException(PHYSICAL_SAFE_MODE_MSG))
+        }
+
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Expert CAFD/FDL Motoru",
+                    currentStep = "UDS 0x22 Mevcut FDL Buffer Okunuyor...",
+                    details = "ECU: ${param.ecuName} (0x%02X)".format(param.ecuAddress),
+                    progress = 0.35f
+                )
+            )
         }
 
         // Read-Modify-Write-Verify + Auto-Rollback
@@ -661,12 +865,37 @@ class BimmerRepository(
             }
         }
         val previousByte = currentBuffer[param.byteOffset]
+
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Expert CAFD/FDL Motoru",
+                    currentStep = "CAFD Bitmask Hesaplanıyor & Buffer Yamalanıyor...",
+                    details = "Offset 0x%02X, Mask 0x%02X -> Değer %s".format(param.byteOffset, param.bitMask, hexStr),
+                    progress = 0.55f
+                )
+            )
+        }
+
         val patchedBuffer = CafdBitmaskEngine.writeMaskedValue(
             codingData = currentBuffer,
             byteOffset = param.byteOffset,
             bitMask = param.bitMask,
             newValue = byteVal
         )
+
+        _session.update {
+            it.copy(
+                activeOperation = ActiveOperationState(
+                    inProgress = true,
+                    title = "BMW Expert CAFD/FDL Motoru",
+                    currentStep = "UDS 0x2E FDL Parametresi Yazılıyor...",
+                    details = "${param.functionName} = $hexStr (Byte=0x%02X)".format(patchedBuffer[param.byteOffset]),
+                    progress = 0.75f
+                )
+            )
+        }
 
         val writeResp = udsClient.sendUds(
             param.ecuAddress,
@@ -676,6 +905,17 @@ class BimmerRepository(
 
         return when (writeResp) {
             is UdsResponse.Positive -> {
+                _session.update {
+                    it.copy(
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Expert CAFD/FDL Motoru",
+                            currentStep = "UDS 0x22 Doğrulama (Verify) Yapılıyor...",
+                            details = "Geri okunan byte kontrol ediliyor...",
+                            progress = 0.90f
+                        )
+                    )
+                }
                 val readVerify = runCatching {
                     udsClient.sendUds(
                         param.ecuAddress,
@@ -696,24 +936,62 @@ class BimmerRepository(
                         )
                     }
                     val rollbackMsg = "Doğrulama Hatası (${param.ecuName}): Geri okunan byte eşleşmedi, otomatik rollback uygulandı."
-                    _session.update { it.copy(lastOperationMessage = rollbackMsg) }
+                    _session.update {
+                        it.copy(
+                            lastOperationMessage = rollbackMsg,
+                            activeOperation = ActiveOperationState(
+                                inProgress = true,
+                                title = "BMW Expert CAFD/FDL Motoru",
+                                currentStep = "Doğrulama Hatası (Rollback)",
+                                details = rollbackMsg,
+                                progress = 1f,
+                                isCompleted = true,
+                                isSuccess = false,
+                                errorMessage = rollbackMsg
+                            )
+                        )
+                    }
                     return Result.failure(IllegalStateException(rollbackMsg))
                 }
                 ecuCafdBuffers[param.ecuAddress] = patchedBuffer
                 val updated = state.cafdParameters.map {
                     if (it.id == paramId) it.copy(currentHex = hexStr, selectedOptionLabel = optionLabel) else it
                 }
+                val successMsg = "Expert FDL doğrulandı & yazıldı: ${param.functionName} -> $optionLabel"
                 _session.update {
                     it.copy(
                         cafdParameters = updated,
-                        lastOperationMessage = "Expert FDL doğrulandı & yazıldı: ${param.functionName} -> $optionLabel"
+                        lastOperationMessage = successMsg,
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Expert CAFD/FDL Motoru",
+                            currentStep = "Kodlama Başarıyla Tamamlandı & Doğrulandı!",
+                            details = successMsg,
+                            progress = 1.0f,
+                            isCompleted = true,
+                            isSuccess = true
+                        )
                     )
                 }
                 Result.success("Expert FDL doğrulandı ve yazıldı")
             }
             is UdsResponse.Negative -> {
                 val msg = "ECU Reddi (NRC 0x%02X): ${writeResp.nrc.description}".format(writeResp.nrc.code)
-                _session.update { it.copy(lastOperationMessage = msg) }
+                _session.update {
+                    it.copy(
+                        lastOperationMessage = msg,
+                        activeOperation = ActiveOperationState(
+                            inProgress = true,
+                            title = "BMW Expert CAFD/FDL Motoru",
+                            currentStep = "Yazma Reddedildi",
+                            details = msg,
+                            progress = 1f,
+                            isCompleted = true,
+                            isSuccess = false,
+                            errorMessage = msg
+                        )
+                    )
+                }
                 Result.failure(IllegalStateException(msg))
             }
         }
@@ -1064,6 +1342,10 @@ class BimmerRepository(
 
     fun clearProtocolLogs() {
         udsClient.clearLogs()
+    }
+
+    fun dismissActiveOperation() {
+        _session.update { it.copy(activeOperation = null) }
     }
 
     suspend fun scanHardware() {
