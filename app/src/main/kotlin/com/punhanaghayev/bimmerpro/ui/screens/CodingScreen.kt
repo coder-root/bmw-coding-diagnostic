@@ -425,7 +425,13 @@ fun CodingScreen(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = newVoCode,
-                                        onValueChange = { newVoCode = it.uppercase().take(6) },
+                                        onValueChange = { input ->
+                                            newVoCode = input.uppercase().take(6)
+                                            val autoDesc = VoDependencyMapper.lookupOptionDescription(newVoCode)
+                                            if (!autoDesc.startsWith("BMW Fabrika Opsiyonu") && autoDesc.isNotBlank()) {
+                                                newVoDesc = autoDesc
+                                            }
+                                        },
                                         label = { Text(strings.codeLabel, fontSize = 12.sp, maxLines = 1) },
                                         placeholder = { Text("6NS", fontSize = 12.sp) },
                                         textStyle = TextStyle(fontSize = 13.sp),

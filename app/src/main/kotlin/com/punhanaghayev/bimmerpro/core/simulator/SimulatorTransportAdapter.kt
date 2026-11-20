@@ -63,6 +63,15 @@ class SimulatorTransportAdapter(
         check(_connectionState.value is ConnectionState.Connected) { "Simulator is not connected" }
         delay(25)
 
+        val frameHex = frame.joinToString("") { "%02X".format(it) }
+        val traceResp = SimulatorTraceCatalog.findResponse(frameHex)
+        if (traceResp != null && traceResp.length % 2 == 0) {
+            val respBytes = ByteArray(traceResp.length / 2) { i ->
+                traceResp.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+            }
+            return respBytes
+        }
+
         val request = HsfzFrame.decode(frame)
         val uds = request.payload
         val targetEcu = request.targetAddress

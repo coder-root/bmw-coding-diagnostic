@@ -140,6 +140,7 @@ class BimmerRepository(
 
     init {
         appContext?.let { ctx ->
+            VoDependencyMapper.initializeFromDataPack(File(ctx.filesDir, "datapacks"))
             DataPackDownloader.loadCachedDtcPack(ctx.filesDir)?.let { pack ->
                 BmwDtcDictionary.loadExternalPack(pack)
                 val meta = DataPackDownloader.loadCachedMeta(ctx.filesDir)
@@ -1466,6 +1467,8 @@ class BimmerRepository(
         _session.update { it.copy(dataPackStatus = DataPackStatus.Downloading) }
         return runCatching {
             val pack = DataPackDownloader.downloadAndCacheDtcPack(ctx.filesDir)
+            DataPackDownloader.downloadOptionalPacks(ctx.filesDir)
+            VoDependencyMapper.initializeFromDataPack(File(ctx.filesDir, "datapacks"))
             BmwDtcDictionary.loadExternalPack(pack)
             val total = BmwDtcDictionary.totalCodeCount()
             val added = (total - prevCount).coerceAtLeast(0)

@@ -84,6 +84,24 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.2.0",
+            versionName = "1.2.0",
+            title = "BMW Expert PRO v1.2.0 — BimmerCode & E-Sys CAFD Entegrasyonu ve SALAPA Veritabanı",
+            changelog = """
+                • Orijinal BimmerCode ve E-Sys veritabanından ayıklanan gerçek CAFD & FDL parametre haritası
+                • FEM, CAS4, REM, KOMBI, HU_NBT, IHKA ve HKFM kontrol üniteleri için tam Easy Mode ve Expert Mode desteği
+                • LED ampul dönüşümü & sıcak/soğuk voltaj kontrolü (arıza lambası söndürme) parametreleri
+                • Otomatik ayna katlama, Angel Eyes parlaklığı, karşılama ışıkları ve Video in Motion menüleri
+                • 5.640 adet BMW fabrika donanım ve retrofit opsiyonunu içeren çevrimdışı SALAPA (FA/VO) kataloğu
+                • 616 adet BMW kontrol ünitesi (ECU) ve I-Level tanımlama veritabanı
+                • Gerçek araçlardan kaydedilen 499 adet HSFZ UDS paket trace'i ile çevrimdışı simülasyon ve replay motoru
+                • FA/VO kodlamada opsiyon kodu girildiğinde otomatik fabrika açıklaması tamamlama
+            """.trimIndent(),
+            publishedDate = "20.11.2026",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.1.1",
             versionName = "1.1.1",
             title = "BMW Expert PRO v1.1.1 — İlerleme HUD, Garage ve UI Optimizasyonları",

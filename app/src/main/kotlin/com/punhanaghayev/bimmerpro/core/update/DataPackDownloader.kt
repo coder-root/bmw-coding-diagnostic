@@ -54,13 +54,19 @@ sealed interface DataPackStatus {
 }
 
 /**
- * Downloads and caches modular BMW DTC & CAFD JSON data packs from GitHub/CDN
- * so the APK remains lightweight (~1.5 MB) while supporting thousands of codes.
+ * Downloads and caches modular BMW DTC, SALAPA (FA/VO), and CAFD Coding JSON data packs from GitHub/CDN
+ * so the APK remains lightweight while supporting thousands of authentic codes.
  */
 object DataPackDownloader {
 
     private const val DTC_PACK_URL =
         "https://raw.githubusercontent.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}/main/datapacks/bmw_dtc_pack.json"
+
+    private const val SALAPA_PACK_URL =
+        "https://raw.githubusercontent.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}/main/datapacks/bmw_salapa_pack.json"
+
+    private const val CODING_PACK_URL =
+        "https://raw.githubusercontent.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}/main/datapacks/bmw_coding_pack.json"
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -87,8 +93,8 @@ object DataPackDownloader {
     suspend fun downloadAndCacheDtcPack(filesDir: File): ExternalDtcPackDto = withContext(Dispatchers.IO) {
         val conn = (URL(DTC_PACK_URL).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
-            connectTimeout = 6000
-            readTimeout = 8000
+            connectTimeout = 8000
+            readTimeout = 12000
             setRequestProperty("User-Agent", "BMWExpertPRO-DataPack")
         }
         try {
@@ -101,6 +107,25 @@ object DataPackDownloader {
             parsed
         } finally {
             conn.disconnect()
+        }
+    }
+
+    suspend fun downloadOptionalPacks(filesDir: File) = withContext(Dispatchers.IO) {
+        val dir = File(filesDir, "datapacks").apply { mkdirs() }
+        for ((urlStr, fileName) in listOf(SALAPA_PACK_URL to "bmw_salapa_pack.json", CODING_PACK_URL to "bmw_coding_pack.json")) {
+            runCatching {
+                val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 8000
+                    readTimeout = 15000
+                    setRequestProperty("User-Agent", "BMWExpertPRO-DataPack")
+                }
+                if (conn.responseCode in 200..299) {
+                    val content = conn.inputStream.bufferedReader().use { it.readText() }
+                    File(dir, fileName).writeText(content)
+                }
+                conn.disconnect()
+            }
         }
     }
 }

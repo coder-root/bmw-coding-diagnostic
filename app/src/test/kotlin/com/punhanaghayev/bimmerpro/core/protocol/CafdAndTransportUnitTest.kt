@@ -106,6 +106,6 @@ class CafdAndTransportUnitTest {
         assertEquals("29F4", dtcs[1].first)
 
         val affected = VoDependencyMapper.affectedEcusFor("2TB")
-        assertEquals(3, affected.size)
+        assertEquals(4, affected.size)
     }
 }
