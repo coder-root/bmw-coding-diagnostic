@@ -69,6 +69,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.data.ConnectionPurpose
 import com.punhanaghayev.bimmerpro.ui.components.BatterySafetyPill
 import com.punhanaghayev.bimmerpro.ui.components.BmwRoundelLogo
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
@@ -81,12 +82,11 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 @Composable
 fun GarageScreen(
     session: BimmerSessionState,
-    onConnect: (AdapterType, String, Int?) -> Unit,
+    onConnect: (AdapterType, String, Int?, ConnectionPurpose) -> Unit,
     onDisconnect: () -> Unit,
     onAdjustSimVoltage: (Double) -> Unit,
     onScanHardware: () -> Unit,
     onSelectBleDevice: (String) -> Unit,
-    onRemoveSavedVehicle: (String) -> Unit,
     onNavigateToTab: (Int) -> Unit
 ) {
     val physicalAdapters = remember { AdapterType.entries.filter { !it.isSimulator } }
@@ -97,6 +97,7 @@ fun GarageScreen(
             if (session.connectionState is ConnectionState.Connected) session.selectedAdapter.isSimulator else false
         )
     }
+    var selectedPurpose by remember(session.connectionPurpose) { mutableStateOf(session.connectionPurpose) }
     var selectedPhysical by remember { mutableStateOf(AdapterType.VLINKER_BM_WIFI) }
     var selectedSimulator by remember { mutableStateOf(AdapterType.SIMULATOR_F10) }
     var dropdownExpanded by remember { mutableStateOf(false) }
@@ -127,7 +128,7 @@ fun GarageScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 ModeSelectorCard(
-                    title = "Connect",
+                    title = strings.connectModeLabel,
                     subtitle = "vLinker / ENET / BLE",
                     icon = Icons.Default.Wifi,
                     selected = !isSimulatorMode,
@@ -138,7 +139,7 @@ fun GarageScreen(
                     }
                 )
                 ModeSelectorCard(
-                    title = "Simulator",
+                    title = strings.simulatorModeLabel,
                     subtitle = "F10 / F30 / G30 / E90",
                     icon = Icons.Default.DirectionsCar,
                     selected = isSimulatorMode,
@@ -191,31 +192,31 @@ fun GarageScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            VehicleStatChip("Şasi / Seri", "${profile.chassis.code} (${profile.chassis.family.label})")
-                            VehicleStatChip("Motor", profile.engineCode)
+                            VehicleStatChip(strings.chassisLabel, "${profile.chassis.code} (${profile.chassis.family.label})", Modifier.weight(1f))
+                            VehicleStatChip(strings.engineLabel, profile.engineCode, Modifier.weight(1f))
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            VehicleStatChip("I-Level (Güncel)", profile.iLevel)
-                            VehicleStatChip("Kilometre", "%,d km".format(profile.odometerKm))
+                            VehicleStatChip(strings.currentILevelLabel, profile.iLevel, Modifier.weight(1f))
+                            VehicleStatChip(strings.mileageLabel, "%,d km".format(profile.odometerKm), Modifier.weight(1f))
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            VehicleStatChip("Fabrika I-Level", profile.factoryILevel)
-                            VehicleStatChip("Tip / Üretim", "${profile.typeCode} • ${profile.productionDate}")
+                            VehicleStatChip(strings.factoryILevelLabel, profile.factoryILevel, Modifier.weight(1f))
+                            VehicleStatChip(strings.typeProdLabel, "${profile.typeCode} • ${profile.productionDate}", Modifier.weight(1f))
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            VehicleStatChip("Renk", profile.paintCode)
-                            VehicleStatChip("Döşeme", profile.upholsteryCode)
+                            VehicleStatChip(strings.paintLabel, profile.paintCode, Modifier.weight(1f))
+                            VehicleStatChip(strings.upholsteryLabel, profile.upholsteryCode, Modifier.weight(1f))
                         }
 
                         // BimmerCode-style Vehicle Equipment (FA/VO) Overview
@@ -235,15 +236,21 @@ fun GarageScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Vehicle Equipment (${profile.faOptions.size} FA/VO Opsiyon)",
+                                    text = strings.vehicleEquipmentLabel.format(profile.faOptions.size),
                                     color = theme.primaryBright,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
+                                Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = if (showEquipment) "Gizle" else "Göster",
+                                    text = if (showEquipment) strings.hideBtn else strings.showBtn,
                                     color = theme.textSecondary,
-                                    fontSize = 11.sp
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                             if (showEquipment) {
@@ -254,12 +261,14 @@ fun GarageScreen(
                                         fontSize = 11.sp
                                     )
                                 }
-                                OutlinedButton(
-                                    onClick = { onNavigateToTab(2) },
-                                    modifier = Modifier.fillMaxWidth().height(36.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
-                                ) {
-                                    Text("Donanım / VO Kodla", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                                if (session.connectionPurpose == ConnectionPurpose.CODING) {
+                                    OutlinedButton(
+                                        onClick = { onNavigateToTab(2) },
+                                        modifier = Modifier.fillMaxWidth().height(36.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(strings.codeEquipmentBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                                    }
                                 }
                             }
                         }
@@ -301,27 +310,30 @@ fun GarageScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            QuickActionTile(
-                                icon = Icons.Default.Memory,
-                                title = strings.quickDiagnostics,
-                                badge = "${session.dtcs.size} DTC",
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToTab(1) }
-                            )
-                            QuickActionTile(
-                                icon = Icons.Default.Build,
-                                title = strings.quickCoding,
-                                badge = "${session.presets.size} Preset",
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToTab(2) }
-                            )
-                            QuickActionTile(
-                                icon = Icons.Default.Speed,
-                                title = strings.quickLiveService,
-                                badge = "${session.liveChannels.size} PID",
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToTab(3) }
-                            )
+                            if (session.connectionPurpose == ConnectionPurpose.DIAGNOSTICS) {
+                                QuickActionTile(
+                                    icon = Icons.Default.Build,
+                                    title = strings.quickDiagnostics,
+                                    badge = "${session.dtcs.size} DTC",
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToTab(1) }
+                                )
+                                QuickActionTile(
+                                    icon = Icons.Default.Speed,
+                                    title = strings.quickLiveService,
+                                    badge = "${session.liveChannels.size} PID",
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToTab(3) }
+                                )
+                            } else {
+                                QuickActionTile(
+                                    icon = Icons.Default.Memory,
+                                    title = strings.quickCoding,
+                                    badge = "${session.presets.size} Preset",
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToTab(2) }
+                                )
+                            }
                         }
 
                         OutlinedButton(
@@ -349,11 +361,39 @@ fun GarageScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = if (isSimulatorMode) "BMW Araç Simülatörü" else strings.connectionHubTitle,
+                        text = if (isSimulatorMode) strings.simulatorModeLabel else strings.connectionHubTitle,
                         style = MaterialTheme.typography.titleSmall,
                         color = theme.textPrimary,
                         fontWeight = FontWeight.Bold
                     )
+
+                    Text(
+                        text = strings.connectionPurposeTitle,
+                        color = theme.textSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ModeSelectorCard(
+                            title = strings.purposeDiagnosticsLabel,
+                            subtitle = strings.purposeDiagnosticsSub,
+                            icon = Icons.Default.Build,
+                            selected = selectedPurpose == ConnectionPurpose.DIAGNOSTICS,
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedPurpose = ConnectionPurpose.DIAGNOSTICS }
+                        )
+                        ModeSelectorCard(
+                            title = strings.purposeCodingLabel,
+                            subtitle = strings.purposeCodingSub,
+                            icon = Icons.Default.Memory,
+                            selected = selectedPurpose == ConnectionPurpose.CODING,
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedPurpose = ConnectionPurpose.CODING }
+                        )
+                    }
 
                     ExposedDropdownMenuBox(
                         expanded = dropdownExpanded,
@@ -541,14 +581,16 @@ fun GarageScreen(
                                 AdapterType.VLINKER_BM_WIFI -> onConnect(
                                     activeAdapter,
                                     vlinkerHost.trim(),
-                                    vlinkerPort.toIntOrNull() ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT
+                                    vlinkerPort.toIntOrNull() ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT,
+                                    selectedPurpose
                                 )
                                 AdapterType.ENET_WIFI, AdapterType.ENET_USB -> onConnect(
                                     activeAdapter,
                                     enetHost.trim(),
-                                    TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
+                                    TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT,
+                                    selectedPurpose
                                 )
-                                else -> onConnect(activeAdapter, "", null)
+                                else -> onConnect(activeAdapter, "", null, selectedPurpose)
                             }
                         },
                         enabled = !isConnecting,
@@ -570,58 +612,11 @@ fun GarageScreen(
                             Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = if (isSimulatorMode) "Simülatörü Başlat" else strings.connectVehicleBtn,
+                                text = if (isSimulatorMode) strings.startSimulatorBtn else strings.connectVehicleBtn,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        if (session.savedVehicles.isNotEmpty()) {
-            item {
-                Text(
-                    text = strings.savedVehiclesTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = theme.textPrimary
-                )
-            }
-            items(session.savedVehicles, key = { it.vin }) { saved ->
-                Card(
-                    modifier = Modifier.clickable {
-                        val matched = AdapterType.entries.firstOrNull { it.displayName == saved.adapterName }
-                            ?: AdapterType.SIMULATOR_F10
-                        if (matched.isSimulator) {
-                            isSimulatorMode = true
-                            selectedSimulator = matched
-                        } else {
-                            isSimulatorMode = false
-                            selectedPhysical = matched
-                        }
-                        onConnect(matched, "", null)
-                    },
-                    colors = CardDefaults.cardColors(containerColor = theme.card),
-                    border = BorderStroke(1.dp, theme.outline),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(saved.modelName, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text("VIN: ${saved.vin}", color = theme.primaryBright, fontSize = 11.sp, fontFamily = FontFamily.Monospace, maxLines = 1, softWrap = false)
-                            Text("${saved.lastConnected} • %,d km".format(saved.odometerKm), color = theme.textSecondary, fontSize = 11.sp)
-                        }
-                        IconButton(onClick = { onRemoveSavedVehicle(saved.vin) }) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = theme.textSecondary, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -731,11 +726,11 @@ private fun GarageHeroHeader(connectionState: ConnectionState) {
 }
 
 @Composable
-private fun VehicleStatChip(label: String, value: String) {
+private fun VehicleStatChip(label: String, value: String, modifier: Modifier = Modifier) {
     val theme = LocalThemeStyle.current
-    Column(modifier = Modifier.padding(vertical = 2.dp)) {
-        Text(text = label, color = theme.textSecondary, fontSize = 11.sp)
-        Text(text = value, color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    Column(modifier = modifier.padding(vertical = 2.dp)) {
+        Text(text = label, color = theme.textSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(text = value, color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

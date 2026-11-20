@@ -56,7 +56,7 @@ object BmwSimulatorCatalog {
     private fun buildF10Bundle(): SimulatedVehicleBundle {
         val readings = listOf(
             MileageModuleReading("CAS4 (Karosseri)", 148_420),
-            MileageModuleReading("KOMBI (GÃ¶sterge)", 148_420),
+            MileageModuleReading("KOMBI (Gösterge)", 148_420),
             MileageModuleReading("DDE7 (Motor ECU)", 148_412, engineHours = 3_110),
             MileageModuleReading("EGS (ZF 8HP)", 148_418)
         )
@@ -75,7 +75,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.6,
             odometerKm = 148_420,
             faOptions = listOf(
-                VehicleOrderOption("S2TB", "Sport Otomatik ÅžanzÄ±man (ZF 8HP)"),
+                VehicleOrderOption("S2TB", "Sport Otomatik Şanzıman (ZF 8HP)"),
                 VehicleOrderOption("S403", "Elektrikli Cam Sunroof"),
                 VehicleOrderOption("S552", "Adaptive LED Farlar"),
                 VehicleOrderOption("S609", "Navigation System Professional (NBT)"),
@@ -85,7 +85,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 8,
                 status = TamperStatus.VERIFIED,
-                summary = "TÃ¼m 4 ana kontrol Ã¼nitesi tutarlÄ± (Â±8 km normal senkron farkÄ±)."
+                summary = "Tüm 4 ana kontrol ünitesi tutarlı (±8 km normal senkron farkı)."
             )
         )
 
@@ -106,48 +106,48 @@ object BmwSimulatorCatalog {
                 code = "245700",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DDE7",
-                title = "PartikÃ¼l Filtresi Sistemi: SÄ±nÄ±rlÄ± Kalan Mesafe / Kurum YÃ¼kÃ¼",
-                technicalDetail = "DPF diferansiyel basÄ±nÃ§ deÄŸeri nominal aralÄ±ÄŸÄ±n Ã¼st sÄ±nÄ±rÄ±na yaklaÅŸtÄ± (kurum yÃ¼kÃ¼ 34.8 g).",
+                title = "Partikül Filtresi Sistemi: Sınırlı Kalan Mesafe / Kurum Yükü",
+                technicalDetail = "DPF diferansiyel basınç değeri nominal aralığın üst sınırına yaklaştı (kurum yükü 34.8 g).",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(148_390, 14.1, 88, 2150, 3),
-                istaGuidance = "1) CanlÄ± veriden DPF Egzoz KarÅŸÄ± BasÄ±ncÄ± ve KÃ¼l MiktarÄ±nÄ± kontrol edin.\n2) AkÃ¼/yakÄ±t yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu baÅŸlatÄ±n."
+                istaGuidance = "1) Canlı veriden DPF Egzoz Karşı Basıncı ve Kül Miktarını kontrol edin.\n2) Akü/yakıt yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu başlatın."
             ),
             DtcFault(
                 id = "f10-8040b9",
                 code = "8040B9",
                 ecuAddress = EcuAddress.FEM_CAS,
                 ecuName = "CAS4",
-                title = "AkÃ¼ DeÅŸarj / Enerji YÃ¶netimi Uyku AkÄ±mÄ± Ä°hlali",
-                technicalDetail = "AraÃ§ kilitliyken 80 mA Ã¼zeri parazit akÄ±m Ã§ekimi tespit edildi (muhtemel Comfort Access kapÄ± kolu).",
+                title = "Akü Deşarj / Enerji Yönetimi Uyku Akımı İhlali",
+                technicalDetail = "Araç kilitliyken 80 mA üzeri parazit akım çekimi tespit edildi (muhtemel Comfort Access kapı kolu).",
                 severity = DtcSeverity.INFO,
                 status = DtcStatus.INTERMITTENT,
                 freezeFrame = FreezeFrameData(148_210, 11.9, 24, 0, 2),
-                istaGuidance = "1) KapÄ± kolu Comfort Access sensÃ¶rlerinde nem/kÄ±sa devre kontrolÃ¼ yapÄ±n.\n2) AkÃ¼ yaÅŸÄ± > 4 yÄ±l ise IBS akÃ¼ saÄŸlÄ±k Ã¶lÃ§Ã¼mÃ¼nÃ¼ doÄŸrulayÄ±n."
+                istaGuidance = "1) Kapı kolu Comfort Access sensörlerinde nem/kısa devre kontrolü yapın.\n2) Akü yaşı > 4 yıl ise IBS akü sağlık ölçümünü doğrulayın."
             ),
             DtcFault(
                 id = "f10-cd9304",
                 code = "CD9304",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DDE7",
-                title = "LIN Bus: Aktif RadyatÃ¶r Panjuru HaberleÅŸme Gecikmesi",
-                technicalDetail = "GÃ¶lge hafÄ±za (Shadow Memory) â€” geÃ§ici LIN veri yolu cevapsÄ±zlÄ±ÄŸÄ±.",
+                title = "LIN Bus: Aktif Radyatör Panjuru Haberleşme Gecikmesi",
+                technicalDetail = "Gölge hafıza (Shadow Memory) — geçici LIN veri yolu cevapsızlığı.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(147_980, 13.8, 72, 1400, 1),
-                istaGuidance = "Mekanik takÄ±lma yoksa ve hata aktifleÅŸmiyorsa yalnÄ±zca bilgi amaÃ§lÄ± gÃ¶lge kaydÄ±dÄ±r; temizlenebilir."
+                istaGuidance = "Mekanik takılma yoksa ve hata aktifleşmiyorsa yalnızca bilgi amaçlı gölge kaydıdır; temizlenebilir."
             ),
             DtcFault(
                 id = "f10-e1c447",
                 code = "E1C447",
                 ecuAddress = EcuAddress.HU_MEDIA,
                 ecuName = "HU_NBT",
-                title = "MOST Ring GeÃ§ici Senkronizasyon KaybÄ±",
-                technicalDetail = "SoÄŸuk Ã§alÄ±ÅŸtÄ±rmada MOST fiber optik halka geÃ§ici olarak yeniden baÅŸlatÄ±ldÄ±.",
+                title = "MOST Ring Geçici Senkronizasyon Kaybı",
+                technicalDetail = "Soğuk çalıştırmada MOST fiber optik halka geçici olarak yeniden başlatıldı.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(146_500, 12.1, 18, 820, 1),
-                istaGuidance = "Ses/iDrive kesintisi yaÅŸanmÄ±yorsa temizlenip izlenebilir."
+                istaGuidance = "Ses/iDrive kesintisi yaşanmıyorsa temizlenip izlenebilir."
             )
         )
 
@@ -160,8 +160,8 @@ object BmwSimulatorCatalog {
             liveChannels = defaultLiveChannels(isDiesel = true),
             serviceRoutines = defaultServiceRoutines(isDiesel = true),
             serviceHistory = listOf(
-                ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor YaÄŸÄ±", "Mikrofiltre")),
-                ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor YaÄŸÄ±", "Fren HidroliÄŸi", "AraÃ§ Kontrol"))
+                ServiceHistoryRecord("sh1", "14.10.2025", 138_200, "Borusan Oto (04120)", listOf("Motor Yağı", "Mikrofiltre")),
+                ServiceHistoryRecord("sh2", "02.09.2024", 124_500, "Punhan Garage (08801)", listOf("Motor Yağı", "Fren Hidroliği", "Araç Kontrol"))
             )
         )
     }
@@ -184,7 +184,7 @@ object BmwSimulatorCatalog {
                         MileageModuleReading("DME (N20)", 112_635, engineHours = 2_410)
                     ),
                     maxDifferenceKm = 5,
-                    summary = "TÃ¼m F30 modÃ¼lleri tutarlÄ± (Â±5 km)."
+                    summary = "Tüm F30 modülleri tutarlı (±5 km)."
                 )
             ),
             liveChannels = defaultLiveChannels(isDiesel = false),
@@ -210,7 +210,7 @@ object BmwSimulatorCatalog {
                         MileageModuleReading("DME8 (B58)", 39_847, engineHours = 820)
                     ),
                     maxDifferenceKm = 3,
-                    summary = "TÃ¼m G20 modÃ¼lleri doÄŸrulandÄ± (Â±3 km)."
+                    summary = "Tüm G20 modülleri doğrulandı (±3 km)."
                 )
             )
         )
@@ -233,7 +233,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.7,
             odometerKm = 62_180,
             faOptions = listOf(
-                VehicleOrderOption("S2TB", "Sport Otomatik ÅžanzÄ±man"),
+                VehicleOrderOption("S2TB", "Sport Otomatik Şanzıman"),
                 VehicleOrderOption("S337", "M Sport Paket"),
                 VehicleOrderOption("S5AT", "Driving Assistant Plus"),
                 VehicleOrderOption("S6U3", "BMW Live Cockpit Professional (MGU)"),
@@ -243,7 +243,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 4,
                 status = TamperStatus.VERIFIED,
-                summary = "TÃ¼m G30 modÃ¼lleri doÄŸrulandÄ± (Â±4 km)."
+                summary = "Tüm G30 modülleri doğrulandı (±4 km)."
             )
         )
 
@@ -263,24 +263,24 @@ object BmwSimulatorCatalog {
                 code = "B7F8C3",
                 ecuAddress = EcuAddress.HU_MEDIA,
                 ecuName = "HU_MGU",
-                title = "RAM / TCB Acil Ã‡aÄŸrÄ± Anteni YÃ¼ksek Empedans",
-                technicalDetail = "Telematik baÄŸlantÄ± anten devresinde geÃ§ici yÃ¼ksek direnÃ§ algÄ±landÄ±.",
+                title = "RAM / TCB Acil Çağrı Anteni Yüksek Empedans",
+                technicalDetail = "Telematik bağlantı anten devresinde geçici yüksek direnç algılandı.",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.ACTIVE,
                 freezeFrame = FreezeFrameData(62_140, 14.3, 91, 1850, 4),
-                istaGuidance = "Tavan kÃ¶pekbalÄ±ÄŸÄ± anten (Shark Fin) su sÄ±zdÄ±rmazlÄ±ÄŸÄ± ve TCB yedek pil durumunu kontrol edin."
+                istaGuidance = "Tavan köpekbalığı anten (Shark Fin) su sızdırmazlığı ve TCB yedek pil durumunu kontrol edin."
             ),
             DtcFault(
                 id = "g30-1f0510",
                 code = "1F0510",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DME8",
-                title = "Valvetronic Limit Pozisyonu SoÄŸuk Ã–ÄŸrenme",
-                technicalDetail = "GÃ¶lge hafÄ±za â€” soÄŸuk baÅŸlangÄ±Ã§ta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
+                title = "Valvetronic Limit Pozisyonu Soğuk Öğrenme",
+                technicalDetail = "Gölge hafıza — soğuk başlangıçta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
                 severity = DtcSeverity.SHADOW,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(61_910, 12.4, 14, 1100, 1),
-                istaGuidance = "Normal adaptasyon kaydÄ±dÄ±r; rÃ¶lanti dalgalanmasÄ± yoksa iÅŸlem gerekmez."
+                istaGuidance = "Normal adaptasyon kaydıdır; rölanti dalgalanması yoksa işlem gerekmez."
             )
         )
 
@@ -298,7 +298,7 @@ object BmwSimulatorCatalog {
     private fun buildE90Bundle(): SimulatedVehicleBundle {
         val readings = listOf(
             MileageModuleReading("CAS3 (Car Access)", 186_400),
-            MileageModuleReading("KOMBI (GÃ¶sterge)", 186_400),
+            MileageModuleReading("KOMBI (Gösterge)", 186_400),
             MileageModuleReading("MSD81 (N54 DME)", 264_890, engineHours = 5_410),
             MileageModuleReading("DSC MK60", 264_850)
         )
@@ -312,7 +312,7 @@ object BmwSimulatorCatalog {
             batteryVoltage = 12.1,
             odometerKm = 186_400,
             faOptions = listOf(
-                VehicleOrderOption("S205", "Otomatik ÅžanzÄ±man"),
+                VehicleOrderOption("S205", "Otomatik Şanzıman"),
                 VehicleOrderOption("S337", "M Sport Paket"),
                 VehicleOrderOption("S522", "Bi-Xenon Farlar"),
                 VehicleOrderOption("S609", "CCC / CIC Navigation Professional")
@@ -321,7 +321,7 @@ object BmwSimulatorCatalog {
                 readings = readings,
                 maxDifferenceKm = 78_490,
                 status = TamperStatus.SUSPICIOUS_MISMATCH,
-                summary = "DÄ°KKAT: GÃ¶sterge/CAS (186.400 km) ile DME/DSC (264.890 km) arasÄ±nda 78.490 km fark tespit edildi!"
+                summary = "DİKKAT: Gösterge/CAS (186.400 km) ile DME/DSC (264.890 km) arasında 78.490 km fark tespit edildi!"
             )
         )
 
@@ -338,24 +338,24 @@ object BmwSimulatorCatalog {
                 code = "30FF",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "MSD81",
-                title = "Boost Pressure Control: Hedef BasÄ±nÃ§ AltÄ±nda (Turbo Underboost)",
-                technicalDetail = "Ä°stenen 0.62 bar takviye basÄ±ncÄ±na ulaÅŸÄ±lamadÄ± (Ã¶lÃ§Ã¼len 0.34 bar).",
+                title = "Boost Pressure Control: Hedef Basınç Altında (Turbo Underboost)",
+                technicalDetail = "İstenen 0.62 bar takviye basıncına ulaşılamadı (ölçülen 0.34 bar).",
                 severity = DtcSeverity.CRITICAL,
                 status = DtcStatus.ACTIVE,
                 freezeFrame = FreezeFrameData(264_840, 13.7, 94, 4820, 6),
-                istaGuidance = "1) Vakum hatlarÄ± ve basÄ±nÃ§ dÃ¶nÃ¼ÅŸtÃ¼rÃ¼cÃ¼ selenoidleri (boost solenoids) test edin.\n2) Charge-pipe Ã§atlaÄŸÄ± ve wastegate rattle boÅŸluÄŸunu kontrol edin."
+                istaGuidance = "1) Vakum hatları ve basınç dönüştürücü selenoidleri (boost solenoids) test edin.\n2) Charge-pipe çatlağı ve wastegate rattle boşluğunu kontrol edin."
             ),
             DtcFault(
                 id = "e90-29f4",
                 code = "29F4",
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "MSD81",
-                title = "Katalitik KonvertÃ¶r VerimliliÄŸi Bank 1 EÅŸik AltÄ±",
-                technicalDetail = "Lambda sonrasÄ± sensÃ¶r salÄ±nÄ±mÄ± katalizÃ¶r yaÅŸlanmasÄ±na iÅŸaret ediyor.",
+                title = "Katalitik Konvertör Verimliliği Bank 1 Eşik Altı",
+                technicalDetail = "Lambda sonrası sensör salınımı katalizör yaşlanmasına işaret ediyor.",
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(264_700, 13.9, 92, 2400, 3),
-                istaGuidance = "Downpipe/katalizÃ¶r durumu ve arka O2 sensÃ¶r tepkisini canlÄ± veride inceleyin."
+                istaGuidance = "Downpipe/katalizör durumu ve arka O2 sensör tepkisini canlı veride inceleyin."
             )
         )
 
@@ -419,24 +419,24 @@ object BmwSimulatorCatalog {
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.BATTERY_REGISTRATION,
-                title = "AkÃ¼ TanÄ±tma & Kapasite KaydÄ± (IBS)",
+                title = "Akü Tanıtma & Kapasite Kaydı (IBS)",
                 targetEcu = "DME/DDE",
                 targetAddress = EcuAddress.DME_DDE,
                 routineId = 0xF010,
-                description = "Yeni akÃ¼ deÄŸiÅŸimi sonrasÄ± ÅŸarj profilini sÄ±fÄ±rlar (Ã–rn. 90Ah AGM).",
-                warningNote = "YanlÄ±ÅŸ akÃ¼ tipi/kapasitesi seÃ§ilirse erken akÃ¼ yÄ±pranmasÄ±na yol aÃ§abilir."
+                description = "Yeni akü değişimi sonrası şarj profilini sıfırlar (Örn. 90Ah AGM).",
+                warningNote = "Yanlış akü tipi/kapasitesi seçilirse erken akü yıpranmasına yol açabilir."
             )
         )
         if (isDiesel) {
             add(
                 ServiceRoutine(
                     type = ServiceRoutineType.DPF_REGENERATION,
-                    title = "Zorunlu DPF Rejenerasyonu BaÅŸlat",
+                    title = "Zorunlu DPF Rejenerasyonu Başlat",
                     targetEcu = "DDE7",
                     targetAddress = EcuAddress.DME_DDE,
                     routineId = 0xF022,
-                    description = "Dizel PartikÃ¼l Filtresi kurum yakma dÃ¶ngÃ¼sÃ¼nÃ¼ sÃ¼rÃ¼ÅŸ iÃ§in onaylar.",
-                    warningNote = "YakÄ±t > 1/4 olmalÄ±, soÄŸutma suyu > 75Â°C ve kritik motor hatasÄ± bulunmamalÄ±dÄ±r."
+                    description = "Dizel Partikül Filtresi kurum yakma döngüsünü sürüş için onaylar.",
+                    warningNote = "Yakıt > 1/4 olmalı, soğutma suyu > 75°C ve kritik motor hatası bulunmamalıdır."
                 )
             )
         }
@@ -447,41 +447,41 @@ object BmwSimulatorCatalog {
                 targetEcu = "DSC",
                 targetAddress = EcuAddress.DSC,
                 routineId = 0xF031,
-                description = "Arka balata deÄŸiÅŸimi iÃ§in EMF kaliper pistonlarÄ±nÄ± geri Ã§eker.",
-                warningNote = "AraÃ§ dÃ¼z zeminde ve takozlu olmalÄ±dÄ±r."
+                description = "Arka balata değişimi için EMF kaliper pistonlarını geri çeker.",
+                warningNote = "Araç düz zeminde ve takozlu olmalıdır."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.CBS_OIL_RESET,
-                title = "CBS BakÄ±m SÄ±fÄ±rlama (YaÄŸ / Fren / AraÃ§ Kontrol)",
+                title = "CBS Bakım Sıfırlama (Yağ / Fren / Araç Kontrol)",
                 targetEcu = "KOMBI",
                 targetAddress = EcuAddress.KOMBI,
                 routineId = 0xF040,
-                description = "iDrive servis sayacÄ±nÄ± yeniler ve bakÄ±m geÃ§miÅŸine kayÄ±t iÅŸler.",
-                warningNote = "YalnÄ±zca bakÄ±m iÅŸlemi fiilen tamamlandÄ±ktan sonra sÄ±fÄ±rlayÄ±n."
+                description = "iDrive servis sayacını yeniler ve bakım geçmişine kayıt işler.",
+                warningNote = "Yalnızca bakım işlemi fiilen tamamlandıktan sonra sıfırlayın."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.EXHAUST_VALVE_OPEN,
-                title = "Egzoz Valfi KontrolÃ¼ (AÃ§ / Fabrika)",
+                title = "Egzoz Valfi Kontrolü (Aç / Fabrika)",
                 targetEcu = "DME/DDE",
                 targetAddress = EcuAddress.DME_DDE,
                 routineId = 0xF055,
-                description = "SaÄŸ egzoz flapÄ±nÄ± aÃ§Ä±k konumda kilitler veya fabrika haritasÄ±na dÃ¶ndÃ¼rÃ¼r.",
-                warningNote = "Kontak aÃ§Ä±k (PAD modu) veya motor rÃ¶lantide olmalÄ±dÄ±r."
+                description = "Sağ egzoz flapını açık konumda kilitler veya fabrika haritasına döndürür.",
+                warningNote = "Kontak açık (PAD modu) veya motor rölantide olmalıdır."
             )
         )
         add(
             ServiceRoutine(
                 type = ServiceRoutineType.STEERING_ANGLE_CALIBRATION,
-                title = "Direksiyon AÃ§Ä± SensÃ¶rÃ¼ (SZL) Kalibrasyonu",
+                title = "Direksiyon Açı Sensörü (SZL) Kalibrasyonu",
                 targetEcu = "DSC",
                 targetAddress = EcuAddress.DSC,
                 routineId = 0xF061,
-                description = "Rot ayarÄ± veya akÃ¼ sÃ¶kÃ¼mÃ¼ sonrasÄ± sÄ±fÄ±r noktasÄ± kalibrasyonu yapar.",
-                warningNote = "Direksiyon tam dÃ¼z konumda tutulmalÄ±dÄ±r."
+                description = "Rot ayarı veya akü sökümü sonrası sıfır noktası kalibrasyonu yapar.",
+                warningNote = "Direksiyon tam düz konumda tutulmalıdır."
             )
         )
     }

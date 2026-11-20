@@ -60,10 +60,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
-import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
+import com.punhanaghayev.bimmerpro.core.update.DataPackStatus
 import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
 import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
 import com.punhanaghayev.bimmerpro.ui.components.BmwRoundelLogo
@@ -77,8 +78,8 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeveloperScreen(
-    protocolLogs: List<ProtocolLogEntry>,
     otaState: OtaCheckState,
+    dataPackStatus: DataPackStatus,
     currentLanguage: AppLanguage,
     currentTheme: AppThemeStyle,
     isPhysicalSafeMode: Boolean,
@@ -89,15 +90,15 @@ fun DeveloperScreen(
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit,
     onTogglePhysicalWriteUnlock: (Boolean) -> Unit,
-    onDownloadDataPack: () -> Unit,
-    onExportTrace: () -> Unit,
-    onClearLogs: () -> Unit
+    onDownloadDataPack: () -> Unit
 ) {
     val strings = LocalAppStrings.current
     val theme = LocalThemeStyle.current
     var langExpanded by remember { mutableStateOf(false) }
     var themeExpanded by remember { mutableStateOf(false) }
     var changelogExpanded by remember { mutableStateOf(false) }
+    var archExpanded by remember { mutableStateOf(false) }
+    var selectedSeries by remember { mutableStateOf(SeriesFamily.F_SERIES) }
 
     val changelogList = when (otaState) {
         is OtaCheckState.UpToDate -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
@@ -286,12 +287,6 @@ fun DeveloperScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Fiziksel Araç Koruması & Offline Veri Paketi",
-                        fontWeight = FontWeight.Bold,
-                        color = theme.textPrimary,
-                        fontSize = 14.sp
-                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -299,23 +294,24 @@ fun DeveloperScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = "Fiziksel Yazma Kilidini Aç (Gelişmiş)",
+                                text = strings.physicalSafeUnlockTitle,
                                 color = if (isPhysicalWriteUnlocked) StatusRed else theme.textPrimary,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
                             )
                             Text(
                                 text = if (isPhysicalSafeMode && !isPhysicalWriteUnlocked) {
-                                    "Aktif araçta Salt-Okunur Güvenli Mod kilitli."
+                                    strings.safeModeBannerLocked
                                 } else if (isPhysicalWriteUnlocked) {
-                                    "Dikkat: Fiziksel ECU yazma komutları (0x2E/0x31/0x2F) açık!"
+                                    strings.safeModeBannerUnlocked
                                 } else {
-                                    "Simülatör modunda test yazmaları serbest; gerçek araçta varsayılan kilitlidir."
+                                    strings.disclaimerBullet1
                                 },
                                 color = theme.textSecondary,
                                 fontSize = 11.sp
                             )
                         }
+                        Spacer(Modifier.width(8.dp))
                         Switch(
                             checked = isPhysicalWriteUnlocked,
                             onCheckedChange = onTogglePhysicalWriteUnlock,
@@ -327,19 +323,111 @@ fun DeveloperScreen(
                         )
                     }
                     HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("DTC Veri Paketi ($dtcDictionaryCount kod)", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                            Text("GitHub'dan harici BMW DTC sözlüğünü indirir.", color = theme.textSecondary, fontSize = 11.sp)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("${strings.dataPackTitle} ($dtcDictionaryCount)", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                val (statusText, statusColor) = when (dataPackStatus) {
+                                    DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
+                                    DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
+                                    is DataPackStatus.Applied -> strings.dataPackApplied.format(dataPackStatus.packVersion, dataPackStatus.addedCount, dataPackStatus.updatedAt) to StatusGreen
+                                    is DataPackStatus.UpToDate -> strings.dataPackUpToDate.format(dataPackStatus.packVersion, dataPackStatus.updatedAt, dataPackStatus.totalCount) to StatusGreen
+                                    is DataPackStatus.Error -> dataPackStatus.message to StatusRed
+                                }
+                                Text(statusText, color = statusColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedButton(
+                                onClick = onDownloadDataPack,
+                                enabled = dataPackStatus !is DataPackStatus.Downloading
+                            ) {
+                                if (dataPackStatus is DataPackStatus.Downloading) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(Modifier.width(6.dp))
+                                Text(strings.dataPackDownloadBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                            }
                         }
-                        OutlinedButton(onClick = onDownloadDataPack) {
-                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("İndir", fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        // Supported BMW Architecture & Protocol Stack Dropdown (placed ABOVE Release History)
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(strings.supportedArchTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                    ExposedDropdownMenuBox(
+                        expanded = archExpanded,
+                        onExpandedChange = { archExpanded = !archExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedSeries.label,
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = { Text(strings.selectSeriesLabel) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = archExpanded) },
+                            modifier = Modifier
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = archExpanded,
+                            onDismissRequest = { archExpanded = false },
+                            modifier = Modifier.background(theme.cardElevated)
+                        ) {
+                            SeriesFamily.entries.forEach { family ->
+                                DropdownMenuItem(
+                                    text = { Text(family.label, color = theme.textPrimary) },
+                                    onClick = {
+                                        selectedSeries = family
+                                        archExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = selectedSeries.protocolStack,
+                        color = theme.primaryBright,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    val matchingModels = BmwChassis.entries.filter { it.family == selectedSeries }
+                    val seriesSummary = when (selectedSeries) {
+                        SeriesFamily.E_SERIES -> "E60 / E61 (5 Series), E90 / E91 / E92 (3 Series), E70 (X5), E87 (1 Series)"
+                        SeriesFamily.F_SERIES -> "F10 / F11 / F07 (5 Series), F30 / F31 / F34 (3 Series), F20, F15 (X5), F25 (X3)"
+                        SeriesFamily.G_SERIES -> "G30 / G31 (5 Series), G20 / G21 (3 Series), G05 (X5), G01 (X3), G11 (7 Series)"
+                        SeriesFamily.I_SERIES -> "I01 (i3), I12 (i8), I20 (iX)"
+                    }
+                    Text("${strings.supportedModelsLabel} $seriesSummary", color = theme.textPrimary, fontSize = 12.sp)
+                    matchingModels.forEach { chassis ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(theme.primary.copy(alpha = 0.25f))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(chassis.code, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            Text(chassis.modelRange, color = theme.textSecondary, fontSize = 12.sp)
                         }
                     }
                 }
@@ -411,131 +499,6 @@ fun DeveloperScreen(
                     }
                     Text(selectedRelease.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     Text(selectedRelease.changelog, color = theme.textSecondary, fontSize = 12.sp, lineHeight = 18.sp)
-                }
-            }
-        }
-
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(strings.supportedArchTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary)
-                    BmwChassis.entries.forEachIndexed { idx, chassis ->
-                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(theme.primary.copy(alpha = 0.25f))
-                                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                                ) {
-                                    Text(chassis.code, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                                }
-                                Text(chassis.modelRange, color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Text(
-                                text = chassis.family.protocolStack,
-                                color = theme.textSecondary,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(start = 2.dp)
-                            )
-                        }
-                        if (idx < BmwChassis.entries.lastIndex) {
-                            HorizontalDivider(color = theme.outline.copy(alpha = 0.5f))
-                        }
-                    }
-                }
-            }
-        }
-
-        // Clean Live HSFZ / UDS Packet Inspector Header & Logs
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(strings.packetInspectorTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
-                            Text(strings.packetInspectorSub, color = theme.textSecondary, fontSize = 11.sp)
-                        }
-                        if (protocolLogs.isNotEmpty()) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                OutlinedButton(
-                                    onClick = onExportTrace,
-                                    modifier = Modifier.height(32.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
-                                ) {
-                                    Text("Trace (.txt)", color = StatusGreen, fontSize = 11.sp, maxLines = 1, softWrap = false)
-                                }
-                                OutlinedButton(
-                                    onClick = onClearLogs,
-                                    modifier = Modifier.height(32.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
-                                ) {
-                                    Text(strings.clearBtn, color = theme.primaryBright, fontSize = 11.sp, maxLines = 1, softWrap = false)
-                                }
-                            }
-                        }
-                    }
-
-                    if (protocolLogs.isEmpty()) {
-                        Text(
-                            text = "Henüz paket trafiği yok. Garaj sekmesinden bir araç simülasyonu veya vLinker / ENET bağlantısı başlatın.",
-                            color = theme.textSecondary,
-                            fontSize = 12.sp
-                        )
-                    } else {
-                        protocolLogs.take(30).forEach { entry ->
-                            val dirColor = when {
-                                entry.isError -> StatusRed
-                                entry.direction == "TX" -> theme.primaryBright
-                                else -> StatusGreen
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(theme.cardElevated)
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(3.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "[${entry.direction}] 0x%02X".format(entry.ecuAddress),
-                                        color = dirColor,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(entry.timestamp, color = theme.textSecondary, fontSize = 10.sp)
-                                }
-                                Text(entry.summary, color = theme.textPrimary, fontSize = 11.sp)
-                                if (entry.rawHex.isNotBlank()) {
-                                    Text(
-                                        text = entry.rawHex,
-                                        color = theme.textSecondary,
-                                        fontSize = 10.sp,
-                                        fontFamily = FontFamily.Monospace
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

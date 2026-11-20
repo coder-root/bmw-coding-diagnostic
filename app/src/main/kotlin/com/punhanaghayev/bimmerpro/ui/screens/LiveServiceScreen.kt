@@ -2,6 +2,8 @@ package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Build
@@ -27,13 +33,17 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,17 +51,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
+import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
@@ -68,9 +83,12 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 fun LiveServiceScreen(
     session: BimmerSessionState,
     isLiveStreamRunning: Boolean,
+    availableLiveChannels: List<LiveSensorChannel>,
     onToggleLiveStream: () -> Unit,
     onTogglePerformanceRun: () -> Unit,
     onExportCsv: () -> Unit,
+    onSetSelectedPids: (List<String>) -> Unit,
+    onMoveLiveChannel: (Int, Int) -> Unit,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
     onRunActuatorTest: (ActuatorTestItem) -> Unit,
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
@@ -94,6 +112,79 @@ fun LiveServiceScreen(
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    var showCustomizeSensorsDialog by remember { mutableStateOf(false) }
+    var isReorderMode by remember { mutableStateOf(false) }
+
+    if (showCustomizeSensorsDialog) {
+        val currentIds = session.liveChannels.map { it.id }
+        var draftSelected by remember { mutableStateOf(currentIds.toSet()) }
+        val ecuNames = remember { BmwEcuAndPidCatalog.allBmwEcus.associateBy { it.address } }
+        val groupedPids = remember(availableLiveChannels) {
+            val catalogIds = availableLiveChannels.map { it.id }.toSet()
+            BmwEcuAndPidCatalog.livePidDefinitions
+                .filter { catalogIds.isEmpty() || it.id in catalogIds }
+                .groupBy { it.ecuAddress }
+        }
+        AlertDialog(
+            onDismissRequest = { showCustomizeSensorsDialog = false },
+            title = { Text(strings.customizeSensorsTitle, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    groupedPids.forEach { (ecuAddr, defs) ->
+                        val ecuTitle = ecuNames[ecuAddr]?.let { "${it.shortName} (0x%02X)".format(it.address) }
+                            ?: "ECU 0x%02X".format(ecuAddr)
+                        Text(ecuTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        defs.forEach { def ->
+                            val checked = def.id in draftSelected
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        draftSelected = if (checked && draftSelected.size > 1) {
+                                            draftSelected - def.id
+                                        } else {
+                                            draftSelected + def.id
+                                        }
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = { isChecked ->
+                                        draftSelected = if (!isChecked && draftSelected.size > 1) {
+                                            draftSelected - def.id
+                                        } else if (isChecked) {
+                                            draftSelected + def.id
+                                        } else draftSelected
+                                    }
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(def.name, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                    Text("DID 0x%04X • ${def.unit}".format(def.did), fontSize = 10.sp, color = theme.textSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val preservedOrder = currentIds.filter { it in draftSelected } +
+                        BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.filter { it in draftSelected && it !in currentIds }
+                    onSetSelectedPids(preservedOrder)
+                    showCustomizeSensorsDialog = false
+                }) {
+                    Text(strings.applyBtn)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomizeSensorsDialog = false }) { Text(strings.cancelBtn) }
+            }
+        )
+    }
 
     editingInjectorCyl?.let { (cyl, currentCode) ->
         var codeInput by remember { mutableStateOf(currentCode) }
@@ -301,20 +392,73 @@ fun LiveServiceScreen(
             }
         }
 
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = { showCustomizeSensorsDialog = true },
+                    modifier = Modifier.weight(1f).height(36.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(15.dp), tint = theme.primaryBright)
+                    Spacer(Modifier.width(6.dp))
+                    Text(strings.customizeSensorsBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                OutlinedButton(
+                    onClick = { isReorderMode = !isReorderMode },
+                    modifier = Modifier.height(36.dp),
+                    border = BorderStroke(1.dp, if (isReorderMode) theme.primaryBright else theme.outline),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.SwapVert, contentDescription = null, modifier = Modifier.size(15.dp), tint = theme.primaryBright)
+                    Spacer(Modifier.width(4.dp))
+                    Text(if (isReorderMode) strings.doneBtn else strings.editOrderBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                }
+            }
+            Text(
+                text = strings.reorderHintLabel,
+                color = theme.textSecondary,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
         items(session.liveChannels.chunked(2)) { pair ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 pair.forEach { channel ->
+                    val globalIndex = session.liveChannels.indexOfFirst { it.id == channel.id }
+                    var dragAccumX by remember(channel.id) { mutableFloatStateOf(0f) }
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .pointerInput(channel.id, globalIndex, session.liveChannels.size) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { dragAccumX = 0f },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        dragAccumX += dragAmount.x
+                                        if (dragAccumX > 85f && globalIndex in 0 until session.liveChannels.lastIndex) {
+                                            onMoveLiveChannel(globalIndex, globalIndex + 1)
+                                            dragAccumX = 0f
+                                        } else if (dragAccumX < -85f && globalIndex > 0) {
+                                            onMoveLiveChannel(globalIndex, globalIndex - 1)
+                                            dragAccumX = 0f
+                                        }
+                                    }
+                                )
+                            },
                         colors = CardDefaults.cardColors(containerColor = theme.card),
-                        border = BorderStroke(1.dp, theme.outline),
+                        border = BorderStroke(1.dp, if (isReorderMode) theme.primaryBright.copy(alpha = 0.6f) else theme.outline),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(channel.name, color = theme.textSecondary, fontSize = 11.sp, maxLines = 1)
+                            Text(channel.name, color = theme.textSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
                                 text = "${channel.currentValue} ${channel.unit}",
                                 color = theme.textPrimary,
@@ -328,6 +472,31 @@ fun LiveServiceScreen(
                                     .fillMaxWidth()
                                     .height(34.dp)
                             )
+                            if (isReorderMode) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    IconButton(
+                                        onClick = { if (globalIndex > 0) onMoveLiveChannel(globalIndex, globalIndex - 1) },
+                                        enabled = globalIndex > 0,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp), tint = theme.primaryBright)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            if (globalIndex in 0 until session.liveChannels.lastIndex) {
+                                                onMoveLiveChannel(globalIndex, globalIndex + 1)
+                                            }
+                                        },
+                                        enabled = globalIndex in 0 until session.liveChannels.lastIndex,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp), tint = theme.primaryBright)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -439,7 +608,7 @@ fun LiveServiceScreen(
                     Text("${routine.targetEcu} • RID 0x%04X".format(routine.routineId), color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     Text(routine.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                     Text(routine.description, color = theme.textSecondary, fontSize = 12.sp)
-                    Text("Not: ${routine.warningNote}", color = StatusAmber, fontSize = 11.sp)
+                    Text("${strings.notePrefix} ${routine.warningNote}", color = StatusAmber, fontSize = 11.sp)
                     Button(
                         onClick = {
                             if (routine.type == ServiceRoutineType.BATTERY_REGISTRATION) {
@@ -578,7 +747,7 @@ fun LiveServiceScreen(
         session.ibsHealth?.let { ibs ->
             item {
                 Spacer(Modifier.height(4.dp))
-                Text("IBS Akü Sağlığı & Son 5 Gün (%)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                Text(strings.ibsHealthTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
             }
             item {
                 Card(
@@ -588,9 +757,9 @@ fun LiveServiceScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Şarj (SOC): %${ibs.stateOfChargePercent}", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Text("Sağlık (SOH): %${ibs.stateOfHealthPercent}", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Text("${ibs.capacityAh}Ah ${if (ibs.isAgm) "AGM" else "Sulu"}", color = theme.textSecondary, fontSize = 12.sp)
+                            Text("SOC: %${ibs.stateOfChargePercent}", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("SOH: %${ibs.stateOfHealthPercent}", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("${ibs.capacityAh}Ah ${if (ibs.isAgm) "AGM" else "Wet"}", color = theme.textSecondary, fontSize = 12.sp)
                         }
                         TelemetrySparkline(
                             points = ibs.last5DaysSoc.map { it.toFloat() },
@@ -606,7 +775,7 @@ fun LiveServiceScreen(
         if (session.actuatorTests.isNotEmpty()) {
             item {
                 Spacer(Modifier.height(4.dp))
-                Text("Aktüatör & Parça Testleri (UDS 0x2F)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                Text(strings.actuatorTestsTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
             }
             items(session.actuatorTests, key = { it.id }) { test ->
                 Card(
@@ -630,7 +799,7 @@ fun LiveServiceScreen(
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
                         ) {
-                            Text("Test Et", fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
+                            Text(strings.testBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
                         }
                     }
                 }

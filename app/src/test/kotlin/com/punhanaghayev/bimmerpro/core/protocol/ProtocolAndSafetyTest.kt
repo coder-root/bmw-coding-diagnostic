@@ -12,7 +12,9 @@ import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.OfflineFaultAnalyzer
 import com.punhanaghayev.bimmerpro.core.update.ExternalDtcDto
 import com.punhanaghayev.bimmerpro.core.update.ExternalDtcPackDto
+import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -104,5 +106,69 @@ class ProtocolAndSafetyTest {
             )
         )
         assertTrue(BmwDtcDictionary.totalCodeCount() >= initialCount + 1)
+    }
+
+    @Test
+    fun `physical parser decodes i-level and live pid engineering units`() {
+        val iLevelPayload = byteArrayOf(0xF1.toByte(), 0x50) + "F010-24-03-520".toByteArray()
+        assertEquals("F010-24-03-520", PhysicalUdsParser.parseILevel(iLevelPayload))
+
+        val rpmPayload = byteArrayOf(0xF4.toByte(), 0x0C, 0x0C, 0x30) // (0x0C30 = 3120) / 4 = 780.0 rpm
+        assertEquals(780.0, PhysicalUdsParser.parsePhysicalPidValue("rpm", rpmPayload) ?: 0.0, 0.01)
+
+        val coolPayload = byteArrayOf(0xF4.toByte(), 0x05, 0x82.toByte()) // 130 - 40 = 90 C
+        assertEquals(90.0, PhysicalUdsParser.parsePhysicalPidValue("coolant", coolPayload) ?: 0.0, 0.01)
+
+        val dpfPayload = byteArrayOf(0x58, 0x22, 0x09, 0xB0.toByte()) // 2480 / 100 = 24.8 g
+        assertEquals(24.8, PhysicalUdsParser.parsePhysicalPidValue("dpf_soot", dpfPayload) ?: 0.0, 0.01)
+    }
+
+    @Test
+    fun `stn parser filters intermediate 0x78 response pending before isotp multiframe vin`() {
+        val stnRaw = """
+            6F1 F4 03 7F 22 78
+            6F1 F4 10 14 62 F1 90 57 42 41
+            6F1 F4 21 35 41 35 31 30 58 30
+            6F1 F4 22 44 39 38 31 32 34 35
+            >
+        """.trimIndent()
+        val uds = TcpElmStnTransportAdapter.parseStnUdsResponse(stnRaw)
+        assertEquals("WBA5A510X0D981245", PhysicalUdsParser.extractVin(uds))
+    }
+
+    @Test
+    fun `trace replay adapter parses rx lines and replays ecu frames offline`() = runTest {
+        val sampleTrace = """
+            # BMW Expert PRO Raw Trace
+            [08:00:01.100] TX  ECU 0x10 | UDS 0x22 Read VIN | 22 F1 90
+            [08:00:01.145] RX  0x10 | UDS +0x22 | 62 F1 90 57 42 41 35 41 35 31 30 58 30 44 39 38 31 32 34 35
+        """.trimIndent()
+        val replay = TraceReplayTransportAdapter(sampleTrace)
+        replay.connect()
+        val reqFrame = HsfzFrame(HsfzFrame.CONTROL_DIAGNOSTIC_DATA, HsfzFrame.TESTER_ADDRESS, 0x10, byteArrayOf(0x22, 0xF1.toByte(), 0x90.toByte())).encode()
+        val respFrame = HsfzFrame.decode(replay.transceive(reqFrame))
+        assertEquals("WBA5A510X0D981245", PhysicalUdsParser.extractVin(respFrame.payload))
+
+        // Also verify SessionTraceRecorder multiline format (`[RX] ECU=0x10 ... \n  HEX: ...`)
+        val recorderTrace = """
+            # BMW Expert PRO Raw Diagnostic Trace
+            08:00:01 [RX] ECU=0x10 | UDS +0x22 VIN
+              HEX: 62 F1 90 57 42 41 35 41 35 31 30 58 30 44 39 38 31 32 34 35
+        """.trimIndent()
+        val replay2 = TraceReplayTransportAdapter(recorderTrace)
+        replay2.connect()
+        val resp2 = HsfzFrame.decode(replay2.transceive(reqFrame))
+        assertEquals("WBA5A510X0D981245", PhysicalUdsParser.extractVin(resp2.payload))
+    }
+
+    @Test
+    fun `cafd read modify write verify succeeds on matching readback in simulator`() = runTest {
+        val repo = BimmerRepository()
+        repo.connect(AdapterType.SIMULATOR_F10)
+        val firstCafd = repo.session.value.cafdParameters.first()
+        val nextOpt = firstCafd.availableOptions.keys.first { it != firstCafd.selectedOptionLabel }
+        val result = repo.applyCafdParameter(firstCafd.id, nextOpt)
+        assertTrue(result.isSuccess)
+        assertEquals(nextOpt, repo.session.value.cafdParameters.first { it.id == firstCafd.id }.selectedOptionLabel)
     }
 }

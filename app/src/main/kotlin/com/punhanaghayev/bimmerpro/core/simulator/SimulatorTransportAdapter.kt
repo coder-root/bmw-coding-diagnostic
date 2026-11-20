@@ -30,6 +30,7 @@ class SimulatorTransportAdapter(
         private set
 
     private val dtcStore = mutableListOf<DtcFault>()
+    private val writtenDids = mutableMapOf<Int, ByteArray>()
     private var activeSession: Int = 0x01
 
     override suspend fun connect() {
@@ -38,6 +39,7 @@ class SimulatorTransportAdapter(
         bundle = BmwSimulatorCatalog.buildBundle(adapterType)
         dtcStore.clear()
         dtcStore.addAll(bundle.dtcs)
+        writtenDids.clear()
         activeSession = 0x01
         _connectionState.value = ConnectionState.Connected(
             adapterType = adapterType,
@@ -110,7 +112,10 @@ class SimulatorTransportAdapter(
                     (ecuKm and 0xFF).toByte()
                 )
             }
-            else -> prefix + byteArrayOf(0x00, 0x01)
+            else -> {
+                val stored = writtenDids[(targetEcu shl 16) or did]
+                prefix + (stored ?: byteArrayOf(0x00, 0x01))
+            }
         }
     }
 
@@ -151,6 +156,8 @@ class SimulatorTransportAdapter(
         if (uds.size < 4) {
             return negativeResponse(UdsServiceId.WRITE_DATA_BY_ID, UdsNegativeResponseCode.INCORRECT_MESSAGE_LENGTH)
         }
+        val did = ((uds[1].toInt() and 0xFF) shl 8) or (uds[2].toInt() and 0xFF)
+        writtenDids[(targetEcu shl 16) or did] = uds.copyOfRange(3, uds.size)
         return byteArrayOf((UdsServiceId.WRITE_DATA_BY_ID + 0x40).toByte(), uds[1], uds[2])
     }
 

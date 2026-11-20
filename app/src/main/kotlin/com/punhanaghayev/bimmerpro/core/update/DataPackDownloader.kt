@@ -3,10 +3,14 @@ package com.punhanaghayev.bimmerpro.core.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Serializable
 data class ExternalDtcDto(
@@ -23,6 +27,32 @@ data class ExternalDtcPackDto(
     val entries: List<ExternalDtcDto> = emptyList()
 )
 
+@Serializable
+data class DataPackMeta(
+    val packVersion: String,
+    val entryCount: Int,
+    val updatedAt: String
+)
+
+sealed interface DataPackStatus {
+    data object NotInstalled : DataPackStatus
+    data object Downloading : DataPackStatus
+    data class Applied(
+        val packVersion: String,
+        val addedCount: Int,
+        val totalCount: Int,
+        val updatedAt: String
+    ) : DataPackStatus
+
+    data class UpToDate(
+        val packVersion: String,
+        val totalCount: Int,
+        val updatedAt: String
+    ) : DataPackStatus
+
+    data class Error(val message: String) : DataPackStatus
+}
+
 /**
  * Downloads and caches modular BMW DTC & CAFD JSON data packs from GitHub/CDN
  * so the APK remains lightweight (~1.5 MB) while supporting thousands of codes.
@@ -38,6 +68,20 @@ object DataPackDownloader {
         val file = File(File(filesDir, "datapacks"), "bmw_dtc_pack.json")
         if (!file.exists()) return null
         return runCatching { json.decodeFromString<ExternalDtcPackDto>(file.readText()) }.getOrNull()
+    }
+
+    fun loadCachedMeta(filesDir: File): DataPackMeta? {
+        val metaFile = File(File(filesDir, "datapacks"), "pack_meta.json")
+        if (!metaFile.exists()) return null
+        return runCatching { json.decodeFromString<DataPackMeta>(metaFile.readText()) }.getOrNull()
+    }
+
+    fun saveCachedMeta(filesDir: File, packVersion: String, totalCount: Int): DataPackMeta {
+        val stamp = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
+        val meta = DataPackMeta(packVersion = packVersion, entryCount = totalCount, updatedAt = stamp)
+        val dir = File(filesDir, "datapacks").apply { mkdirs() }
+        File(dir, "pack_meta.json").writeText(json.encodeToString(meta))
+        return meta
     }
 
     suspend fun downloadAndCacheDtcPack(filesDir: File): ExternalDtcPackDto = withContext(Dispatchers.IO) {

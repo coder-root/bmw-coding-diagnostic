@@ -92,6 +92,51 @@ enum class AppThemeStyle(
         accentRed = Color(0xFFE21A22),
         textPrimary = Color(0xFF0F172A),
         textSecondary = Color(0xFF475569)
+    ),
+    MOTORSPORT_RED(
+        id = "motorsport_red",
+        displayName = "Motorsport Red",
+        isDark = true,
+        bg = Color(0xFF140709),
+        surface = Color(0xFF1E0B0E),
+        card = Color(0xFF2B1015),
+        cardElevated = Color(0xFF3B161D),
+        outline = Color(0xFF5C222B),
+        primary = Color(0xFFDC2626),
+        primaryBright = Color(0xFFF87171),
+        accentRed = Color(0xFFEF4444),
+        textPrimary = Color(0xFFFFF1F2),
+        textSecondary = Color(0xFFFCA5A5)
+    ),
+    ALPINE_WHITE(
+        id = "alpine_white",
+        displayName = "Alpine White",
+        isDark = false,
+        bg = Color(0xFFFFFFFF),
+        surface = Color(0xFFF8FAFC),
+        card = Color(0xFFFFFFFF),
+        cardElevated = Color(0xFFF1F5F9),
+        outline = Color(0xFFE2E8F0),
+        primary = Color(0xFF0066B1),
+        primaryBright = Color(0xFF0284C7),
+        accentRed = Color(0xFFE21A22),
+        textPrimary = Color(0xFF0F172A),
+        textSecondary = Color(0xFF64748B)
+    ),
+    CARBON_BLACK(
+        id = "carbon_black",
+        displayName = "Carbon Black (AMOLED)",
+        isDark = true,
+        bg = Color(0xFF000000),
+        surface = Color(0xFF09090B),
+        card = Color(0xFF121215),
+        cardElevated = Color(0xFF1C1C21),
+        outline = Color(0xFF27272A),
+        primary = Color(0xFF2563EB),
+        primaryBright = Color(0xFF60A5FA),
+        accentRed = Color(0xFFE21A22),
+        textPrimary = Color(0xFFFAFAFA),
+        textSecondary = Color(0xFFA1A1AA)
     );
 
     companion object {

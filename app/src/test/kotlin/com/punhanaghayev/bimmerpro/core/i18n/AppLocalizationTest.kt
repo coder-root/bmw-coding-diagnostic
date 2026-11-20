@@ -17,6 +17,6 @@ class AppLocalizationTest {
         assertEquals(AppLanguage.AZ, AppLanguage.fromCode("az"))
         assertEquals(AppLanguage.RU, AppLanguage.fromCode("ru"))
         assertEquals(AppLanguage.EN, AppLanguage.fromCode("en"))
-        assertEquals(AppLanguage.TR, AppLanguage.fromCode("unknown"))
+        assertEquals(AppLanguage.EN, AppLanguage.fromCode("unknown"))
     }
 }

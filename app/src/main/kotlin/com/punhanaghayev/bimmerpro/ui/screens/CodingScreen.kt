@@ -2,6 +2,7 @@ package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,23 +18,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -53,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
@@ -67,7 +74,7 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun CodingScreen(
     session: BimmerSessionState,
@@ -96,6 +103,9 @@ fun CodingScreen(
     var searchQuery by remember { mutableStateOf("") }
     var easySearchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<CodingCategory?>(null) }
+    var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedEasyModule by remember { mutableStateOf<String?>(null) }
+    var selectedCafdModule by remember { mutableStateOf<String?>(null) }
     var newVoCode by remember { mutableStateOf("") }
     var newVoDesc by remember { mutableStateOf("") }
     var pendingPresetDiff by remember { mutableStateOf<Pair<CodingPreset, Int>?>(null) }
@@ -106,17 +116,17 @@ fun CodingScreen(
         val afterLabel = preset.options.getOrNull(targetIdx) ?: "-"
         AlertDialog(
             onDismissRequest = { pendingPresetDiff = null },
-            title = { Text("Kodlama Önizlemesi (Diff)") },
+            title = { Text(strings.diffPreviewTitle) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(preset.title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("Hedef ECU: ${preset.targetEcu} (0x%02X)".format(preset.targetAddress), fontSize = 12.sp)
-                    Text("CAFD Anahtarı: ${preset.cafdKey}", fontSize = 12.sp)
-                    Text("Önce: $beforeLabel", color = StatusAmber, fontSize = 12.sp)
-                    Text("Sonra: $afterLabel", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("ECU: ${preset.targetEcu} (0x%02X)".format(preset.targetAddress), fontSize = 12.sp)
+                    Text("CAFD: ${preset.cafdKey}", fontSize = 12.sp)
+                    Text("${strings.diffBeforeLabel} $beforeLabel", color = StatusAmber, fontSize = 12.sp)
+                    Text("${strings.diffAfterLabel} $afterLabel", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     if (session.isPhysicalSafeMode && !session.isPhysicalWriteUnlocked) {
                         Text(
-                            text = "Not: Fiziksel Salt-Okunur Güvenli Mod aktif olduğu için araca yazma kilitlenecektir.",
+                            text = strings.safeModeBannerLocked,
                             color = StatusRed,
                             fontSize = 11.sp
                         )
@@ -130,12 +140,12 @@ fun CodingScreen(
                     pendingPresetDiff = null
                     onApplyPreset(p.id, idx)
                 }) {
-                    Text("Uygula")
+                    Text(strings.applyBtn)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingPresetDiff = null }) {
-                    Text("İptal")
+                    Text(strings.cancelBtn)
                 }
             }
         )
@@ -146,17 +156,17 @@ fun CodingScreen(
         val afterBytes = param.availableOptions[afterOption]?.let { "0x$it" } ?: "--"
         AlertDialog(
             onDismissRequest = { pendingCafdDiff = null },
-            title = { Text("FDL/CAFD Byte Önizlemesi (Diff)") },
+            title = { Text(strings.diffPreviewTitle) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("${param.section} -> ${param.functionName}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     Text("ECU: ${param.ecuName} • ${param.cafdFile}", fontSize = 12.sp)
                     Text("Offset: 0x%02X | Bitmask: 0x%02X".format(param.byteOffset, param.bitMask), fontSize = 12.sp)
-                    Text("Önce: ${param.selectedOptionLabel} ($beforeBytes)", color = StatusAmber, fontSize = 12.sp)
-                    Text("Sonra: $afterOption ($afterBytes)", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("${strings.diffBeforeLabel} ${param.selectedOptionLabel} ($beforeBytes)", color = StatusAmber, fontSize = 12.sp)
+                    Text("${strings.diffAfterLabel} $afterOption ($afterBytes)", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     if (session.isPhysicalSafeMode && !session.isPhysicalWriteUnlocked) {
                         Text(
-                            text = "Not: Fiziksel Salt-Okunur Güvenli Mod aktif olduğu için araca yazma kilitlenecektir.",
+                            text = strings.safeModeBannerLocked,
                             color = StatusRed,
                             fontSize = 11.sp
                         )
@@ -170,12 +180,12 @@ fun CodingScreen(
                     pendingCafdDiff = null
                     onApplyCafd(p.id, opt)
                 }) {
-                    Text("Uygula")
+                    Text(strings.applyBtn)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingCafdDiff = null }) {
-                    Text("İptal")
+                    Text(strings.cancelBtn)
                 }
             }
         )
@@ -231,44 +241,100 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = easySearchQuery,
                             onValueChange = { easySearchQuery = it },
-                            placeholder = { Text(strings.searchCodingHint, fontSize = 13.sp) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            placeholder = { Text(strings.searchCodingHint, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                     item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            item {
-                                FilterChip(
-                                    selected = selectedCategory == null,
-                                    onClick = { selectedCategory = null },
-                                    label = { Text(strings.filterAll, fontSize = 11.sp) }
+                        ExposedDropdownMenuBox(
+                            expanded = categoryDropdownExpanded,
+                            onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedCategory?.label ?: strings.filterAll,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                label = { Text(strings.categoryFilterLabel, fontSize = 11.sp) },
+                                textStyle = TextStyle(fontSize = 13.sp),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                                modifier = Modifier
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                    .fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = categoryDropdownExpanded,
+                                onDismissRequest = { categoryDropdownExpanded = false },
+                                modifier = Modifier.background(theme.cardElevated)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(strings.filterAll, color = theme.textPrimary) },
+                                    onClick = {
+                                        selectedCategory = null
+                                        categoryDropdownExpanded = false
+                                    }
                                 )
-                            }
-                            items(CodingCategory.entries) { cat ->
-                                FilterChip(
-                                    selected = selectedCategory == cat,
-                                    onClick = { selectedCategory = if (selectedCategory == cat) null else cat },
-                                    label = { Text(cat.label, fontSize = 11.sp) }
-                                )
+                                CodingCategory.entries.forEach { cat ->
+                                    DropdownMenuItem(
+                                        text = { Text(cat.label, color = theme.textPrimary) },
+                                        onClick = {
+                                            selectedCategory = cat
+                                            categoryDropdownExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                    val filteredPresets = session.presets.filter { preset ->
-                        (selectedCategory == null || preset.category == selectedCategory) &&
-                            (easySearchQuery.isBlank() ||
-                                preset.title.contains(easySearchQuery, ignoreCase = true) ||
-                                preset.description.contains(easySearchQuery, ignoreCase = true) ||
-                                preset.targetEcu.contains(easySearchQuery, ignoreCase = true))
-                    }
-                    items(filteredPresets, key = { it.id }) { preset ->
-                        PresetCodingCard(preset = preset, enabled = voltageSafe, onSelectOption = { idx ->
-                            if (idx != preset.currentOptionIndex) {
-                                pendingPresetDiff = preset to idx
+
+                    val showModuleList = selectedEasyModule == null && easySearchQuery.isBlank() && selectedCategory == null
+                    if (showModuleList) {
+                        val easyModules = session.presets.groupBy { it.targetEcu }
+                        item {
+                            Text(strings.codingModulesHint, color = theme.textSecondary, fontSize = 12.sp)
+                        }
+                        items(easyModules.keys.toList(), key = { "easy_$it" }) { ecuName ->
+                            val list = easyModules[ecuName].orEmpty()
+                            val addr = list.firstOrNull()?.targetAddress ?: 0
+                            CodingModuleSelectorCard(
+                                moduleName = ecuName,
+                                addressHex = "0x%02X".format(addr),
+                                itemCount = list.size,
+                                onClick = { selectedEasyModule = ecuName }
+                            )
+                        }
+                    } else {
+                        if (selectedEasyModule != null) {
+                            item {
+                                OutlinedButton(
+                                    onClick = { selectedEasyModule = null },
+                                    modifier = Modifier.height(34.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("${strings.backToModulesBtn} ($selectedEasyModule)", fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
                             }
-                        })
+                        }
+                        val filteredPresets = session.presets.filter { preset ->
+                            (selectedEasyModule == null || preset.targetEcu == selectedEasyModule) &&
+                                (selectedCategory == null || preset.category == selectedCategory) &&
+                                (easySearchQuery.isBlank() ||
+                                    preset.title.contains(easySearchQuery, ignoreCase = true) ||
+                                    preset.description.contains(easySearchQuery, ignoreCase = true) ||
+                                    preset.targetEcu.contains(easySearchQuery, ignoreCase = true))
+                        }
+                        items(filteredPresets, key = { it.id }) { preset ->
+                            PresetCodingCard(preset = preset, enabled = voltageSafe, onSelectOption = { idx ->
+                                if (idx != preset.currentOptionIndex) {
+                                    pendingPresetDiff = preset to idx
+                                }
+                            })
+                        }
                     }
                 }
 
@@ -277,25 +343,57 @@ fun CodingScreen(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text(strings.searchCafdHint, fontSize = 13.sp) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            placeholder = { Text(strings.searchCafdHint, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             textStyle = TextStyle(fontSize = 13.sp),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    val filtered = session.cafdParameters.filter {
-                        searchQuery.isBlank() ||
-                            it.functionName.contains(searchQuery, ignoreCase = true) ||
-                            it.ecuName.contains(searchQuery, ignoreCase = true) ||
-                            it.cafdFile.contains(searchQuery, ignoreCase = true)
-                    }
-                    items(filtered, key = { it.id }) { param ->
-                        ExpertCafdCard(param = param, enabled = voltageSafe, onApply = { optLabel ->
-                            if (optLabel != param.selectedOptionLabel) {
-                                pendingCafdDiff = param to optLabel
+                    val showCafdModules = selectedCafdModule == null && searchQuery.isBlank()
+                    if (showCafdModules) {
+                        val cafdModules = session.cafdParameters.groupBy { it.ecuName }
+                        item {
+                            Text(strings.codingModulesHint, color = theme.textSecondary, fontSize = 12.sp)
+                        }
+                        items(cafdModules.keys.toList(), key = { "cafd_$it" }) { ecuName ->
+                            val list = cafdModules[ecuName].orEmpty()
+                            val addr = list.firstOrNull()?.ecuAddress ?: 0
+                            CodingModuleSelectorCard(
+                                moduleName = ecuName,
+                                addressHex = "0x%02X".format(addr),
+                                itemCount = list.size,
+                                onClick = { selectedCafdModule = ecuName }
+                            )
+                        }
+                    } else {
+                        if (selectedCafdModule != null) {
+                            item {
+                                OutlinedButton(
+                                    onClick = { selectedCafdModule = null },
+                                    modifier = Modifier.height(34.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("${strings.backToModulesBtn} ($selectedCafdModule)", fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
                             }
-                        })
+                        }
+                        val filtered = session.cafdParameters.filter { param ->
+                            (selectedCafdModule == null || param.ecuName == selectedCafdModule) &&
+                                (searchQuery.isBlank() ||
+                                    param.functionName.contains(searchQuery, ignoreCase = true) ||
+                                    param.ecuName.contains(searchQuery, ignoreCase = true) ||
+                                    param.cafdFile.contains(searchQuery, ignoreCase = true))
+                        }
+                        items(filtered, key = { it.id }) { param ->
+                            ExpertCafdCard(param = param, enabled = voltageSafe, onApply = { optLabel ->
+                                if (optLabel != param.selectedOptionLabel) {
+                                    pendingCafdDiff = param to optLabel
+                                }
+                            })
+                        }
                     }
                 }
 
@@ -499,9 +597,27 @@ private fun ExpertCafdCard(
         border = BorderStroke(1.dp, theme.outline)
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${param.ecuName} • ${param.cafdFile}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text("Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask), color = theme.textSecondary, fontSize = 10.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${param.ecuName} • ${param.cafdFile}",
+                    color = theme.primaryBright,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Offset 0x%02X | Mask 0x%02X".format(param.byteOffset, param.bitMask),
+                    color = theme.textSecondary,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
             Text("${param.section} -> ${param.functionName}", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             Text("${strings.currentValueLabel} ${param.selectedOptionLabel}", color = StatusGreen, fontSize = 12.sp)
@@ -517,6 +633,48 @@ private fun ExpertCafdCard(
                         Text(optionLabel, fontSize = 11.sp, color = theme.textPrimary)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CodingModuleSelectorCard(
+    moduleName: String,
+    addressHex: String,
+    itemCount: Int,
+    onClick: () -> Unit
+) {
+    val theme = LocalThemeStyle.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.Memory, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
+                Column {
+                    Text(moduleName, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("ECU $addressHex", color = theme.textSecondary, fontSize = 11.sp)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(theme.primary.copy(alpha = 0.2f))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text("$itemCount", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

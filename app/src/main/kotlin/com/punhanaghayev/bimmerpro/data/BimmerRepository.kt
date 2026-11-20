@@ -47,6 +47,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanTransportAdapter
 import com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog
 import com.punhanaghayev.bimmerpro.core.simulator.SimulatorTransportAdapter
 import com.punhanaghayev.bimmerpro.core.update.DataPackDownloader
+import com.punhanaghayev.bimmerpro.core.update.DataPackStatus
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,8 +67,14 @@ data class PerformanceTimerState(
     val bestZeroToHundredSec: Double? = null
 )
 
+enum class ConnectionPurpose {
+    DIAGNOSTICS,
+    CODING
+}
+
 data class BimmerSessionState(
     val selectedAdapter: AdapterType = AdapterType.SIMULATOR_F10,
+    val connectionPurpose: ConnectionPurpose = ConnectionPurpose.DIAGNOSTICS,
     val connectionState: ConnectionState = ConnectionState.Disconnected,
     val vehicleProfile: VehicleProfile? = null,
     val ecus: List<EcuModule> = emptyList(),
@@ -86,6 +93,7 @@ data class BimmerSessionState(
     val isPhysicalSafeMode: Boolean = true,
     val isPhysicalWriteUnlocked: Boolean = false,
     val dtcDictionaryCount: Int = BmwDtcDictionary.totalCodeCount(),
+    val dataPackStatus: DataPackStatus = DataPackStatus.NotInstalled,
     val isScanning: Boolean = false,
     val scanProgress: Float = 0f,
     val scanStatusText: String = "",
@@ -109,6 +117,8 @@ class BimmerRepository(
     private val udsClient = UdsClient { activeTransport }
     private val ecuCafdBuffers = mutableMapOf<Int, ByteArray>()
 
+    private var cachedLiveChannelsCatalog: List<LiveSensorChannel> = emptyList()
+
     private val _session = MutableStateFlow(
         BimmerSessionState(
             backups = backupStorage?.loadBackups().orEmpty(),
@@ -120,7 +130,18 @@ class BimmerRepository(
         appContext?.let { ctx ->
             DataPackDownloader.loadCachedDtcPack(ctx.filesDir)?.let { pack ->
                 BmwDtcDictionary.loadExternalPack(pack)
-                _session.update { it.copy(dtcDictionaryCount = BmwDtcDictionary.totalCodeCount()) }
+                val meta = DataPackDownloader.loadCachedMeta(ctx.filesDir)
+                val total = BmwDtcDictionary.totalCodeCount()
+                _session.update {
+                    it.copy(
+                        dtcDictionaryCount = total,
+                        dataPackStatus = DataPackStatus.UpToDate(
+                            packVersion = meta?.packVersion ?: pack.packVersion,
+                            totalCount = total,
+                            updatedAt = meta?.updatedAt ?: "-"
+                        )
+                    )
+                }
             }
         }
     }
@@ -134,7 +155,8 @@ class BimmerRepository(
         adapterType: AdapterType,
         customHost: String = "",
         customPort: Int? = null,
-        bleAddress: String? = _session.value.selectedBleAddress
+        bleAddress: String? = _session.value.selectedBleAddress,
+        purpose: ConnectionPurpose = _session.value.connectionPurpose
     ) {
         activeTransport.disconnect()
         activeTransport = when (adapterType) {
@@ -177,6 +199,7 @@ class BimmerRepository(
         _session.update {
             it.copy(
                 selectedAdapter = adapterType,
+                connectionPurpose = purpose,
                 connectionState = ConnectionState.Connecting(adapterType.displayName),
                 lastOperationMessage = null
             )
@@ -205,22 +228,38 @@ class BimmerRepository(
                     "UDS 0x22 Read Battery Voltage"
                 )
             }.getOrNull()
+            val iLevelResp = runCatching {
+                udsClient.sendUds(
+                    EcuAddress.ZGW_BDC,
+                    UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_I_LEVEL),
+                    "UDS 0x22 Read Gateway I-Level (0xF150)"
+                )
+            }.getOrNull()
+            val odoResp = runCatching {
+                udsClient.sendUds(
+                    EcuAddress.ZGW_BDC,
+                    UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_ODOMETER),
+                    "UDS 0x22 Read Gateway Odometer"
+                )
+            }.getOrNull()
 
             val sim = activeTransport as? SimulatorTransportAdapter
             if (sim != null) {
                 val bundle = sim.bundle
                 val savedList = saveConnectedVehicle(bundle.profile, adapterType)
                 val dtcs = sim.currentDtcs()
-                val health = OfflineFaultAnalyzer.analyze(dtcs, bundle.liveChannels, bundle.ibsHealth, bundle.profile.batteryVoltage, bundle.zfAdaptations)
+                val customChannels = applySavedLivePidOrder(bundle.liveChannels)
+                val health = OfflineFaultAnalyzer.analyze(dtcs, customChannels, bundle.ibsHealth, bundle.profile.batteryVoltage, bundle.zfAdaptations)
                 _session.update {
                     it.copy(
                         connectionState = connState,
+                        connectionPurpose = purpose,
                         vehicleProfile = bundle.profile,
                         ecus = bundle.ecus,
                         dtcs = dtcs,
                         presets = bundle.presets,
                         cafdParameters = bundle.cafdParameters,
-                        liveChannels = bundle.liveChannels,
+                        liveChannels = customChannels,
                         serviceRoutines = bundle.serviceRoutines,
                         serviceHistory = bundle.serviceHistory,
                         zfAdaptations = bundle.zfAdaptations,
@@ -242,6 +281,12 @@ class BimmerRepository(
                 val udsVoltage = (voltResp as? UdsResponse.Positive)?.payload?.let { p ->
                     if (p.size >= 4) (((p[2].toInt() and 0xFF) shl 8) or (p[3].toInt() and 0xFF)) / 1000.0 else null
                 }
+                val liveILevel = (iLevelResp as? UdsResponse.Positive)
+                    ?.let { PhysicalUdsParser.parseILevel(it.payload) }
+                    ?: "Live Gateway"
+                val liveOdoKm = (odoResp as? UdsResponse.Positive)
+                    ?.let { PhysicalUdsParser.parseOdometerKm(it.payload) }
+                    ?: 0
                 val batteryVolts = vlinkerVoltage ?: udsVoltage ?: 12.6
                 val template = BmwSimulatorCatalog.buildBundle(
                     when (inferredChassis) {
@@ -259,31 +304,33 @@ class BimmerRepository(
                     modelDisplayName = "BMW ${inferredChassis.code} (${adapterType.displayName})",
                     engineCode = "Fiziksel OBD/UDS Bağlantısı",
                     productionYear = 2015,
-                    iLevel = "Live Gateway",
+                    iLevel = liveILevel,
                     batteryVoltage = batteryVolts,
-                    odometerKm = 0,
+                    odometerKm = liveOdoKm,
                     faOptions = listOf(VehicleOrderOption("LIVE", "Canlı ECU Okuması Aktif")),
                     mileageVerification = MileageVerificationResult(
-                        readings = listOf(MileageModuleReading("Gateway", 0)),
+                        readings = listOf(MileageModuleReading("ZGW / Gateway", liveOdoKm)),
                         maxDifferenceKm = 0,
                         status = TamperStatus.VERIFIED,
-                        summary = "Fiziksel araç bağlı — tam modül taraması için Diagnostik -> Tüm ECU Tara çalıştırın."
+                        summary = "Fiziksel araç bağlı — tam modül & KM doğrulaması için Diagnostik -> Tüm ECU Tara çalıştırın."
                     )
                 )
                 val savedList = saveConnectedVehicle(physicalProfile, adapterType)
                 val fullEcuTree = BmwEcuAndPidCatalog.allBmwEcus.map { def ->
                     EcuModule(def.address, def.shortName, def.fullName, "Live", "Live", null, CodingCapability.FDL_ONLY, 0, 0)
                 }
-                val health = OfflineFaultAnalyzer.analyze(emptyList(), template.liveChannels, null, batteryVolts, emptyList())
+                val customChannels = applySavedLivePidOrder(template.liveChannels)
+                val health = OfflineFaultAnalyzer.analyze(emptyList(), customChannels, null, batteryVolts, emptyList())
                 _session.update {
                     it.copy(
                         connectionState = connState,
+                        connectionPurpose = purpose,
                         vehicleProfile = physicalProfile,
                         ecus = fullEcuTree,
                         dtcs = emptyList(),
                         presets = template.presets,
                         cafdParameters = template.cafdParameters,
-                        liveChannels = template.liveChannels,
+                        liveChannels = customChannels,
                         serviceRoutines = template.serviceRoutines,
                         serviceHistory = emptyList(),
                         zfAdaptations = emptyList(),
@@ -312,8 +359,12 @@ class BimmerRepository(
         _session.update {
             BimmerSessionState(
                 selectedAdapter = it.selectedAdapter,
+                connectionPurpose = it.connectionPurpose,
                 connectionState = ConnectionState.Disconnected,
-                dtcDictionaryCount = it.dtcDictionaryCount
+                dtcDictionaryCount = it.dtcDictionaryCount,
+                dataPackStatus = it.dataPackStatus,
+                savedVehicles = it.savedVehicles,
+                backups = it.backups
             )
         }
     }
@@ -362,16 +413,17 @@ class BimmerRepository(
             return
         }
 
-        // Physical vehicle scan: query each ECU with UDS 0x19 0x02, keep responding ECUs & decode real DTC bytes
+        // Physical vehicle scan: query each ECU with UDS 0x19 0x02 + SWE/Odometer, keep responding ECUs
         val physicalDtcs = mutableListOf<DtcFault>()
         val odo = _session.value.vehicleProfile?.odometerKm ?: 0
         val volts = _session.value.vehicleProfile?.batteryVoltage ?: 12.6
         val updatedEcus = mutableListOf<EcuModule>()
+        val mileageReadings = mutableListOf<MileageModuleReading>()
         ecus.forEachIndexed { index, ecu ->
             _session.update {
                 it.copy(
                     scanProgress = (index + 1) / total,
-                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC sorgulanıyor..."
+                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & SVT sorgulanıyor..."
                 )
             }
             val resp = runCatching {
@@ -384,14 +436,50 @@ class BimmerRepository(
             if (resp is UdsResponse.Positive) {
                 val parsed = PhysicalUdsParser.parseDtcRecords(ecu.address, ecu.shortName, resp.payload, odo, volts)
                 physicalDtcs.addAll(parsed)
+                val swResp = runCatching {
+                    udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(0xF195), "UDS 0x22 SWE (${ecu.shortName})")
+                }.getOrNull() as? UdsResponse.Positive
+                val swVersion = swResp?.let { PhysicalUdsParser.parseSoftwareVersion(it.payload) } ?: ecu.softwareVersion
+                val ecuOdoResp = runCatching {
+                    udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_ODOMETER), "UDS 0x22 KM (${ecu.shortName})")
+                }.getOrNull() as? UdsResponse.Positive
+                val ecuKm = ecuOdoResp?.let { PhysicalUdsParser.parseOdometerKm(it.payload) }
+                if (ecuKm != null && ecuKm > 0) {
+                    mileageReadings.add(MileageModuleReading(ecu.shortName, ecuKm))
+                }
                 updatedEcus.add(
                     ecu.copy(
+                        softwareVersion = swVersion,
+                        reportedMileageKm = ecuKm ?: ecu.reportedMileageKm,
                         activeDtcCount = parsed.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
                         shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
                     )
                 )
             } else if (ecu.address == EcuAddress.ZGW_BDC || ecu.address == EcuAddress.DME_DDE) {
                 updatedEcus.add(ecu)
+            }
+        }
+        val updatedProfile = _session.value.vehicleProfile?.let { prof ->
+            if (mileageReadings.size >= 2) {
+                val maxKm = mileageReadings.maxOf { it.mileageKm }
+                val minKm = mileageReadings.minOf { it.mileageKm }
+                val diff = maxKm - minKm
+                val status = when {
+                    diff <= 10 -> TamperStatus.VERIFIED
+                    diff <= 150 -> TamperStatus.MINOR_DRIFT
+                    else -> TamperStatus.SUSPICIOUS_MISMATCH
+                }
+                prof.copy(
+                    odometerKm = maxKm,
+                    mileageVerification = MileageVerificationResult(
+                        readings = mileageReadings,
+                        maxDifferenceKm = diff,
+                        status = status,
+                        summary = "${mileageReadings.size} ECU'dan KM okundu (maks fark: $diff km)."
+                    )
+                )
+            } else {
+                prof
             }
         }
         val physicalHealth = OfflineFaultAnalyzer.analyze(
@@ -406,6 +494,7 @@ class BimmerRepository(
                 isScanning = false,
                 scanProgress = 1f,
                 scanStatusText = "Fiziksel tarama tamamlandı (${updatedEcus.size} ECU, ${physicalDtcs.size} kayıt)",
+                vehicleProfile = updatedProfile ?: it.vehicleProfile,
                 ecus = updatedEcus.ifEmpty { ecus },
                 dtcs = physicalDtcs,
                 offlineReport = physicalHealth,
@@ -552,9 +641,26 @@ class BimmerRepository(
             return Result.failure(IllegalStateException(PHYSICAL_SAFE_MODE_MSG))
         }
 
+        // Read-Modify-Write-Verify + Auto-Rollback
+        val readBefore = runCatching {
+            udsClient.sendUds(
+                param.ecuAddress,
+                UdsCodec.buildReadDataById(0x3002),
+                "UDS 0x22 Read FDL Before (${param.ecuName})"
+            )
+        }.getOrNull() as? UdsResponse.Positive
+
         val hexStr = param.availableOptions[optionLabel] ?: param.currentHex
         val byteVal = hexStr.removePrefix("0x").toIntOrNull(16) ?: 0
         val currentBuffer = ecuCafdBuffers.getOrPut(param.ecuAddress) { ByteArray(128) }
+        val payloadBefore = readBefore?.payload
+        if (payloadBefore != null && payloadBefore.size >= 4) {
+            val remoteOffset = payloadBefore[2].toInt() and 0xFF
+            if (remoteOffset in currentBuffer.indices && remoteOffset == param.byteOffset) {
+                currentBuffer[remoteOffset] = payloadBefore[3]
+            }
+        }
+        val previousByte = currentBuffer[param.byteOffset]
         val patchedBuffer = CafdBitmaskEngine.writeMaskedValue(
             codingData = currentBuffer,
             byteOffset = param.byteOffset,
@@ -570,6 +676,29 @@ class BimmerRepository(
 
         return when (writeResp) {
             is UdsResponse.Positive -> {
+                val readVerify = runCatching {
+                    udsClient.sendUds(
+                        param.ecuAddress,
+                        UdsCodec.buildReadDataById(0x3002),
+                        "UDS 0x22 Verify FDL (${param.ecuName})"
+                    )
+                }.getOrNull() as? UdsResponse.Positive
+                val verifyPayload = readVerify?.payload
+                if (verifyPayload != null && verifyPayload.size >= 4 &&
+                    (verifyPayload[2].toInt() and 0xFF) == param.byteOffset &&
+                    verifyPayload[3] != patchedBuffer[param.byteOffset]
+                ) {
+                    runCatching {
+                        udsClient.sendUds(
+                            param.ecuAddress,
+                            UdsCodec.buildWriteDataById(0x3002, byteArrayOf(param.byteOffset.toByte(), previousByte)),
+                            "UDS 0x2E Rollback FDL (${param.ecuName})"
+                        )
+                    }
+                    val rollbackMsg = "Doğrulama Hatası (${param.ecuName}): Geri okunan byte eşleşmedi, otomatik rollback uygulandı."
+                    _session.update { it.copy(lastOperationMessage = rollbackMsg) }
+                    return Result.failure(IllegalStateException(rollbackMsg))
+                }
                 ecuCafdBuffers[param.ecuAddress] = patchedBuffer
                 val updated = state.cafdParameters.map {
                     if (it.id == paramId) it.copy(currentHex = hexStr, selectedOptionLabel = optionLabel) else it
@@ -577,10 +706,10 @@ class BimmerRepository(
                 _session.update {
                     it.copy(
                         cafdParameters = updated,
-                        lastOperationMessage = "Expert FDL yazıldı: ${param.functionName} -> $optionLabel"
+                        lastOperationMessage = "Expert FDL doğrulandı & yazıldı: ${param.functionName} -> $optionLabel"
                     )
                 }
-                Result.success("Expert FDL yazıldı")
+                Result.success("Expert FDL doğrulandı ve yazıldı")
             }
             is UdsResponse.Negative -> {
                 val msg = "ECU Reddi (NRC 0x%02X): ${writeResp.nrc.description}".format(writeResp.nrc.code)
@@ -591,6 +720,10 @@ class BimmerRepository(
     }
 
     suspend fun restoreBackup(backupId: String) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         val state = _session.value
         val backup = state.backups.firstOrNull { it.id == backupId } ?: return
         var restoredPresets = state.presets
@@ -707,30 +840,30 @@ class BimmerRepository(
 
         val sim = activeTransport as? SimulatorTransportAdapter
         if (sim == null) {
-            // Physical ECU live PID polling (DME/DDE RPM 0xF40C & Coolant 0xF405)
-            val rpmResp = runCatching {
-                udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0xF40C), "UDS 0x22 Live RPM")
-            }.getOrNull() as? UdsResponse.Positive
-            val coolResp = runCatching {
-                udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0xF405), "UDS 0x22 Live Coolant")
-            }.getOrNull() as? UdsResponse.Positive
-
-            val liveRpm = rpmResp?.payload?.takeIf { it.size >= 4 }?.let {
-                ((((it[2].toInt() and 0xFF) shl 8) or (it[3].toInt() and 0xFF)) / 4.0)
-            }
-            val liveCoolant = coolResp?.payload?.takeIf { it.size >= 3 }?.let {
-                ((it[2].toInt() and 0xFF) - 40).toDouble()
-            }
-
-            val updated = current.map { ch ->
-                val v = when {
-                    ch.id == "rpm" && liveRpm != null -> liveRpm
-                    ch.id == "coolant" && liveCoolant != null -> liveCoolant
-                    else -> ch.currentValue
+            // Cyclic Multi-ECU live PID polling across BmwEcuAndPidCatalog (4 PIDs per tick)
+            val pidMap = BmwEcuAndPidCatalog.livePidDefinitions.associateBy { it.id }
+            val activeDefs = current.mapNotNull { ch -> pidMap[ch.id] }
+            if (activeDefs.isNotEmpty()) {
+                val batchSize = 4
+                val batchCount = ((activeDefs.size + batchSize - 1) / batchSize).coerceAtLeast(1)
+                val startIdx = (telemetryTick % batchCount) * batchSize
+                val batch = activeDefs.drop(startIdx).take(batchSize)
+                val polledValues = mutableMapOf<String, Double>()
+                batch.forEach { def ->
+                    val resp = runCatching {
+                        udsClient.sendUds(def.ecuAddress, UdsCodec.buildReadDataById(def.did), "UDS 0x22 Live ${def.id}")
+                    }.getOrNull() as? UdsResponse.Positive
+                    val parsed = resp?.payload?.let { PhysicalUdsParser.parsePhysicalPidValue(def.id, it) }
+                    if (parsed != null) {
+                        polledValues[def.id] = parsed
+                    }
                 }
-                ch.copy(currentValue = v, history = (ch.history.drop(1) + v.toFloat()))
+                val updated = current.map { ch ->
+                    val v = polledValues[ch.id] ?: ch.currentValue
+                    ch.copy(currentValue = v, history = (ch.history.drop(1) + v.toFloat()))
+                }
+                _session.update { it.copy(liveChannels = updated) }
             }
-            _session.update { it.copy(liveChannels = updated) }
             return
         }
 
@@ -893,7 +1026,7 @@ class BimmerRepository(
     }
 
     fun importBackupsJson(rawJson: String): Int {
-        val storage = backupStorage ?: BackupStorage(File(System.getProperty("java.io.tmpdir")))
+        val storage = backupStorage ?: BackupStorage(File(System.getProperty("java.io.tmpdir") ?: "/tmp"))
         val imported = storage.importFromJson(rawJson)
         val merged = (imported + _session.value.backups).distinctBy { it.id }.take(50)
         backupStorage?.saveBackups(merged)
@@ -1005,19 +1138,73 @@ class BimmerRepository(
         }
     }
 
+    private fun applySavedLivePidOrder(catalogChannels: List<LiveSensorChannel>): List<LiveSensorChannel> {
+        cachedLiveChannelsCatalog = catalogChannels
+        val savedCsv = appContext?.getSharedPreferences("bmw_expert_pro_prefs", Context.MODE_PRIVATE)
+            ?.getString("selected_live_pids", null)
+        if (savedCsv.isNullOrBlank()) return catalogChannels
+        val byId = catalogChannels.associateBy { it.id }
+        val ordered = savedCsv.split(",").mapNotNull { byId[it.trim()] }
+        return ordered.ifEmpty { catalogChannels }
+    }
+
+    private fun persistLivePidOrder(channels: List<LiveSensorChannel>) {
+        appContext?.getSharedPreferences("bmw_expert_pro_prefs", Context.MODE_PRIVATE)
+            ?.edit()
+            ?.putString("selected_live_pids", channels.joinToString(",") { it.id })
+            ?.apply()
+    }
+
+    fun availableLiveChannelCatalog(): List<LiveSensorChannel> =
+        cachedLiveChannelsCatalog.ifEmpty { _session.value.liveChannels }
+
+    fun setSelectedLivePids(orderedIds: List<String>) {
+        if (orderedIds.isEmpty()) return
+        val pool = (cachedLiveChannelsCatalog + _session.value.liveChannels).associateBy { it.id }
+        val updated = orderedIds.mapNotNull { pool[it] }
+        if (updated.isNotEmpty()) {
+            persistLivePidOrder(updated)
+            _session.update { it.copy(liveChannels = updated) }
+        }
+    }
+
+    fun moveLiveChannel(fromIndex: Int, toIndex: Int) {
+        val current = _session.value.liveChannels.toMutableList()
+        if (fromIndex !in current.indices || toIndex !in current.indices || fromIndex == toIndex) return
+        val item = current.removeAt(fromIndex)
+        current.add(toIndex, item)
+        persistLivePidOrder(current)
+        _session.update { it.copy(liveChannels = current) }
+    }
+
     suspend fun downloadDataPack(): Result<Int> {
         val ctx = appContext ?: return Result.failure(IllegalStateException("Context yok"))
+        val prevCount = BmwDtcDictionary.totalCodeCount()
+        val prevMeta = DataPackDownloader.loadCachedMeta(ctx.filesDir)
+        _session.update { it.copy(dataPackStatus = DataPackStatus.Downloading) }
         return runCatching {
             val pack = DataPackDownloader.downloadAndCacheDtcPack(ctx.filesDir)
             BmwDtcDictionary.loadExternalPack(pack)
             val total = BmwDtcDictionary.totalCodeCount()
+            val added = (total - prevCount).coerceAtLeast(0)
+            val meta = DataPackDownloader.saveCachedMeta(ctx.filesDir, pack.packVersion, total)
+            val newStatus = if (added > 0 || prevMeta?.packVersion != pack.packVersion) {
+                DataPackStatus.Applied(pack.packVersion, added, total, meta.updatedAt)
+            } else {
+                DataPackStatus.UpToDate(pack.packVersion, total, meta.updatedAt)
+            }
             _session.update {
                 it.copy(
                     dtcDictionaryCount = total,
-                    lastOperationMessage = "Veri paketi indirildi: toplam $total BMW DTC kodu aktif."
+                    dataPackStatus = newStatus,
+                    lastOperationMessage = "Veri paketi v${pack.packVersion} doğrulandı ($total BMW DTC)."
                 )
             }
-            total
+            added
+        }.onFailure { err ->
+            _session.update {
+                it.copy(dataPackStatus = DataPackStatus.Error(err.message ?: "İndirme başarısız"))
+            }
         }
     }
 

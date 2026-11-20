@@ -23,6 +23,7 @@ import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
 import com.punhanaghayev.bimmerpro.core.update.SemVerComparator
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.data.ConnectionPurpose
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,12 +65,28 @@ class BimmerViewModel(
     private val _isDisclaimerAccepted = MutableStateFlow(prefs.getBoolean("disclaimer_accepted_v1", false))
     val isDisclaimerAccepted: StateFlow<Boolean> = _isDisclaimerAccepted.asStateFlow()
 
+    private val _isLanguageConfirmed = MutableStateFlow(AppLocalization.hasConfirmedLanguage(application))
+    val isLanguageConfirmed: StateFlow<Boolean> = _isLanguageConfirmed.asStateFlow()
+
+    private val _otaPromptDismissed = MutableStateFlow(false)
+    val otaPromptDismissed: StateFlow<Boolean> = _otaPromptDismissed.asStateFlow()
+
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
     private var telemetryJob: Job? = null
     private var perfJob: Job? = null
     private var keepAliveJob: Job? = null
+
+    fun confirmInitialLanguage(language: AppLanguage) {
+        AppLocalization.saveLanguage(getApplication(), language, markConfirmed = true)
+        _appLanguage.value = language
+        _isLanguageConfirmed.value = true
+    }
+
+    fun dismissOtaPrompt() {
+        _otaPromptDismissed.value = true
+    }
 
     fun acceptDisclaimer() {
         prefs.edit().putBoolean("disclaimer_accepted_v1", true).apply()
@@ -79,12 +96,13 @@ class BimmerViewModel(
     fun connect(
         adapterType: AdapterType,
         customHost: String = "",
-        customPort: Int? = null
+        customPort: Int? = null,
+        purpose: ConnectionPurpose = ConnectionPurpose.DIAGNOSTICS
     ) {
         keepAliveJob?.cancel()
         keepAliveJob = null
         viewModelScope.launch {
-            repository.connect(adapterType, customHost, customPort)
+            repository.connect(adapterType, customHost, customPort, purpose = purpose)
             if (!adapterType.isSimulator && session.value.connectionState is ConnectionState.Connected) {
                 keepAliveJob = viewModelScope.launch {
                     while (isActive && session.value.connectionState is ConnectionState.Connected) {
@@ -321,9 +339,9 @@ class BimmerViewModel(
         }
     }
 
-    fun checkForOtaUpdates() {
+    fun checkForOtaUpdates(silent: Boolean = false) {
         viewModelScope.launch {
-            _otaState.value = OtaCheckState.Checking
+            if (!silent) _otaState.value = OtaCheckState.Checking
             runCatching {
                 OtaUpdateManager.fetchReleases()
             }.onSuccess { remoteReleases ->
@@ -332,11 +350,13 @@ class BimmerViewModel(
                 val latest = remoteReleases.firstOrNull()
                 if (latest != null && SemVerComparator.isNewer(latest.versionName, BuildConfig.VERSION_NAME)) {
                     _otaState.value = OtaCheckState.UpdateAvailable(latest, combined)
-                } else {
+                } else if (!silent) {
                     _otaState.value = OtaCheckState.UpToDate(BuildConfig.VERSION_NAME, combined)
                 }
             }.onFailure { err ->
-                _otaState.value = OtaCheckState.Error(err.message ?: "OTA sunucusuna erişilemedi")
+                if (!silent) {
+                    _otaState.value = OtaCheckState.Error(err.message ?: "OTA server unreachable")
+                }
             }
         }
     }
@@ -384,14 +404,29 @@ class BimmerViewModel(
         repository.setPhysicalWriteUnlocked(unlocked)
     }
 
+    fun availableLiveChannels() = repository.availableLiveChannelCatalog()
+
+    fun setSelectedLivePids(orderedIds: List<String>) {
+        repository.setSelectedLivePids(orderedIds)
+    }
+
+    fun moveLiveChannel(fromIndex: Int, toIndex: Int) {
+        repository.moveLiveChannel(fromIndex, toIndex)
+    }
+
     fun downloadDataPack() {
         viewModelScope.launch {
             repository.downloadDataPack()
                 .onSuccess { added ->
-                    _uiEvents.emit(UiEvent.Snackbar("Veri paketi güncellendi: +$added ek DTC kodu (Toplam ${session.value.dtcDictionaryCount})."))
+                    _uiEvents.emit(
+                        UiEvent.Snackbar(
+                            if (added > 0) "Data pack updated: +$added codes (${session.value.dtcDictionaryCount} total)."
+                            else "Data pack is up to date (${session.value.dtcDictionaryCount} codes)."
+                        )
+                    )
                 }
                 .onFailure { err ->
-                    _uiEvents.emit(UiEvent.Snackbar("Veri paketi indirilemedi: ${err.message ?: "Ağ hatası"}"))
+                    _uiEvents.emit(UiEvent.Snackbar("Data pack error: ${err.message ?: "Network error"}"))
                 }
         }
     }

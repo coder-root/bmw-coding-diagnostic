@@ -84,6 +84,22 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.1.0",
+            versionName = "1.1.0",
+            title = "BMW Expert PRO v1.1.0 — Modüler i18n, Oturum Seçimi, Read-Verify & Replay",
+            changelog = """
+                • Bağlantı öncesi Diagnostik/Kodlama oturum seçimi; bağlantısız gizli menüler ve ikon düzeni
+                • Modüler dil dosyaları (EN varsayılan/TR/AZ/RU), ilk açılış dil seçimi ve otomatik OTA güncelleme uyarısı
+                • Easy Mode & Expert CAFD modül bazlı gruplama, kategori dropdown'u ve kompakt arama kutuları
+                • Canlı/Servis özelleştirilebilir modül/sensör seçimi ve sürükle-bırak kart sıralama
+                • Ayrı Paket İnceleyici ve Kayıtlı Araçlar ekranları + Kırmızı, Beyaz, Siyah temalar
+                • Gerçek Gateway I-Level (0xF150), CAFD Read-Modify-Write-Verify, STN adaptif zamanlama ve DTC DataPack durumu
+            """.trimIndent(),
+            publishedDate = "20.11.2026 08:30",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.4",
             versionName = "1.0.4",
             title = "BMW Expert PRO v1.0.4 — Fiziksel Güvenlik, ISO-TP, 28 ECU & Veri Paketi",

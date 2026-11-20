@@ -83,7 +83,7 @@ class TcpElmStnTransportAdapter(
             delay(150)
             drainInput()
 
-            // Initialize STN2255 / ELM327 for BMW D-CAN (500kbps)
+            // Initialize STN2255 / ELM327 for BMW D-CAN (500kbps) + adaptive timing
             sendAtCommand("ATZ", waitMs = 1200)
             sendAtCommand("ATE0")
             sendAtCommand("ATL0")
@@ -92,6 +92,10 @@ class TcpElmStnTransportAdapter(
             sendAtCommand("ATSP6")
             sendAtCommand("ATCAF1")
             sendAtCommand("ATAL")
+            sendAtCommand("ATAT2")
+            sendAtCommand("ATST64")
+            // Enable STN2255 ISO-TP long-frame segmentation receive when supported
+            sendAtCommand("STCSEGR 1", waitMs = 600)
 
             val rv = sendAtCommand("ATRV")
             lastReadVoltage = parseVoltage(rv)
@@ -181,26 +185,48 @@ class TcpElmStnTransportAdapter(
                 return byteArrayOf(0x7F, 0x22, 0x31)
             }
 
-            // Reassemble multi-line ISO-TP CAN frames when ATH1 is active (e.g., "6F1 10 14 62 F1 90 ...")
-            val isoTpFrames = lines.mapNotNull { line ->
-                val tokens = line.split(Regex("\\s+"))
+            // Reassemble multi-line ISO-TP CAN frames when ATH1 is active (e.g., "6F1 F4 10 14 62 F1 90 ...")
+            val allFrames = lines.mapNotNull { line ->
+                val rawTokens = line.split(Regex("\\s+")).filter { it.isNotBlank() }
+                // Drop 3-char 11-bit CAN arbitration header (e.g., "6F1", "612", "7E8") when present
+                val hasCanIdHeader = rawTokens.firstOrNull()?.let {
+                    it.length == 3 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' }
+                } == true
+                val byteTokens = (if (hasCanIdHeader) rawTokens.drop(1) else rawTokens)
                     .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
-                if (tokens.isEmpty()) return@mapNotNull null
-                val bytes = tokens.map { it.toInt(16).toByte() }.toByteArray()
-                // Strip 2-byte extended CAN header (e.g., 6F1 F4 or 06 F1) when present
+                if (byteTokens.isEmpty()) return@mapNotNull null
+                val bytes = byteTokens.map { it.toInt(16).toByte() }.toByteArray()
+                // Strip BMW extended addressing byte(s):
+                // e.g. with 3-char CAN ID stripped: [F4, 10, 14, ...] or [F1, 10, 14, ...]
+                // or 2-byte header [06, F1, ...] / [6x, F4, ...]
                 when {
+                    hasCanIdHeader && bytes.size > 2 && ((bytes[0].toInt() and 0xFF) == 0xF4 || (bytes[0].toInt() and 0xFF) == 0xF1) ->
+                        bytes.copyOfRange(1, bytes.size)
                     bytes.size > 3 && (bytes[0].toInt() and 0xFF) == 0x06 && (bytes[1].toInt() and 0xFF) == 0xF1 ->
                         bytes.copyOfRange(2, bytes.size)
-                    bytes.size > 2 && ((bytes[0].toInt() and 0xF0) ushr 4) == 6 && (bytes[1].toInt() and 0xFF) == 0xF4 ->
+                    bytes.size > 2 && ((bytes[0].toInt() and 0xF0) ushr 4) == 6 &&
+                        ((bytes[1].toInt() and 0xFF) == 0xF4 || (bytes[1].toInt() and 0xFF) == 0xF1) ->
                         bytes.copyOfRange(2, bytes.size)
                     else -> bytes
                 }
             }
-            if (isoTpFrames.isEmpty()) return byteArrayOf(0x7F, 0x22, 0x31)
-            return if (isoTpFrames.size > 1) {
-                IsoTpCodec.reassemble(isoTpFrames)
+            if (allFrames.isEmpty()) return byteArrayOf(0x7F, 0x22, 0x31)
+
+            // Filter out intermediate NRC 0x78 (Response Pending) frames if a subsequent frame arrived
+            val finalFrames = if (allFrames.size > 1) {
+                val filtered = allFrames.filterNot { f ->
+                    (f.size >= 4 && (f[0].toInt() and 0xFF) <= 0x07 && (f[1].toInt() and 0xFF) == 0x7F && (f[3].toInt() and 0xFF) == 0x78) ||
+                        (f.size >= 3 && (f[0].toInt() and 0xFF) == 0x7F && (f[2].toInt() and 0xFF) == 0x78)
+                }
+                filtered.ifEmpty { allFrames }
             } else {
-                val single = isoTpFrames.first()
+                allFrames
+            }
+
+            return if (finalFrames.size > 1) {
+                IsoTpCodec.reassemble(finalFrames)
+            } else {
+                val single = finalFrames.first()
                 // If single frame starts with ISO-TP SF PCI (0x01..0x07), unwrap it; otherwise return directly
                 val pci = (single[0].toInt() and 0xF0) ushr 4
                 val sfLen = single[0].toInt() and 0x0F

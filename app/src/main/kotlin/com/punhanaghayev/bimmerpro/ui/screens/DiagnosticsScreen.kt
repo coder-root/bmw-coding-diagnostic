@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
@@ -189,9 +190,9 @@ fun DiagnosticsScreen(
                         )
                         Text(
                             text = if (session.isPhysicalWriteUnlocked) {
-                                "Dikkat: Fiziksel araçta yazma kilidi Geliştirici menüsünden açıldı. Yalnızca doğrulanmış komutları çalıştırın."
+                                strings.safeModeBannerUnlocked
                             } else {
-                                "Salt-Okunur Güvenli Mod Aktif: Fiziksel araçta kodlama, aktüatör ve servis yazma komutları kilitlidir."
+                                strings.safeModeBannerLocked
                             },
                             color = safeColor,
                             fontSize = 11.sp,
@@ -218,20 +219,25 @@ fun DiagnosticsScreen(
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Çevrimdışı Arıza Analizi & Araç Sağlığı",
+                                text = strings.offlineHealthTitle,
                                 fontWeight = FontWeight.Bold,
                                 color = theme.textPrimary,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = "${healthReport.overallScore}/100",
                                 color = overallColor,
                                 fontWeight = FontWeight.ExtraBold,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                         healthReport.subsystemScores.forEach { sub ->
@@ -243,10 +249,26 @@ fun DiagnosticsScreen(
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(sub.name, color = theme.textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                    Text("${sub.scorePercent}% • ${sub.note}", color = subColor, fontSize = 11.sp)
+                                    Text(
+                                        text = sub.name,
+                                        color = theme.textPrimary,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "${sub.scorePercent}% • ${sub.note}",
+                                        color = subColor,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                                 LinearProgressIndicator(
                                     progress = { (sub.scorePercent / 100f).coerceIn(0f, 1f) },
@@ -381,13 +403,13 @@ fun DiagnosticsScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Trouble Code Sözlüğü (BimmerTool)", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                    Text(strings.dtcDictionaryTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                     androidx.compose.material3.OutlinedTextField(
                         value = dtcLookupQuery,
                         onValueChange = { dtcLookupQuery = it },
-                        placeholder = { Text("Kod veya kelime ara (245700, Turbo, DPF...)", fontSize = 12.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        textStyle = TextStyle(fontSize = 13.sp),
+                        placeholder = { Text(strings.dtcDictionaryHint, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                        textStyle = TextStyle(fontSize = 12.sp),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )

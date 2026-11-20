@@ -14,12 +14,25 @@ import java.nio.charset.StandardCharsets
 object PhysicalUdsParser {
 
     private val vinRegex = Regex("[A-HJ-NPR-Z0-9]{17}")
+    private val bmwVinRegex = Regex("(WBA|WBS|WBX|WBY|WB1|WB2|WB3|WB4|WB5|4US|5UX|5YM|3MW|WMW)[A-HJ-NPR-Z0-9]{14}")
 
     fun extractVin(payload: ByteArray): String? {
         if (payload.isEmpty()) return null
-        val ascii = String(payload, StandardCharsets.US_ASCII)
+        // If payload contains UDS positive response header (0x62 DID_HI DID_LO), skip the 3-byte header
+        // so the positive response SID 0x62 ('b') is not confused with the VIN ASCII character 'B'.
+        val data = if (payload.size >= 20 && (payload[0].toInt() and 0xFF) == 0x62) {
+            payload.copyOfRange(3, payload.size)
+        } else {
+            payload
+        }
+        val ascii = String(data, StandardCharsets.US_ASCII)
             .replace(Regex("[^A-Za-z0-9]"), "")
             .uppercase()
+
+        // Match standard BMW World Manufacturer Identifier (WMI) first
+        val bmwMatch = bmwVinRegex.find(ascii)?.value
+        if (bmwMatch != null) return bmwMatch
+
         return vinRegex.find(ascii)?.value
     }
 
@@ -85,5 +98,57 @@ object PhysicalUdsParser {
             ((payload[3].toInt() and 0xFF) shl 8) or
             (payload[4].toInt() and 0xFF)
         return km.takeIf { it in 1..1_500_000 }
+    }
+
+    private val iLevelRegex = Regex("[FEGSI][0-9A-Z]{2,3}-\\d{2}-\\d{2}-\\d{3}")
+    private val cafdRegex = Regex("CAFD_[0-9A-F]{8}_[0-9]{3}_[0-9]{3}_[0-9]{3}")
+
+    fun parseILevel(payload: ByteArray): String? {
+        if (payload.size <= 2) return null
+        val ascii = String(payload.copyOfRange(2, payload.size), StandardCharsets.US_ASCII)
+            .replace(Regex("[^A-Za-z0-9._-]"), "")
+        return iLevelRegex.find(ascii)?.value ?: ascii.takeIf { it.length >= 6 }
+    }
+
+    fun parseCafdId(payload: ByteArray): String? {
+        if (payload.size <= 2) return null
+        val ascii = String(payload.copyOfRange(2, payload.size), StandardCharsets.US_ASCII)
+            .uppercase()
+        return cafdRegex.find(ascii)?.value
+    }
+
+    fun parseSoftwareVersion(payload: ByteArray): String? {
+        if (payload.size <= 2) return null
+        val clean = String(payload.copyOfRange(2, payload.size), StandardCharsets.US_ASCII)
+            .replace(Regex("[^A-Za-z0-9._-]"), "")
+            .trim()
+        return clean.takeIf { it.length in 3..24 }
+    }
+
+    /**
+     * Decodes physical UDS 0x22 positive response payload (`[didHi, didLo, A, B, ...]`)
+     * into engineering units for any PID defined in [BmwEcuAndPidCatalog].
+     */
+    fun parsePhysicalPidValue(pidId: String, payload: ByteArray): Double? {
+        if (payload.size < 3) return null
+        val a = payload[2].toInt() and 0xFF
+        val b = if (payload.size > 3) payload[3].toInt() and 0xFF else 0
+        val u16 = (a shl 8) or b
+        val s16 = u16.toShort().toInt()
+        return when (pidId) {
+            "rpm" -> u16 / 4.0
+            "speed" -> a.toDouble()
+            "boost", "turbo_target" -> (a - 100) / 100.0
+            "coolant", "oil_temp", "iat" -> (a - 40).toDouble()
+            "trans_temp" -> if (payload.size >= 4) (u16 / 10.0) - 40.0 else (a - 40).toDouble()
+            "rail" -> (u16 * 10.0) / 100.0
+            "load", "throttle", "alt_load" -> (a * 100.0) / 255.0
+            "batt" -> if (payload.size >= 4) u16 / 1000.0 else (a / 10.0)
+            "dpf_diff" -> u16 / 10.0
+            "dpf_soot" -> u16 / 100.0
+            "dpf_regen_km" -> u16.toDouble()
+            "inj_1", "inj_2", "inj_3", "inj_4" -> s16 / 100.0
+            else -> null
+        }
     }
 }
