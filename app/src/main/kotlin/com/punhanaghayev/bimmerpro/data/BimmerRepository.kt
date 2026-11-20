@@ -2,6 +2,8 @@ package com.punhanaghayev.bimmerpro.data
 
 import android.content.Context
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
+import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
@@ -14,6 +16,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
 import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
 import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
+import com.punhanaghayev.bimmerpro.core.bmw.OfflineDiagnosticReport
+import com.punhanaghayev.bimmerpro.core.bmw.OfflineFaultAnalyzer
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceExecutionResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
@@ -42,6 +46,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanDeviceInfo
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanTransportAdapter
 import com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog
 import com.punhanaghayev.bimmerpro.core.simulator.SimulatorTransportAdapter
+import com.punhanaghayev.bimmerpro.core.update.DataPackDownloader
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,6 +82,10 @@ data class BimmerSessionState(
     val injectorCodes: List<InjectorCalibration> = emptyList(),
     val actuatorTests: List<ActuatorTestItem> = emptyList(),
     val ibsHealth: IbsBatteryHealth? = null,
+    val offlineReport: OfflineDiagnosticReport? = null,
+    val isPhysicalSafeMode: Boolean = true,
+    val isPhysicalWriteUnlocked: Boolean = false,
+    val dtcDictionaryCount: Int = BmwDtcDictionary.totalCodeCount(),
     val isScanning: Boolean = false,
     val scanProgress: Float = 0f,
     val scanStatusText: String = "",
@@ -106,6 +115,15 @@ class BimmerRepository(
             savedVehicles = garageHistoryStorage?.loadVehicles().orEmpty()
         )
     )
+
+    init {
+        appContext?.let { ctx ->
+            DataPackDownloader.loadCachedDtcPack(ctx.filesDir)?.let { pack ->
+                BmwDtcDictionary.loadExternalPack(pack)
+                _session.update { it.copy(dtcDictionaryCount = BmwDtcDictionary.totalCodeCount()) }
+            }
+        }
+    }
     val session: StateFlow<BimmerSessionState> = _session.asStateFlow()
 
     val protocolLogs: StateFlow<List<ProtocolLogEntry>> = udsClient.logs
@@ -192,12 +210,14 @@ class BimmerRepository(
             if (sim != null) {
                 val bundle = sim.bundle
                 val savedList = saveConnectedVehicle(bundle.profile, adapterType)
+                val dtcs = sim.currentDtcs()
+                val health = OfflineFaultAnalyzer.analyze(dtcs, bundle.liveChannels, bundle.ibsHealth, bundle.profile.batteryVoltage, bundle.zfAdaptations)
                 _session.update {
                     it.copy(
                         connectionState = connState,
                         vehicleProfile = bundle.profile,
                         ecus = bundle.ecus,
-                        dtcs = sim.currentDtcs(),
+                        dtcs = dtcs,
                         presets = bundle.presets,
                         cafdParameters = bundle.cafdParameters,
                         liveChannels = bundle.liveChannels,
@@ -207,6 +227,8 @@ class BimmerRepository(
                         injectorCodes = bundle.injectorCodes,
                         actuatorTests = bundle.actuatorTests,
                         ibsHealth = bundle.ibsHealth,
+                        offlineReport = health,
+                        isPhysicalSafeMode = false,
                         savedVehicles = savedList,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
                     )
@@ -249,23 +271,29 @@ class BimmerRepository(
                     )
                 )
                 val savedList = saveConnectedVehicle(physicalProfile, adapterType)
+                val fullEcuTree = BmwEcuAndPidCatalog.allBmwEcus.map { def ->
+                    EcuModule(def.address, def.shortName, def.fullName, "Live", "Live", null, CodingCapability.FDL_ONLY, 0, 0)
+                }
+                val health = OfflineFaultAnalyzer.analyze(emptyList(), template.liveChannels, null, batteryVolts, emptyList())
                 _session.update {
                     it.copy(
                         connectionState = connState,
                         vehicleProfile = physicalProfile,
-                        ecus = template.ecus.map { ecu -> ecu.copy(activeDtcCount = 0, shadowDtcCount = 0) },
+                        ecus = fullEcuTree,
                         dtcs = emptyList(),
                         presets = template.presets,
                         cafdParameters = template.cafdParameters,
                         liveChannels = template.liveChannels,
                         serviceRoutines = template.serviceRoutines,
                         serviceHistory = emptyList(),
-                        zfAdaptations = template.zfAdaptations,
-                        injectorCodes = template.injectorCodes,
+                        zfAdaptations = emptyList(),
+                        injectorCodes = emptyList(),
                         actuatorTests = template.actuatorTests,
-                        ibsHealth = template.ibsHealth,
+                        ibsHealth = null,
+                        offlineReport = health,
+                        isPhysicalSafeMode = true,
                         savedVehicles = savedList,
-                        lastOperationMessage = "Fiziksel bağlantı kuruldu: $extractedVin (%.1f V)".format(batteryVolts)
+                        lastOperationMessage = "Fiziksel Salt-Okunur Güvenli Mod: $extractedVin (%.1f V)".format(batteryVolts)
                     )
                 }
             }
@@ -284,7 +312,8 @@ class BimmerRepository(
         _session.update {
             BimmerSessionState(
                 selectedAdapter = it.selectedAdapter,
-                connectionState = ConnectionState.Disconnected
+                connectionState = ConnectionState.Disconnected,
+                dtcDictionaryCount = it.dtcDictionaryCount
             )
         }
     }
@@ -296,41 +325,55 @@ class BimmerRepository(
         _session.update { it.copy(isScanning = true, scanProgress = 0f, scanStatusText = "ECU ağacı taranıyor...") }
         val total = ecus.size.toFloat()
 
-        ecus.forEachIndexed { index, ecu ->
-            _session.update {
-                it.copy(
-                    scanProgress = (index + 1) / total,
-                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & KM okunuyor..."
-                )
-            }
-            udsClient.sendUds(
-                ecu.address,
-                UdsCodec.buildReadDtcByStatusMask(0xFF),
-                "UDS 0x19 Read DTC (${ecu.shortName})"
-            )
-            delay(110)
-        }
-
         val sim = activeTransport as? SimulatorTransportAdapter
         if (sim != null) {
+            ecus.forEachIndexed { index, ecu ->
+                _session.update {
+                    it.copy(
+                        scanProgress = (index + 1) / total,
+                        scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC & KM okunuyor..."
+                    )
+                }
+                udsClient.sendUds(
+                    ecu.address,
+                    UdsCodec.buildReadDtcByStatusMask(0xFF),
+                    "UDS 0x19 Read DTC (${ecu.shortName})"
+                )
+                delay(90)
+            }
             val refreshedDtcs = sim.currentDtcs()
+            val health = OfflineFaultAnalyzer.analyze(
+                refreshedDtcs,
+                _session.value.liveChannels,
+                _session.value.ibsHealth,
+                _session.value.vehicleProfile?.batteryVoltage ?: 12.6,
+                _session.value.zfAdaptations
+            )
             _session.update {
                 it.copy(
                     isScanning = false,
                     scanProgress = 1f,
                     scanStatusText = "Tarama tamamlandı (${refreshedDtcs.size} kayıt)",
                     dtcs = refreshedDtcs,
+                    offlineReport = health,
                     lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu."
                 )
             }
             return
         }
 
-        // Physical vehicle scan: query each ECU with UDS 0x19 0x02 and decode real DTC bytes
+        // Physical vehicle scan: query each ECU with UDS 0x19 0x02, keep responding ECUs & decode real DTC bytes
         val physicalDtcs = mutableListOf<DtcFault>()
         val odo = _session.value.vehicleProfile?.odometerKm ?: 0
         val volts = _session.value.vehicleProfile?.batteryVoltage ?: 12.6
-        val updatedEcus = ecus.map { ecu ->
+        val updatedEcus = mutableListOf<EcuModule>()
+        ecus.forEachIndexed { index, ecu ->
+            _session.update {
+                it.copy(
+                    scanProgress = (index + 1) / total,
+                    scanStatusText = "${ecu.shortName} (${ecu.addressHex}) DTC sorgulanıyor..."
+                )
+            }
             val resp = runCatching {
                 udsClient.sendUds(
                     ecu.address,
@@ -341,22 +384,32 @@ class BimmerRepository(
             if (resp is UdsResponse.Positive) {
                 val parsed = PhysicalUdsParser.parseDtcRecords(ecu.address, ecu.shortName, resp.payload, odo, volts)
                 physicalDtcs.addAll(parsed)
-                ecu.copy(
-                    activeDtcCount = parsed.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
-                    shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
+                updatedEcus.add(
+                    ecu.copy(
+                        activeDtcCount = parsed.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
+                        shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
+                    )
                 )
-            } else {
-                ecu
+            } else if (ecu.address == EcuAddress.ZGW_BDC || ecu.address == EcuAddress.DME_DDE) {
+                updatedEcus.add(ecu)
             }
         }
+        val physicalHealth = OfflineFaultAnalyzer.analyze(
+            physicalDtcs,
+            _session.value.liveChannels,
+            _session.value.ibsHealth,
+            volts,
+            _session.value.zfAdaptations
+        )
         _session.update {
             it.copy(
                 isScanning = false,
                 scanProgress = 1f,
-                scanStatusText = "Fiziksel tarama tamamlandı (${physicalDtcs.size} kayıt)",
-                ecus = updatedEcus,
+                scanStatusText = "Fiziksel tarama tamamlandı (${updatedEcus.size} ECU, ${physicalDtcs.size} kayıt)",
+                ecus = updatedEcus.ifEmpty { ecus },
                 dtcs = physicalDtcs,
-                lastOperationMessage = "Fiziksel araç tarandı: ${physicalDtcs.size} hata kaydı bulundu."
+                offlineReport = physicalHealth,
+                lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu."
             )
         }
     }
@@ -373,10 +426,18 @@ class BimmerRepository(
             val refreshedEcus = _session.value.ecus.map { ecu ->
                 ecu.copy(activeDtcCount = 0, shadowDtcCount = 0)
             }
+            val updatedHealth = OfflineFaultAnalyzer.analyze(
+                remaining,
+                _session.value.liveChannels,
+                _session.value.ibsHealth,
+                _session.value.vehicleProfile?.batteryVoltage ?: 12.6,
+                _session.value.zfAdaptations
+            )
             _session.update {
                 it.copy(
                     dtcs = remaining,
                     ecus = refreshedEcus,
+                    offlineReport = updatedHealth,
                     lastOperationMessage = "Tüm hata ve gölge hafızaları temizlendi."
                 )
             }
@@ -391,11 +452,20 @@ class BimmerRepository(
         )
         if (response is UdsResponse.Positive) {
             _session.update { state ->
+                val remaining = state.dtcs.filterNot { it.ecuAddress == ecuAddress }
+                val updatedHealth = OfflineFaultAnalyzer.analyze(
+                    remaining,
+                    state.liveChannels,
+                    state.ibsHealth,
+                    state.vehicleProfile?.batteryVoltage ?: 12.6,
+                    state.zfAdaptations
+                )
                 state.copy(
-                    dtcs = state.dtcs.filterNot { it.ecuAddress == ecuAddress },
+                    dtcs = remaining,
                     ecus = state.ecus.map {
                         if (it.address == ecuAddress) it.copy(activeDtcCount = 0, shadowDtcCount = 0) else it
                     },
+                    offlineReport = updatedHealth,
                     lastOperationMessage = "$ecuName modülünün hata hafızası temizlendi."
                 )
             }
@@ -415,6 +485,9 @@ class BimmerRepository(
                         .format(profile.batteryVoltage, MIN_SAFE_CODING_VOLTAGE)
                 )
             )
+        }
+        if (isPhysicalWriteBlocked()) {
+            return Result.failure(IllegalStateException(PHYSICAL_SAFE_MODE_MSG))
         }
 
         // Create automatic pre-coding backup snapshot
@@ -474,6 +547,9 @@ class BimmerRepository(
             return Result.failure(
                 IllegalStateException("Güvenlik Kilidi: Akü voltajı %.1f V (< 12.2 V)!".format(profile.batteryVoltage))
             )
+        }
+        if (isPhysicalWriteBlocked()) {
+            return Result.failure(IllegalStateException(PHYSICAL_SAFE_MODE_MSG))
         }
 
         val hexStr = param.availableOptions[optionLabel] ?: param.currentHex
@@ -537,6 +613,10 @@ class BimmerRepository(
     }
 
     suspend fun addVehicleOrderOption(code: String, description: String) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         val cleanCode = code.trim().uppercase()
         if (cleanCode.length < 3) return
         val profile = _session.value.vehicleProfile ?: return
@@ -588,6 +668,10 @@ class BimmerRepository(
     }
 
     suspend fun executeServiceRoutine(routine: ServiceRoutine, optionByte: Byte = 0x01) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         val response = udsClient.sendUds(
             routine.targetAddress,
             UdsCodec.buildRoutineControl(0x01, routine.routineId, byteArrayOf(optionByte)),
@@ -721,6 +805,10 @@ class BimmerRepository(
     }
 
     suspend fun writeInjectorCode(cylinder: Int, imaCode: String) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         val clean = imaCode.trim().uppercase()
         if (clean.length < 5) return
         udsClient.sendUds(
@@ -739,6 +827,10 @@ class BimmerRepository(
     }
 
     suspend fun resetZfAdaptations() {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         udsClient.sendUds(
             EcuAddress.EGS,
             UdsCodec.buildRoutineControl(0x01, 0xF080, byteArrayOf(0x01)),
@@ -753,6 +845,10 @@ class BimmerRepository(
     }
 
     suspend fun sendEcuReset(ecuAddress: Int, ecuName: String, resetType: Int = 0x01) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         udsClient.sendUds(
             ecuAddress,
             UdsCodec.buildEcuReset(resetType),
@@ -764,6 +860,10 @@ class BimmerRepository(
     }
 
     suspend fun runActuatorTest(test: ActuatorTestItem) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         val resp = udsClient.sendUds(
             test.targetAddress,
             UdsCodec.buildIoControl(test.did, controlParam = 0x03, stateByte = 0x01),
@@ -859,6 +959,10 @@ class BimmerRepository(
         dealerCode: String,
         items: List<String>
     ) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
         if (items.isEmpty()) return
         val payload = "$date|$mileageKm|$dealerCode|${items.joinToString(",")}".toByteArray()
         udsClient.sendUds(
@@ -881,7 +985,45 @@ class BimmerRepository(
         }
     }
 
+    private fun isPhysicalWriteBlocked(): Boolean =
+        activeTransport !is SimulatorTransportAdapter && !_session.value.isPhysicalWriteUnlocked
+
+    fun setPhysicalWriteUnlocked(unlocked: Boolean) {
+        _session.update {
+            it.copy(
+                isPhysicalWriteUnlocked = unlocked,
+                isPhysicalSafeMode = !unlocked
+            )
+        }
+    }
+
+    suspend fun sendTesterPresentKeepAlive() {
+        if (_session.value.connectionState is ConnectionState.Connected && activeTransport !is SimulatorTransportAdapter) {
+            runCatching {
+                udsClient.sendUds(EcuAddress.ZGW_BDC, UdsCodec.buildTesterPresent(true), "UDS 0x3E Keep-Alive")
+            }
+        }
+    }
+
+    suspend fun downloadDataPack(): Result<Int> {
+        val ctx = appContext ?: return Result.failure(IllegalStateException("Context yok"))
+        return runCatching {
+            val pack = DataPackDownloader.downloadAndCacheDtcPack(ctx.filesDir)
+            BmwDtcDictionary.loadExternalPack(pack)
+            val total = BmwDtcDictionary.totalCodeCount()
+            _session.update {
+                it.copy(
+                    dtcDictionaryCount = total,
+                    lastOperationMessage = "Veri paketi indirildi: toplam $total BMW DTC kodu aktif."
+                )
+            }
+            total
+        }
+    }
+
     companion object {
         const val MIN_SAFE_CODING_VOLTAGE = 12.2
+        const val PHYSICAL_SAFE_MODE_MSG =
+            "Güvenlik Kalkanı (Salt-Okunur Mod): Fiziksel araçta doğrulanmamış yazma kilitlidir. Developer ekranından kilidi açabilir veya Trace logu alabilirsiniz."
     }
 }

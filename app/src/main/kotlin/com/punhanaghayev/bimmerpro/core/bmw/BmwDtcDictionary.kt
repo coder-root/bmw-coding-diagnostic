@@ -1,5 +1,7 @@
 package com.punhanaghayev.bimmerpro.core.bmw
 
+import com.punhanaghayev.bimmerpro.core.update.ExternalDtcPackDto
+
 data class DtcCatalogEntry(
     val title: String,
     val detail: String,
@@ -8,9 +10,25 @@ data class DtcCatalogEntry(
 )
 
 /**
- * Built-in BMW Hex DTC dictionary for F10/F30/G30/E90 physical ECU scans.
+ * Built-in + downloadable BMW Hex DTC dictionary for F10/F30/G30/E90 physical ECU scans.
  */
 object BmwDtcDictionary {
+
+    private val externalEntries = mutableMapOf<String, DtcCatalogEntry>()
+
+    fun loadExternalPack(pack: ExternalDtcPackDto) {
+        pack.entries.forEach { dto ->
+            val sev = runCatching { DtcSeverity.valueOf(dto.severity.uppercase()) }.getOrDefault(DtcSeverity.WARNING)
+            externalEntries[dto.code.trim().uppercase()] = DtcCatalogEntry(
+                title = dto.title,
+                detail = dto.detail,
+                severity = sev,
+                guidance = dto.guidance
+            )
+        }
+    }
+
+    fun totalCodeCount(): Int = (entries.keys + externalEntries.keys).size
 
     private val entries: Map<String, DtcCatalogEntry> = mapOf(
         "245700" to DtcCatalogEntry(
@@ -141,19 +159,22 @@ object BmwDtcDictionary {
         )
     )
 
-    fun lookup(codeHex: String): DtcCatalogEntry? =
-        entries[codeHex.trim().uppercase()]
+    fun lookup(codeHex: String): DtcCatalogEntry? {
+        val key = codeHex.trim().uppercase()
+        return externalEntries[key] ?: entries[key]
+    }
 
     fun search(query: String): List<Pair<String, DtcCatalogEntry>> {
         val q = query.trim()
         if (q.isBlank()) return emptyList()
-        return entries.entries
+        val combined = entries + externalEntries
+        return combined.entries
             .filter { (code, entry) ->
                 code.contains(q, ignoreCase = true) ||
                     entry.title.contains(q, ignoreCase = true) ||
                     entry.detail.contains(q, ignoreCase = true)
             }
             .map { it.key to it.value }
-            .take(8)
+            .take(10)
     }
 }

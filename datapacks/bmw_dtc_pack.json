@@ -1,0 +1,47 @@
+{
+  "packVersion": "1.0.4",
+  "entries": [
+    {
+      "code": "247500",
+      "title": "Rail Basınç Sensörü: Kısa Devre / Sinyal Çok Yüksek",
+      "detail": "Yüksek basınç yakıt hattı sensör voltajı nominal üst sınırı aştı.",
+      "severity": "CRITICAL",
+      "guidance": "Rail basınç sensörü 3-pin soketini ve kablo demetini kontrol edin."
+    },
+    {
+      "code": "26F500",
+      "title": "SCR / AdBlue Dozaj Modülü Basınç Oluşmuyor",
+      "detail": "Üre enjeksiyon hattında nominal 5 bar basınca ulaşılamadı.",
+      "severity": "WARNING",
+      "guidance": "AdBlue tank seviyesi, pompa filtresi ve enjektör kristalleşmesini kontrol edin."
+    },
+    {
+      "code": "284E00",
+      "title": "Oksijen Sensörü (Lambda) Bank 1 Isıtıcı Devresi",
+      "detail": "Ön lambda sondası ısıtıcı elemanı iç direnci yüksek.",
+      "severity": "WARNING",
+      "guidance": "Lambda sensörü soketini ve ısıtıcı besleme sigortasını test edin."
+    },
+    {
+      "code": "4809AB",
+      "title": "DSC: Direksiyon Açı Sensörü (SZL) Başlatılmadı",
+      "detail": "Akü sökümü veya rot ayarı sonrası SZL sıfır noktası kaybı.",
+      "severity": "WARNING",
+      "guidance": "Canlı & Servis sekmesinden SZL Kalibrasyonu çalıştırın."
+    },
+    {
+      "code": "801C20",
+      "title": "ZGW / BDC: Merkezi Hata Hafızası Dolu (Bilgi)",
+      "detail": "Gateway uzun süreli teşhis belleği doluluk uyarısı.",
+      "severity": "SHADOW",
+      "guidance": "Arıza değildir; tüm hata hafızalarını temizleyerek sıfırlanabilir."
+    },
+    {
+      "code": "CF2101",
+      "title": "EGS: CAN Veriyolu DME Tork Sinyali Geçersiz",
+      "detail": "Motor kontrol ünitesi acil çalışma modundayken şanzımana geçersiz tork bilgisi iletti.",
+      "severity": "WARNING",
+      "guidance": "Önce DME/DDE arızalarını giderin, ardından EGS kodunu temizleyin."
+    }
+  ]
+}

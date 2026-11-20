@@ -10,7 +10,9 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.AppLocalization
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
+import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
+import com.punhanaghayev.bimmerpro.core.protocol.SessionTraceRecorder
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
 import com.punhanaghayev.bimmerpro.core.report.InspectionReportGenerator
 import com.punhanaghayev.bimmerpro.core.report.TelemetryCsvExporter
@@ -57,24 +59,47 @@ class BimmerViewModel(
     private val _themeStyle = MutableStateFlow(AppThemeStyle.loadSaved(application))
     val themeStyle: StateFlow<AppThemeStyle> = _themeStyle.asStateFlow()
 
+    private val prefs = application.getSharedPreferences("bimmerpro_prefs", Context.MODE_PRIVATE)
+
+    private val _isDisclaimerAccepted = MutableStateFlow(prefs.getBoolean("disclaimer_accepted_v1", false))
+    val isDisclaimerAccepted: StateFlow<Boolean> = _isDisclaimerAccepted.asStateFlow()
+
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
     private var telemetryJob: Job? = null
     private var perfJob: Job? = null
+    private var keepAliveJob: Job? = null
+
+    fun acceptDisclaimer() {
+        prefs.edit().putBoolean("disclaimer_accepted_v1", true).apply()
+        _isDisclaimerAccepted.value = true
+    }
 
     fun connect(
         adapterType: AdapterType,
         customHost: String = "",
         customPort: Int? = null
     ) {
+        keepAliveJob?.cancel()
+        keepAliveJob = null
         viewModelScope.launch {
             repository.connect(adapterType, customHost, customPort)
+            if (!adapterType.isSimulator && session.value.connectionState is ConnectionState.Connected) {
+                keepAliveJob = viewModelScope.launch {
+                    while (isActive && session.value.connectionState is ConnectionState.Connected) {
+                        delay(2500)
+                        repository.sendTesterPresentKeepAlive()
+                    }
+                }
+            }
         }
     }
 
     fun disconnect() {
         stopLiveTelemetry()
+        keepAliveJob?.cancel()
+        keepAliveJob = null
         viewModelScope.launch {
             repository.disconnect()
         }
@@ -355,8 +380,45 @@ class BimmerViewModel(
         }
     }
 
+    fun setPhysicalWriteUnlocked(unlocked: Boolean) {
+        repository.setPhysicalWriteUnlocked(unlocked)
+    }
+
+    fun downloadDataPack() {
+        viewModelScope.launch {
+            repository.downloadDataPack()
+                .onSuccess { added ->
+                    _uiEvents.emit(UiEvent.Snackbar("Veri paketi güncellendi: +$added ek DTC kodu (Toplam ${session.value.dtcDictionaryCount})."))
+                }
+                .onFailure { err ->
+                    _uiEvents.emit(UiEvent.Snackbar("Veri paketi indirilemedi: ${err.message ?: "Ağ hatası"}"))
+                }
+        }
+    }
+
+    fun exportSessionTrace(context: Context) {
+        val state = session.value
+        val logs = protocolLogs.value
+        if (logs.isEmpty()) {
+            viewModelScope.launch { _uiEvents.emit(UiEvent.Snackbar("Dışa aktarılacak paket logu yok.")) }
+            return
+        }
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                SessionTraceRecorder.exportTraceFile(
+                    cacheDir = context.cacheDir,
+                    vin = state.vehicleProfile?.vin ?: "NO_VIN",
+                    adapterName = state.selectedAdapter.displayName,
+                    logs = logs
+                )
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "text/plain", "Protokol Trace Dosyasını Paylaş"))
+        }
+    }
+
     override fun onCleared() {
         stopLiveTelemetry()
+        keepAliveJob?.cancel()
         perfJob?.cancel()
         super.onCleared()
     }

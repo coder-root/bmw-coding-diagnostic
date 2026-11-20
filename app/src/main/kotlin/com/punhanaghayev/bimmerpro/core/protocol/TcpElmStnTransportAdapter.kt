@@ -174,21 +174,41 @@ class TcpElmStnTransportAdapter(
         }
 
         internal fun parseStnUdsResponse(raw: String): ByteArray {
-            val clean = raw
-                .replace(">", "")
-                .replace("\r", " ")
-                .replace("\n", " ")
-                .trim()
-            if (clean.contains("NO DATA", ignoreCase = true) || clean.contains("ERROR", ignoreCase = true)) {
+            val lines = raw.replace(">", "").split(Regex("[\r\n]+"))
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            if (lines.any { it.contains("NO DATA", ignoreCase = true) || it.contains("ERROR", ignoreCase = true) }) {
                 return byteArrayOf(0x7F, 0x22, 0x31)
             }
-            val tokens = clean.split(Regex("\\s+"))
-                .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
-            val bytes = tokens.map { it.toInt(16).toByte() }.toByteArray()
-            return if (bytes.size > 3 && (bytes[0].toInt() and 0xFF) == 0x06 && (bytes[1].toInt() and 0xFF) == 0xF1) {
-                bytes.copyOfRange(2, bytes.size)
+
+            // Reassemble multi-line ISO-TP CAN frames when ATH1 is active (e.g., "6F1 10 14 62 F1 90 ...")
+            val isoTpFrames = lines.mapNotNull { line ->
+                val tokens = line.split(Regex("\\s+"))
+                    .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
+                if (tokens.isEmpty()) return@mapNotNull null
+                val bytes = tokens.map { it.toInt(16).toByte() }.toByteArray()
+                // Strip 2-byte extended CAN header (e.g., 6F1 F4 or 06 F1) when present
+                when {
+                    bytes.size > 3 && (bytes[0].toInt() and 0xFF) == 0x06 && (bytes[1].toInt() and 0xFF) == 0xF1 ->
+                        bytes.copyOfRange(2, bytes.size)
+                    bytes.size > 2 && ((bytes[0].toInt() and 0xF0) ushr 4) == 6 && (bytes[1].toInt() and 0xFF) == 0xF4 ->
+                        bytes.copyOfRange(2, bytes.size)
+                    else -> bytes
+                }
+            }
+            if (isoTpFrames.isEmpty()) return byteArrayOf(0x7F, 0x22, 0x31)
+            return if (isoTpFrames.size > 1) {
+                IsoTpCodec.reassemble(isoTpFrames)
             } else {
-                bytes
+                val single = isoTpFrames.first()
+                // If single frame starts with ISO-TP SF PCI (0x01..0x07), unwrap it; otherwise return directly
+                val pci = (single[0].toInt() and 0xF0) ushr 4
+                val sfLen = single[0].toInt() and 0x0F
+                if (pci == 0 && sfLen in 1 until single.size) {
+                    single.copyOfRange(1, 1 + sfLen)
+                } else {
+                    single
+                }
             }
         }
     }

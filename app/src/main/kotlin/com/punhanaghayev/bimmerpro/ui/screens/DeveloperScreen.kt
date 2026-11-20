@@ -41,6 +41,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -68,6 +70,7 @@ import com.punhanaghayev.bimmerpro.ui.components.BmwRoundelLogo
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
+import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
@@ -78,10 +81,16 @@ fun DeveloperScreen(
     otaState: OtaCheckState,
     currentLanguage: AppLanguage,
     currentTheme: AppThemeStyle,
+    isPhysicalSafeMode: Boolean,
+    isPhysicalWriteUnlocked: Boolean,
+    dtcDictionaryCount: Int,
     onSelectLanguage: (AppLanguage) -> Unit,
     onSelectTheme: (AppThemeStyle) -> Unit,
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit,
+    onTogglePhysicalWriteUnlock: (Boolean) -> Unit,
+    onDownloadDataPack: () -> Unit,
+    onExportTrace: () -> Unit,
     onClearLogs: () -> Unit
 ) {
     val strings = LocalAppStrings.current
@@ -269,6 +278,74 @@ fun DeveloperScreen(
             )
         }
 
+        // Physical Safe Mode & On-Demand DTC DataPack Card
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Fiziksel Araç Koruması & Offline Veri Paketi",
+                        fontWeight = FontWeight.Bold,
+                        color = theme.textPrimary,
+                        fontSize = 14.sp
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "Fiziksel Yazma Kilidini Aç (Gelişmiş)",
+                                color = if (isPhysicalWriteUnlocked) StatusRed else theme.textPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = if (isPhysicalSafeMode && !isPhysicalWriteUnlocked) {
+                                    "Aktif araçta Salt-Okunur Güvenli Mod kilitli."
+                                } else if (isPhysicalWriteUnlocked) {
+                                    "Dikkat: Fiziksel ECU yazma komutları (0x2E/0x31/0x2F) açık!"
+                                } else {
+                                    "Simülatör modunda test yazmaları serbest; gerçek araçta varsayılan kilitlidir."
+                                },
+                                color = theme.textSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                        Switch(
+                            checked = isPhysicalWriteUnlocked,
+                            onCheckedChange = onTogglePhysicalWriteUnlock,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = StatusRed,
+                                uncheckedThumbColor = StatusAmber
+                            )
+                        )
+                    }
+                    HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("DTC Veri Paketi ($dtcDictionaryCount kod)", color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            Text("GitHub'dan harici BMW DTC sözlüğünü indirir.", color = theme.textSecondary, fontSize = 11.sp)
+                        }
+                        OutlinedButton(onClick = onDownloadDataPack) {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("İndir", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
         // Release History / Changelog Dropdown Section
         item {
             Card(
@@ -395,12 +472,21 @@ fun DeveloperScreen(
                             Text(strings.packetInspectorSub, color = theme.textSecondary, fontSize = 11.sp)
                         }
                         if (protocolLogs.isNotEmpty()) {
-                            OutlinedButton(
-                                onClick = onClearLogs,
-                                modifier = Modifier.height(32.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
-                            ) {
-                                Text(strings.clearBtn, color = theme.primaryBright, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                OutlinedButton(
+                                    onClick = onExportTrace,
+                                    modifier = Modifier.height(32.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Trace (.txt)", color = StatusGreen, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
+                                OutlinedButton(
+                                    onClick = onClearLogs,
+                                    modifier = Modifier.height(32.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                                ) {
+                                    Text(strings.clearBtn, color = theme.primaryBright, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
                             }
                         }
                     }

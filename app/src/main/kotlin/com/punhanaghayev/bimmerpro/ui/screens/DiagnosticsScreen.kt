@@ -168,6 +168,102 @@ fun DiagnosticsScreen(
             }
         }
 
+        if (session.isPhysicalSafeMode) {
+            item {
+                val safeColor = if (session.isPhysicalWriteUnlocked) StatusRed else StatusAmber
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = safeColor.copy(alpha = 0.14f)),
+                    border = BorderStroke(1.dp, safeColor.copy(alpha = 0.6f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (session.isPhysicalWriteUnlocked) Icons.Default.Warning else Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = safeColor,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = if (session.isPhysicalWriteUnlocked) {
+                                "Dikkat: Fiziksel araçta yazma kilidi Geliştirici menüsünden açıldı. Yalnızca doğrulanmış komutları çalıştırın."
+                            } else {
+                                "Salt-Okunur Güvenli Mod Aktif: Fiziksel araçta kodlama, aktüatör ve servis yazma komutları kilitlidir."
+                            },
+                            color = safeColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+
+        val healthReport = session.offlineReport
+        if (healthReport != null) {
+            item {
+                val overallColor = when {
+                    healthReport.overallScore >= 85 -> StatusGreen
+                    healthReport.overallScore >= 65 -> StatusAmber
+                    else -> StatusRed
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, overallColor.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Çevrimdışı Arıza Analizi & Araç Sağlığı",
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "${healthReport.overallScore}/100",
+                                color = overallColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp
+                            )
+                        }
+                        healthReport.subsystemScores.forEach { sub ->
+                            val subColor = when {
+                                sub.scorePercent >= 85 -> StatusGreen
+                                sub.scorePercent >= 65 -> StatusAmber
+                                else -> StatusRed
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(sub.name, color = theme.textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                    Text("${sub.scorePercent}% • ${sub.note}", color = subColor, fontSize = 11.sp)
+                                }
+                                LinearProgressIndicator(
+                                    progress = { (sub.scorePercent / 100f).coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = subColor,
+                                    trackColor = theme.outline.copy(alpha = 0.35f)
+                                )
+                            }
+                        }
+                        healthReport.recommendations.forEach { rec ->
+                            Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+        }
+
         item {
             val mv = profile.mileageVerification
             val isTampered = mv.status == TamperStatus.SUSPICIOUS_MISMATCH

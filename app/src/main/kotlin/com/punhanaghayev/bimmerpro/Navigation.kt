@@ -3,6 +3,7 @@ package com.punhanaghayev.bimmerpro
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Code
@@ -101,6 +104,7 @@ fun MainNavigation(
     val otaState by viewModel.otaState.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val themeStyle by viewModel.themeStyle.collectAsStateWithLifecycle()
+    val isDisclaimerAccepted by viewModel.isDisclaimerAccepted.collectAsStateWithLifecycle()
     val strings = remember(appLanguage) { AppLocalization.stringsFor(appLanguage) }
 
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -168,6 +172,33 @@ fun MainNavigation(
     BimmerProTheme(themeStyle = themeStyle) {
         val theme = LocalThemeStyle.current
         CompositionLocalProvider(LocalAppStrings provides strings) {
+            if (!isDisclaimerAccepted) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("Yasal Uyarı & Araç Güvenlik Sözleşmesi", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "• Fiziksel araç bağlantılarında uygulama varsayılan olarak Salt-Okunur Güvenli Modda (Read-Only Safe Mode) açılır.",
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = "• Kilometre sıfırlama/değiştirme (odometer rollback) ve ECU chiptuning/flash işlemleri güvenlik ve yasal nedenlerle kapsam dışıdır.",
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = "• Yazma kilidi açıldığında oluşabilecek ECU/kodlama riskleri tamamen kullanıcının sorumluluğundadır. Kodlama öncesi akünün >= 12.2V olduğundan emin olun.",
+                                fontSize = 12.sp
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = viewModel::acceptDisclaimer) {
+                            Text("Okudum, Anladım ve Kabul Ediyorum")
+                        }
+                    }
+                )
+            }
             Scaffold(
                 containerColor = theme.bg,
                 snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -315,10 +346,16 @@ fun MainNavigation(
                             otaState = otaState,
                             currentLanguage = appLanguage,
                             currentTheme = themeStyle,
+                            isPhysicalSafeMode = session.isPhysicalSafeMode,
+                            isPhysicalWriteUnlocked = session.isPhysicalWriteUnlocked,
+                            dtcDictionaryCount = session.dtcDictionaryCount,
                             onSelectLanguage = viewModel::setAppLanguage,
                             onSelectTheme = viewModel::setThemeStyle,
                             onCheckOta = viewModel::checkForOtaUpdates,
                             onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
+                            onTogglePhysicalWriteUnlock = viewModel::setPhysicalWriteUnlocked,
+                            onDownloadDataPack = viewModel::downloadDataPack,
+                            onExportTrace = { viewModel.exportSessionTrace(context) },
                             onClearLogs = viewModel::clearProtocolLogs
                         )
                     }

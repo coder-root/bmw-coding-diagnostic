@@ -84,6 +84,22 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.0.4",
+            versionName = "1.0.4",
+            title = "BMW Expert PRO v1.0.4 — Fiziksel Güvenlik, ISO-TP, 28 ECU & Veri Paketi",
+            changelog = """
+                • Fiziksel Bağlantıda Salt-Okunur Güvenli Mod (Read-Only Safe Mode) ve ilk açılış yasal sorumluluk onayı
+                • Tam 28 ECU BMW veri yolu haritası & 20 adet UDS 0x22 / OBD canlı sensör PID tanımı
+                • IsoTpCodec (SF/FF/CF/FC çok çerçeveli CAN), UDS 0x78 bekleme ve TesterPresent (0x3E) keep-alive
+                • Kodlama öncesi Önce -> Sonra fark (Diff) önizleme penceresi
+                • Çevrimdışı Hata Analiz Motoru (alt sistem sağlık puanları + kestirimci bakım önerileri)
+                • On-demand indirilebilir DTC Veri Paketi (DataPackDownloader) & .txt ham trace dışa aktarma
+            """.trimIndent(),
+            publishedDate = "20.11.2026 07:45",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.3",
             versionName = "1.0.3",
             title = "BMW Expert PRO v1.0.3 — Tam NCD Snapshot, KWP2000 & VO Hesaplayıcı",

@@ -106,6 +106,15 @@ object UdsCodec {
             stateByte
         )
 
+    fun buildTesterPresent(suppressResponse: Boolean = true): ByteArray =
+        byteArrayOf(UdsServiceId.TESTER_PRESENT.toByte(), if (suppressResponse) 0x80.toByte() else 0x00)
+
+    fun buildSecurityRequestSeed(level: Int = 0x01): ByteArray =
+        byteArrayOf(UdsServiceId.SECURITY_ACCESS.toByte(), level.toByte())
+
+    fun buildSecuritySendKey(level: Int = 0x02, keyBytes: ByteArray): ByteArray =
+        byteArrayOf(UdsServiceId.SECURITY_ACCESS.toByte(), level.toByte()) + keyBytes
+
     fun parseResponse(rawUds: ByteArray): UdsResponse {
         require(rawUds.isNotEmpty()) { "Empty UDS response" }
         val sid = rawUds[0].toInt() and 0xFF
@@ -142,9 +151,23 @@ class UdsClient(
         val requestFrame = HsfzFrame.diagnosticRequest(ecuAddress, udsPayload).encode()
         appendLog("TX", ecuAddress, summary, requestFrame.toHexString())
 
-        val rawResponse = adapter.transceive(requestFrame)
-        val decodedFrame = HsfzFrame.decode(rawResponse)
-        val response = UdsCodec.parseResponse(decodedFrame.payload)
+        var rawResponse = adapter.transceive(requestFrame)
+        var decodedFrame = HsfzFrame.decode(rawResponse)
+        var response = UdsCodec.parseResponse(decodedFrame.payload)
+
+        // Handle ISO 14229 NRC 0x78 (responsePending) retries cleanly
+        var pendingRetries = 0
+        while (response is UdsResponse.Negative &&
+            response.nrc == UdsNegativeResponseCode.RESPONSE_PENDING &&
+            pendingRetries < 4
+        ) {
+            pendingRetries++
+            appendLog("RX", ecuAddress, "NRC 0x78 Response Pending (bekleniyor #$pendingRetries)", rawResponse.toHexString(), isError = false)
+            kotlinx.coroutines.delay(250)
+            rawResponse = adapter.transceive(HsfzFrame.diagnosticRequest(ecuAddress, UdsCodec.buildTesterPresent(false)).encode())
+            decodedFrame = HsfzFrame.decode(rawResponse)
+            response = UdsCodec.parseResponse(decodedFrame.payload)
+        }
 
         when (response) {
             is UdsResponse.Positive -> appendLog(

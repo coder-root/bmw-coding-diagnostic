@@ -4,6 +4,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwCodingCatalog
+import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
@@ -390,18 +391,29 @@ object BmwSimulatorCatalog {
     private fun defaultCafdParameters(isGSeries: Boolean): List<CafdParameter> =
         BmwCodingCatalog.buildCafdParameters(isGSeries)
 
-    private fun defaultLiveChannels(isDiesel: Boolean): List<LiveSensorChannel> = listOf(
-        LiveSensorChannel("rpm", "Motor Devri", "rpm", 780.0, 650.0, 6800.0, listOf(760f, 775f, 790f, 780f, 770f, 780f)),
-        LiveSensorChannel("boost", "Turbo Boost BasÄ±ncÄ±", "bar", 0.28, -0.5, 1.8, listOf(0.24f, 0.26f, 0.30f, 0.29f, 0.27f, 0.28f)),
-        LiveSensorChannel("coolant", "SoÄŸutma Suyu SÄ±caklÄ±ÄŸÄ±", "Â°C", 90.0, 80.0, 108.0, listOf(86f, 88f, 89f, 90f, 90f, 90f)),
-        LiveSensorChannel("trans_temp", "ZF8 ÅžanzÄ±man YaÄŸÄ±", "Â°C", 68.0, 40.0, 110.0, listOf(64f, 65f, 66f, 67f, 68f, 68f)),
-        LiveSensorChannel("batt", "AkÃ¼ / AlternatÃ¶r VoltajÄ±", "V", 14.2, 12.2, 14.9, listOf(14.1f, 14.2f, 14.2f, 14.3f, 14.2f, 14.2f)),
-        if (isDiesel) {
-            LiveSensorChannel("dpf_soot", "DPF Kurum YÃ¼kÃ¼ (Soot)", "g", 34.8, 0.0, 45.0, listOf(34.2f, 34.4f, 34.5f, 34.6f, 34.7f, 34.8f))
-        } else {
-            LiveSensorChannel("rail", "YÃ¼ksek YakÄ±t Rail BasÄ±ncÄ±", "bar", 124.5, 45.0, 210.0, listOf(120f, 122f, 125f, 124f, 123f, 124.5f))
-        }
-    )
+    private fun defaultLiveChannels(isDiesel: Boolean): List<LiveSensorChannel> {
+        return BmwEcuAndPidCatalog.livePidDefinitions
+            .filter { pid -> isDiesel || !pid.id.startsWith("dpf_") }
+            .map { pid ->
+                val v = pid.defaultSample
+                LiveSensorChannel(
+                    id = pid.id,
+                    name = pid.name,
+                    unit = pid.unit,
+                    currentValue = v,
+                    minExpected = pid.minExpected,
+                    maxExpected = pid.maxExpected,
+                    history = listOf(
+                        (v * 0.96).toFloat(),
+                        (v * 0.98).toFloat(),
+                        (v * 1.01).toFloat(),
+                        v.toFloat(),
+                        (v * 0.99).toFloat(),
+                        v.toFloat()
+                    )
+                )
+            }
+    }
 
     private fun defaultServiceRoutines(isDiesel: Boolean): List<ServiceRoutine> = buildList {
         add(

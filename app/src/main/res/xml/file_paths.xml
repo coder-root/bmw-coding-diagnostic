@@ -2,5 +2,6 @@
 <paths>
     <cache-path name="inspection_reports" path="reports/" />
     <cache-path name="ota_updates" path="updates/" />
+    <cache-path name="traces" path="traces/" />
     <files-path name="coding_backups" path="backups/" />
 </paths>

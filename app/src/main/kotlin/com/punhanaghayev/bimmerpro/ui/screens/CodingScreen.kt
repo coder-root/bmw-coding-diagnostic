@@ -28,7 +28,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -96,6 +98,88 @@ fun CodingScreen(
     var selectedCategory by remember { mutableStateOf<CodingCategory?>(null) }
     var newVoCode by remember { mutableStateOf("") }
     var newVoDesc by remember { mutableStateOf("") }
+    var pendingPresetDiff by remember { mutableStateOf<Pair<CodingPreset, Int>?>(null) }
+    var pendingCafdDiff by remember { mutableStateOf<Pair<CafdParameter, String>?>(null) }
+
+    pendingPresetDiff?.let { (preset, targetIdx) ->
+        val beforeLabel = preset.options.getOrNull(preset.currentOptionIndex) ?: "-"
+        val afterLabel = preset.options.getOrNull(targetIdx) ?: "-"
+        AlertDialog(
+            onDismissRequest = { pendingPresetDiff = null },
+            title = { Text("Kodlama Önizlemesi (Diff)") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(preset.title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Hedef ECU: ${preset.targetEcu} (0x%02X)".format(preset.targetAddress), fontSize = 12.sp)
+                    Text("CAFD Anahtarı: ${preset.cafdKey}", fontSize = 12.sp)
+                    Text("Önce: $beforeLabel", color = StatusAmber, fontSize = 12.sp)
+                    Text("Sonra: $afterLabel", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    if (session.isPhysicalSafeMode && !session.isPhysicalWriteUnlocked) {
+                        Text(
+                            text = "Not: Fiziksel Salt-Okunur Güvenli Mod aktif olduğu için araca yazma kilitlenecektir.",
+                            color = StatusRed,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val p = preset
+                    val idx = targetIdx
+                    pendingPresetDiff = null
+                    onApplyPreset(p.id, idx)
+                }) {
+                    Text("Uygula")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingPresetDiff = null }) {
+                    Text("İptal")
+                }
+            }
+        )
+    }
+
+    pendingCafdDiff?.let { (param, afterOption) ->
+        val beforeBytes = param.availableOptions[param.selectedOptionLabel]?.let { "0x$it" } ?: "--"
+        val afterBytes = param.availableOptions[afterOption]?.let { "0x$it" } ?: "--"
+        AlertDialog(
+            onDismissRequest = { pendingCafdDiff = null },
+            title = { Text("FDL/CAFD Byte Önizlemesi (Diff)") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("${param.section} -> ${param.functionName}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("ECU: ${param.ecuName} • ${param.cafdFile}", fontSize = 12.sp)
+                    Text("Offset: 0x%02X | Bitmask: 0x%02X".format(param.byteOffset, param.bitMask), fontSize = 12.sp)
+                    Text("Önce: ${param.selectedOptionLabel} ($beforeBytes)", color = StatusAmber, fontSize = 12.sp)
+                    Text("Sonra: $afterOption ($afterBytes)", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    if (session.isPhysicalSafeMode && !session.isPhysicalWriteUnlocked) {
+                        Text(
+                            text = "Not: Fiziksel Salt-Okunur Güvenli Mod aktif olduğu için araca yazma kilitlenecektir.",
+                            color = StatusRed,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val p = param
+                    val opt = afterOption
+                    pendingCafdDiff = null
+                    onApplyCafd(p.id, opt)
+                }) {
+                    Text("Uygula")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingCafdDiff = null }) {
+                    Text("İptal")
+                }
+            }
+        )
+    }
 
     val voltageSafe = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE
 
@@ -181,7 +265,9 @@ fun CodingScreen(
                     }
                     items(filteredPresets, key = { it.id }) { preset ->
                         PresetCodingCard(preset = preset, enabled = voltageSafe, onSelectOption = { idx ->
-                            onApplyPreset(preset.id, idx)
+                            if (idx != preset.currentOptionIndex) {
+                                pendingPresetDiff = preset to idx
+                            }
                         })
                     }
                 }
@@ -206,7 +292,9 @@ fun CodingScreen(
                     }
                     items(filtered, key = { it.id }) { param ->
                         ExpertCafdCard(param = param, enabled = voltageSafe, onApply = { optLabel ->
-                            onApplyCafd(param.id, optLabel)
+                            if (optLabel != param.selectedOptionLabel) {
+                                pendingCafdDiff = param to optLabel
+                            }
                         })
                     }
                 }

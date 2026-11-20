@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
+}
+
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+  if (keystorePropsFile.exists()) {
+    keystorePropsFile.inputStream().use { load(it) }
+  }
 }
 
 android {
@@ -11,15 +20,28 @@ android {
     applicationId = "com.punhanaghayev.bimmerpro"
     minSdk = 26
     targetSdk = 36
-    versionCode = 4
-    versionName = "1.0.3"
+    versionCode = 5
+    versionName = "1.0.4"
+  }
+
+  signingConfigs {
+    create("releaseConfig") {
+      val storePath = keystoreProps.getProperty("storeFile")
+      if (!storePath.isNullOrBlank() && rootProject.file(storePath).exists()) {
+        storeFile = rootProject.file(storePath)
+        storePassword = keystoreProps.getProperty("storePassword")
+        keyAlias = keystoreProps.getProperty("keyAlias")
+        keyPassword = keystoreProps.getProperty("keyPassword")
+      }
+    }
   }
 
   buildTypes {
     release {
       isMinifyEnabled = true
       isShrinkResources = true
-      signingConfig = signingConfigs.getByName("debug")
+      val releaseCfg = signingConfigs.getByName("releaseConfig")
+      signingConfig = if (releaseCfg.storeFile != null) releaseCfg else signingConfigs.getByName("debug")
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }
