@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.core.protocol
 
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
+import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.data.BackupStorage
 import com.punhanaghayev.bimmerpro.data.GarageHistoryStorage
 import com.punhanaghayev.bimmerpro.data.SavedVehicleRecord
@@ -94,5 +95,17 @@ class CafdAndTransportUnitTest {
         } finally {
             tempDir.deleteRecursively()
         }
+    }
+
+    @Test
+    fun `kwp2000 codec and vo dependency mapper work accurately`() {
+        val rawKwp = byteArrayOf(0x58, 0x02, 0x30, 0xFF.toByte(), 0x21, 0x29, 0xF4.toByte(), 0x41)
+        val dtcs = Kwp2000Codec.parseDtcResponse(rawKwp)
+        assertEquals(2, dtcs.size)
+        assertEquals("30FF", dtcs[0].first)
+        assertEquals("29F4", dtcs[1].first)
+
+        val affected = VoDependencyMapper.affectedEcusFor("2TB")
+        assertEquals(3, affected.size)
     }
 }

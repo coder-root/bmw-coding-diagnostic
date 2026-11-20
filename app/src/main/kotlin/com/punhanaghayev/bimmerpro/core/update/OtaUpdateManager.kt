@@ -84,6 +84,19 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.0.3",
+            versionName = "1.0.3",
+            title = "BMW Expert PRO v1.0.3 — Tam NCD Snapshot, KWP2000 & VO Hesaplayıcı",
+            changelog = """
+                • Tam ECU NCD Snapshot alma (SHA-256 doğrulamalı) ve tek tıkla geri yükleme
+                • VoDependencyMapper: FA/VO opsiyon eklemede etkilenecek tüm ECU'ları otomatik hesaplama ve kodlama
+                • Kwp2000Codec: E-Serisi (E60/E90/E70) KWP2000 hata & yerel veri çözümleyici
+            """.trimIndent(),
+            publishedDate = "20.11.2026 07:20",
+            apkDownloadUrl = null,
+            apkSizeBytes = 0L
+        ),
+        AppReleaseInfo(
             tagName = "v1.0.2",
             versionName = "1.0.2",
             title = "BMW Expert PRO v1.0.2 — Vehicle Information, Equipment & Trouble Code",

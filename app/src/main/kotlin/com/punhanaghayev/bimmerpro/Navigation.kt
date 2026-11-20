@@ -288,6 +288,7 @@ fun MainNavigation(
                             onApplyPreset = viewModel::applyPresetCoding,
                             onApplyCafd = viewModel::applyCafdParameter,
                             onRestoreBackup = viewModel::restoreBackup,
+                            onCreateFullNcdSnapshot = viewModel::createFullNcdSnapshot,
                             onExportBackupsJson = { viewModel.exportBackupsJson(context) },
                             onImportBackupsJson = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
                             onAddVoOption = viewModel::addVehicleOrderOption,

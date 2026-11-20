@@ -148,6 +148,13 @@ class BimmerViewModel(
         }
     }
 
+    fun createFullNcdSnapshot() {
+        viewModelScope.launch {
+            repository.createFullNcdSnapshot()
+            _uiEvents.emit(UiEvent.Snackbar("Tam ECU NCD Snapshot kaydedildi."))
+        }
+    }
+
     fun executeServiceRoutine(routine: ServiceRoutine, optionByte: Byte = 0x01) {
         viewModelScope.launch {
             repository.executeServiceRoutine(routine, optionByte)

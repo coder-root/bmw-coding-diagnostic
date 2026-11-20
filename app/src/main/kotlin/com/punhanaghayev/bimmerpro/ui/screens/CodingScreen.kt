@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCategory
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
+import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
@@ -71,6 +72,7 @@ fun CodingScreen(
     onApplyPreset: (String, Int) -> Unit,
     onApplyCafd: (String, String) -> Unit,
     onRestoreBackup: (String) -> Unit,
+    onCreateFullNcdSnapshot: () -> Unit,
     onExportBackupsJson: () -> Unit,
     onImportBackupsJson: () -> Unit,
     onAddVoOption: (String, String) -> Unit,
@@ -253,6 +255,10 @@ fun CodingScreen(
                                         modifier = Modifier.weight(0.64f)
                                     )
                                 }
+                                if (newVoCode.length >= 3) {
+                                    val affectedNames = VoDependencyMapper.affectedEcusFor(newVoCode).joinToString(", ") { it.second }
+                                    Text("Etkilenecek ECU'lar: $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
+                                }
                                 Button(
                                     onClick = {
                                         onAddVoOption(newVoCode, newVoDesc)
@@ -268,6 +274,18 @@ fun CodingScreen(
                                     Text(strings.addVoBtn, maxLines = 1, softWrap = false)
                                 }
                             }
+                        }
+                    }
+
+                    item {
+                        Button(
+                            onClick = onCreateFullNcdSnapshot,
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                        ) {
+                            Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Tam ECU NCD Snapshot Al", fontSize = 12.sp, maxLines = 1, softWrap = false)
                         }
                     }
 

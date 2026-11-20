@@ -20,6 +20,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
+import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.BleAdapterDevice
@@ -541,17 +542,47 @@ class BimmerRepository(
         val profile = _session.value.vehicleProfile ?: return
         if (profile.faOptions.any { it.code == cleanCode }) return
 
-        udsClient.sendUds(
-            EcuAddress.FEM_CAS,
-            UdsCodec.buildWriteDataById(0x3F00, cleanCode.toByteArray()),
-            "UDS 0x2E FA/VO Write +$cleanCode"
-        )
+        val affected = VoDependencyMapper.affectedEcusFor(cleanCode)
+        affected.forEach { (addr, name) ->
+            udsClient.sendUds(
+                addr,
+                UdsCodec.buildWriteDataById(0x3F00, cleanCode.toByteArray()),
+                "UDS 0x2E FA/VO Write +$cleanCode -> $name"
+            )
+        }
+        val ecuNames = affected.joinToString(", ") { it.second }
         _session.update {
             it.copy(
                 vehicleProfile = profile.copy(
                     faOptions = profile.faOptions + VehicleOrderOption(cleanCode, description.ifBlank { "Özel VO Opsiyonu" })
                 ),
-                lastOperationMessage = "FA/VO listesine $cleanCode eklendi ve ilgili ECU'lara işlendi."
+                lastOperationMessage = "FA/VO $cleanCode eklendi. Kodlanan ECU'lar: $ecuNames"
+            )
+        }
+    }
+
+    suspend fun createFullNcdSnapshot() {
+        val state = _session.value
+        val previousMap = state.presets.associate { it.id to it.currentOptionIndex }
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(previousMap.entries.joinToString(",").toByteArray())
+            .take(4)
+            .joinToString("") { "%02X".format(it) }
+        val snapshot = CodingBackupSnapshot(
+            id = "ncd_${System.currentTimeMillis()}",
+            timestamp = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date()),
+            ecuName = "FULL_SVT (${state.ecus.size} ECU)",
+            ecuAddress = EcuAddress.ZGW_BDC,
+            cafdFile = "NCD_SHA256_$digest",
+            summary = "Tam Araç NCD Snapshot (${state.presets.size} parametre, SHA:$digest)",
+            previousValues = previousMap
+        )
+        val updated = listOf(snapshot) + state.backups
+        backupStorage?.saveBackups(updated)
+        _session.update {
+            it.copy(
+                backups = updated,
+                lastOperationMessage = "Tam araç NCD Snapshot alındı (SHA:$digest)."
             )
         }
     }
