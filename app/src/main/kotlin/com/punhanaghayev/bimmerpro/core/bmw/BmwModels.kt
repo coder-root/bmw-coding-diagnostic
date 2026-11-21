@@ -28,7 +28,38 @@ enum class BmwChassis(
         "3 Serisi (2019-Günümüz)",
         SeriesFamily.G_SERIES,
         secureCodingNotice = "MGU & BDC3 modüllerinde Secure Coding 2.0 kısıtlamaları kontrol edilir."
-    )
+    ),
+    F20("F20", "1 Serisi (2011-2019)", SeriesFamily.F_SERIES),
+    F22("F22", "2 Serisi (2013-2021)", SeriesFamily.F_SERIES),
+    F32("F32", "4 Serisi (2013-2020)", SeriesFamily.F_SERIES),
+    F15("F15", "X5 (2013-2018)", SeriesFamily.F_SERIES),
+    F25("F25", "X3 (2010-2017)", SeriesFamily.F_SERIES),
+    F48("F48", "X1 (2015-2022)", SeriesFamily.F_SERIES),
+    G01("G01", "X3 (2017-2024)", SeriesFamily.G_SERIES),
+    G05("G05", "X5 (2018-2023)", SeriesFamily.G_SERIES),
+    G11("G11", "7 Serisi (2015-2022)", SeriesFamily.G_SERIES),
+    G60(
+        "G60",
+        "5 Serisi (2023+)",
+        SeriesFamily.G_SERIES,
+        secureCodingNotice = "iDrive 8.5 / OS 9 ve yeni BDC modüllerinde Secure Coding 2.0 koruması devrededir."
+    ),
+    G70(
+        "G70",
+        "7 Serisi (2022+)",
+        SeriesFamily.G_SERIES,
+        secureCodingNotice = "iDrive 8/8.5 Theatre Screen ve BDC3 modülü imza gerektirir."
+    ),
+    I01("I01", "i3 (2013-2022)", SeriesFamily.I_SERIES),
+    I12("I12", "i8 (2014-2020)", SeriesFamily.I_SERIES),
+    I20(
+        "I20",
+        "iX (2021+)",
+        SeriesFamily.I_SERIES,
+        secureCodingNotice = "BDC3 ve MGU ünitelerinde Secure Coding 2.0 kontrol edilir."
+    ),
+    E70("E70", "X5 (2006-2013)", SeriesFamily.E_SERIES),
+    E87("E87", "1 Serisi (2004-2013)", SeriesFamily.E_SERIES)
 }
 
 object EcuAddress {

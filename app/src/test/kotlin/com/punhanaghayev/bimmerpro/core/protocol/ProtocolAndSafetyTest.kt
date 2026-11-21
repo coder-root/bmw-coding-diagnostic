@@ -248,4 +248,25 @@ class ProtocolAndSafetyTest {
         assertTrue(presets.any { it.id == "rdc_safety_temp" })
         assertTrue(presets.any { it.id == "mirror_fold" })
     }
+
+    @Test
+    fun `bmw model support catalog covers all series from 1 to 8 and x z i`() {
+        val models = com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog.allModels
+        assertTrue(models.size >= 40)
+        assertTrue(models.any { it.chassisCodes.contains("F70") })
+        assertTrue(models.any { it.chassisCodes.contains("G87") })
+        assertTrue(models.any { it.chassisCodes.contains("G20") })
+        assertTrue(models.any { it.chassisCodes.contains("G60") })
+        assertTrue(models.any { it.chassisCodes.contains("G70") })
+        assertTrue(models.any { it.chassisCodes.contains("G05") })
+        assertTrue(models.any { it.chassisCodes.contains("G09") })
+        assertTrue(models.any { it.chassisCodes.contains("I01") })
+        assertTrue(models.any { it.chassisCodes.contains("I20") })
+
+        val xSeries = com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog.filterByCategory("X Series (X1 - X7, XM)")
+        assertTrue(xSeries.size >= 15)
+
+        val iSeries = com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog.filterByCategory("i Series (Elektrikli i3, i4, i5, i7, i8, iX, iX1-3)")
+        assertTrue(iSeries.size >= 8)
+    }
 }

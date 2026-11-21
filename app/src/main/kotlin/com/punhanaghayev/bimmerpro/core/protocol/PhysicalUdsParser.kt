@@ -44,8 +44,16 @@ object PhysicalUdsParser {
             modelCode.startsWith("3A") || modelCode.startsWith("3B") || modelCode.startsWith("8E") -> BmwChassis.F30
             modelCode.startsWith("JA") || modelCode.startsWith("JB") || modelCode.startsWith("JD") -> BmwChassis.G30
             modelCode.startsWith("5U") || modelCode.startsWith("5R") -> BmwChassis.G20
+            modelCode.startsWith("1A") || modelCode.startsWith("1B") || modelCode.startsWith("1C") -> BmwChassis.F20
+            modelCode.startsWith("KS") || modelCode.startsWith("KR") -> BmwChassis.F15
+            modelCode.startsWith("WZ") || modelCode.startsWith("WX") -> BmwChassis.F25
+            modelCode.startsWith("CR") || modelCode.startsWith("CY") -> BmwChassis.G05
+            modelCode.startsWith("TX") || modelCode.startsWith("TY") -> BmwChassis.G01
             modelCode.startsWith("VB") || modelCode.startsWith("VA") || modelCode.startsWith("PG") -> BmwChassis.E90
             modelCode.startsWith("NA") || modelCode.startsWith("NE") || modelCode.startsWith("NU") -> BmwChassis.E60
+            modelCode.startsWith("FE") || modelCode.startsWith("FF") -> BmwChassis.E70
+            modelCode.startsWith("UF") || modelCode.startsWith("UE") -> BmwChassis.E87
+            modelCode.startsWith("1Z") -> BmwChassis.I01
             else -> BmwChassis.F10
         }
     }

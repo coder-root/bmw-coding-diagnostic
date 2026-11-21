@@ -61,7 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
+import com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog
+import com.punhanaghayev.bimmerpro.core.bmw.ModelSupportLevel
 import com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily
+import com.punhanaghayev.bimmerpro.core.bmw.SupportedBmwModelEntry
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
@@ -99,7 +102,7 @@ fun DeveloperScreen(
     var themeExpanded by remember { mutableStateOf(false) }
     var changelogExpanded by remember { mutableStateOf(false) }
     var archExpanded by remember { mutableStateOf(false) }
-    var selectedSeries by remember { mutableStateOf(SeriesFamily.F_SERIES) }
+    var selectedCategory by remember { mutableStateOf("Tümü") }
 
     val changelogList = when (otaState) {
         is OtaCheckState.UpToDate -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
@@ -392,7 +395,7 @@ fun DeveloperScreen(
                         onExpandedChange = { archExpanded = !archExpanded }
                     ) {
                         OutlinedTextField(
-                            value = selectedSeries.label,
+                            value = selectedCategory,
                             onValueChange = {},
                             readOnly = true,
                             singleLine = true,
@@ -407,11 +410,11 @@ fun DeveloperScreen(
                             onDismissRequest = { archExpanded = false },
                             modifier = Modifier.background(theme.cardElevated)
                         ) {
-                            SeriesFamily.entries.forEach { family ->
+                            BmwModelSupportCatalog.allCategories.forEach { cat ->
                                 DropdownMenuItem(
-                                    text = { Text(family.label, color = theme.textPrimary) },
+                                    text = { Text(cat, color = theme.textPrimary, fontSize = 12.sp) },
                                     onClick = {
-                                        selectedSeries = family
+                                        selectedCategory = cat
                                         archExpanded = false
                                     }
                                 )
@@ -419,47 +422,78 @@ fun DeveloperScreen(
                         }
                     }
 
+                    val filteredModels = BmwModelSupportCatalog.filterByCategory(selectedCategory)
                     Text(
-                        text = selectedSeries.protocolStack,
+                        text = "${filteredModels.size} Desteklenen Model & Kasa",
                         color = theme.primaryBright,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     )
-                    val matchingModels = BmwChassis.entries.filter { it.family == selectedSeries }
-                    val seriesSummary = when (selectedSeries) {
-                        SeriesFamily.E_SERIES -> "E60 / E61 (5 Series), E90 / E91 / E92 (3 Series), E70 (X5), E87 (1 Series)"
-                        SeriesFamily.F_SERIES -> "F10 / F11 / F07 (5 Series), F30 / F31 / F34 (3 Series), F20, F15 (X5), F25 (X3)"
-                        SeriesFamily.G_SERIES -> "G30 / G31 (5 Series), G20 / G21 (3 Series), G05 (X5), G01 (X3), G11 (7 Series)"
-                        SeriesFamily.I_SERIES -> "I01 (i3), I12 (i8), I20 (iX)"
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = strings.supportedModelsLabel,
-                            color = theme.textSecondary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            text = seriesSummary,
-                            color = theme.textPrimary,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
-                        )
-                    }
-                    matchingModels.forEach { chassis ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                    filteredModels.forEach { model ->
+                        val badgeColor = when (model.supportLevel) {
+                            ModelSupportLevel.FULL -> StatusGreen
+                            ModelSupportLevel.PARTIAL_SECURE_CODING -> StatusAmber
+                            ModelSupportLevel.K_LINE_HARDWARE -> theme.primaryBright
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(theme.cardElevated)
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(theme.primary.copy(alpha = 0.25f))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(chassis.code, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f, fill = false)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(theme.primary.copy(alpha = 0.25f))
+                                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(model.chassisCodes, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    }
+                                    Text(model.yearRange, color = theme.textSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(badgeColor.copy(alpha = 0.15f))
+                                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                                ) {
+                                    Text(model.supportLevel.label, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
-                            Text(chassis.modelRange, color = theme.textSecondary, fontSize = 12.sp)
+
+                            Text("• Teşhis: ${model.diagnosticSummary}", color = theme.textPrimary, fontSize = 11.sp)
+                            Text("• Kodlama: ${model.codingSummary}", color = theme.textSecondary, fontSize = 11.sp)
+                            Text("• Gerekli Adaptör: ${model.requiredAdapter}", color = theme.primaryBright, fontSize = 11.sp)
+
+                            if (model.limitationNote != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(StatusAmber.copy(alpha = 0.12f))
+                                        .padding(8.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text("⚠️ Kısıtlama Nedeni: ${model.limitationNote}", color = StatusAmber, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                                        if (model.howToSupportSolution != null) {
+                                            Text("💡 Çözüm: ${model.howToSupportSolution}", color = theme.textPrimary, fontSize = 10.sp)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
