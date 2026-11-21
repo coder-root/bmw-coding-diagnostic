@@ -84,6 +84,25 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.4.1",
+            versionName = "1.4.1",
+            title = "BMW Expert PRO v1.4.1 — Standart UI Şablonları, Live & Service Düzeltmeleri, Tam Yerelleştirme ve Güvenlik Onayları",
+            changelog = """
+                • Standart UI Şablon Sistemi (Template System): BmwPrimaryButton, BmwOutlinedButton, BmwSecondaryButton, BmwDangerButton, BmwSwitchRow, BmwStatusBadge
+                • Live Ekranı "Customize Modules" çökme hatası düzeltildi (sınırlı yükseklikli güvenli diyalog ve stabil seçim mimarisi)
+                • 0-100 km/h Performans Zamanlayıcı butonu başlık altındaki temiz eylem alanına taşındı, metin çakışmaları tamamen giderildi
+                • Servis Ekranı IBS Akü Sağlığı kartındaki dikey harf kırılmaları ve SOC/SOH/Voltaj başlık çakışmaları eşit 3 sütunlu ızgara yapısıyla düzeltildi
+                • Servis & Bakım Rutinleri başlığındaki mükerrer "(UDS 0x31)" yazısı kaldırıldı
+                • Servis Rutinleri (Run Routine) butonlarına oturum hafızalı güvenlik onay diyaloğu eklendi ve çalıştırma sonrası anlık durum kartı getirildi
+                • iDrive Dijital Servis Geçmişi "+ Yaz" butonu başlık altına taşındı
+                • Teşhis ekranı DTC durumları (Stored, Active), hata kodları ve kilometre kontrol üniteleri tüm dillerde (EN, TR, AZ, RU) eksiksiz yerelleştirildi
+                • 2023+ LCI & Secure Coding 2.0 (X.509 JWT) ile 2001-2007 Pre-LCI (K-Line Pin 7+8 switch) araçları için detaylı mimari bilgilendirme kartları eklendi
+            """.trimIndent(),
+            publishedDate = "21.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.4.1/BMW_Expert_PRO_1.4.1.apk",
+            apkSizeBytes = 1780000L
+        ),
+        AppReleaseInfo(
             tagName = "v1.4.0",
             versionName = "1.4.0",
             title = "BMW Expert PRO v1.4.0 — DoIP (ISO 13400), UDS 0x27 Security Access, DPF & ZF8 Derinliği, 20+ CAFD & Ekspertiz Raporu",

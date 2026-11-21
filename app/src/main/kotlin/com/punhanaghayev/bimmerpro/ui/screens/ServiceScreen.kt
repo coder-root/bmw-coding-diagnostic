@@ -25,10 +25,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
@@ -37,12 +39,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -96,9 +101,74 @@ fun ServiceScreen(
     }
 
     var batteryDialogRoutine by remember { mutableStateOf<ServiceRoutine?>(null) }
+    var pendingRoutineToExecute by remember { mutableStateOf<Pair<ServiceRoutine, Byte>?>(null) }
+    var rememberRoutineConfirmation by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
     var showZfResetConfirm by remember { mutableStateOf(false) }
+
+    pendingRoutineToExecute?.let { (routine, optionByte) ->
+        AlertDialog(
+            onDismissRequest = { pendingRoutineToExecute = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Security, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(20.dp))
+                    Text(strings.routineConfirmTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = strings.routineConfirmWarning.format(routine.localizedTitle(strings), routine.targetEcu),
+                        color = theme.textPrimary,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = strings.routineConfirmPreconditions,
+                        color = StatusAmber,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(theme.cardElevated)
+                            .clickable { rememberRoutineConfirmation = !rememberRoutineConfirmation }
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = rememberRoutineConfirmation,
+                            onCheckedChange = { rememberRoutineConfirmation = it }
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = strings.rememberChoiceSession,
+                            color = theme.textPrimary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val r = routine
+                        val opt = optionByte
+                        pendingRoutineToExecute = null
+                        onExecuteRoutine(r, opt)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                ) {
+                    Text(strings.runRoutineBtn)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRoutineToExecute = null }) { Text(strings.cancelBtn) }
+            }
+        )
+    }
 
     editingInjectorCyl?.let { (cyl, currentCode) ->
         var codeInput by remember { mutableStateOf(currentCode) }
@@ -193,9 +263,9 @@ fun ServiceScreen(
     if (showZfResetConfirm) {
         AlertDialog(
             onDismissRequest = { showZfResetConfirm = false },
-            title = { Text("ZF 8HP Adaptasyonları Sıfırlansın mı?", fontWeight = FontWeight.Bold) },
+            title = { Text(strings.zfResetConfirmTitle, fontWeight = FontWeight.Bold) },
             text = {
-                Text("Kavrama dolum süreleri ve basınç değerleri fabrika ayarlarına döndürülecektir. Sıfırlama sonrası ilk 50 km boyunca vites geçişleri öğrenme sürecinde olacaktır.")
+                Text(strings.zfResetConfirmText)
             },
             confirmButton = {
                 Button(
@@ -266,37 +336,69 @@ fun ServiceScreen(
                 border = BorderStroke(1.dp, socColor.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = socColor, modifier = Modifier.size(18.dp))
-                            Text(strings.ibsHealthTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            Text(
+                                text = strings.ibsHealthTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                        Text(
-                            text = "$capacity Ah " + (if (isAgm) "AGM" else strings.leadAcidLabel),
-                            color = theme.primaryBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(theme.primaryBright.copy(alpha = 0.16f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "$capacity Ah ${if (isAgm) "AGM" else strings.leadAcidLabel}",
+                                color = theme.primaryBright,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                softWrap = false
+                            )
+                        }
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column {
-                            Text(strings.socLabel, color = theme.textSecondary, fontSize = 11.sp)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(strings.socLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Spacer(Modifier.height(2.dp))
                             Text("$soc%", color = socColor, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                         }
-                        Column {
-                            Text(strings.sohLabel, color = theme.textSecondary, fontSize = 11.sp)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(strings.sohLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Spacer(Modifier.height(2.dp))
                             Text("$soh%", color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                         }
-                        Column {
-                            Text(strings.terminalVoltageLabel, color = theme.textSecondary, fontSize = 11.sp)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(strings.terminalVoltageLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Spacer(Modifier.height(2.dp))
                             Text("%.1f V".format(profile.batteryVoltage), color = theme.textPrimary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                         }
                     }
@@ -307,11 +409,49 @@ fun ServiceScreen(
         // Service Routines (UDS 0x31)
         item {
             Text(
-                text = "${strings.serviceRoutinesTitle} (UDS 0x31)",
+                text = strings.serviceRoutinesTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = theme.textPrimary
             )
+        }
+
+        session.lastServiceResult?.let { res ->
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = (if (res.success) StatusGreen else StatusRed).copy(alpha = 0.15f)),
+                    border = BorderStroke(1.dp, if (res.success) StatusGreen else StatusRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (res.success) Icons.Default.CheckCircle else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (res.success) StatusGreen else StatusRed,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${res.title} • ${res.timestamp}",
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = res.message,
+                                color = if (res.success) StatusGreen else StatusRed,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         items(session.serviceRoutines) { routine ->
@@ -350,8 +490,10 @@ fun ServiceScreen(
                         onClick = {
                             if (routine.type == ServiceRoutineType.BATTERY_REGISTRATION) {
                                 batteryDialogRoutine = routine
-                            } else {
+                            } else if (rememberRoutineConfirmation) {
                                 onExecuteRoutine(routine, 0x01)
+                            } else {
+                                pendingRoutineToExecute = routine to 0x01
                             }
                         },
                         modifier = Modifier.align(Alignment.End),
@@ -607,27 +749,22 @@ fun ServiceScreen(
                 border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Default.History, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                            Text(strings.serviceHistoryTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
-                        }
-                        Button(
-                            onClick = { showHistoryDialog = true },
-                            modifier = Modifier.height(32.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text(strings.writeRecordBtn, fontSize = 11.sp)
-                        }
+                        Icon(Icons.Default.History, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                        Text(strings.serviceHistoryTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                     }
+
+                    BmwOutlinedButton(
+                        text = strings.writeRecordBtn,
+                        icon = Icons.Default.Add,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { showHistoryDialog = true }
+                    )
                     session.serviceHistory.forEach { rec ->
                         Column(
                             modifier = Modifier

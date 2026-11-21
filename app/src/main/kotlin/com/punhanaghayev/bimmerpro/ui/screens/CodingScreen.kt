@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -227,7 +228,7 @@ fun CodingScreen(
                         )
                     } else {
                         Text(
-                            text = "Akü Voltajı: %.1f V (GÜVENLİ)".format(profile.batteryVoltage),
+                            text = "${strings.batteryVoltageLabel}: %.1f V (${strings.batterySafeLabel})".format(profile.batteryVoltage),
                             color = StatusGreen,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp
@@ -308,6 +309,100 @@ fun CodingScreen(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
             )
+        }
+
+        val isSecureCodingVehicle = profile.chassis.family == com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily.G_SERIES ||
+            profile.chassis.name.contains("G", ignoreCase = true) ||
+            profile.chassis.name.contains("I20", ignoreCase = true) ||
+            profile.chassis.name.contains("U06", ignoreCase = true) ||
+            profile.chassis.name.contains("U11", ignoreCase = true) ||
+            profile.chassis.name.contains("U10", ignoreCase = true) ||
+            profile.chassis.name.contains("F70", ignoreCase = true) ||
+            profile.chassis.name.contains("F74", ignoreCase = true)
+
+        if (isSecureCodingVehicle) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = StatusAmber.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, StatusAmber.copy(alpha = 0.6f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = StatusAmber,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.secureCodingWarningTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textPrimary,
+                            fontSize = 12.sp
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = strings.secureCodingWarningText,
+                            color = theme.textSecondary,
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        val isKLineVehicle = profile.chassis.family == com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily.E_SERIES &&
+            (profile.productionYear in 2001..2007 || profile.chassis.name.contains("E85", ignoreCase = true) || profile.chassis.name.contains("E65", ignoreCase = true))
+
+        if (isKLineVehicle) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.primaryBright.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.6f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = theme.primaryBright,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.kLineWarningTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textPrimary,
+                            fontSize = 12.sp
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = strings.kLineWarningText,
+                            color = theme.textSecondary,
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
+            }
         }
 
         PrimaryTabRow(

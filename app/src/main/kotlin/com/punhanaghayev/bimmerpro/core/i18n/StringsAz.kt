@@ -226,6 +226,40 @@ object StringsAz {
         zfClutchOptimal = "Optimal",
         zfClutchWarn = "Aşınma",
 
+        dtcStatusActive = "Aktiv",
+        dtcStatusStored = "Qeyd edilib",
+        dtcStatusPending = "Gözləyir",
+        dtcStatusIntermittent = "Davamlı olmayan",
+        dtcStatusShadow = "Kölgə / Məlumat",
+
+        routineConfirmTitle = "Servis Rutinini Başlat",
+        routineConfirmWarning = "%s rutinini %s üzərində icra etmək istədiyinizdən əminsiniz?",
+        routineConfirmPreconditions = "İlkin şərtlər: Alışdırma AÇIQ (KL15), Mühərrik SÖNÜLÜ, Akkumulyator Gərginliyi >= 12.2V.",
+        rememberChoiceSession = "Bu sessiya üçün təsdiqi yadda saxla",
+
+        zfResetConfirmTitle = "ZF 8HP Adaptasiyalarını Sıfırlansın?",
+        zfResetConfirmText = "İlişmə doldurma vaxtları və təzyiq parametrləri zavod standartlarına qaytarılacaq. Sıfırlamadan sonra ilk 50 km ərzində ötürmələr öyrənmə rejimində olacaq.",
+
+        istaControlPlan = "ISTA İstiqamətləndirilmiş Nəzarət Planı",
+        freezeFrameOccurrences = "Təkrar: %dx",
+
+        batteryVoltageLabel = "Akkumulyator Gərginliyi",
+        batterySafeLabel = "TƏHLÜKƏSİZ",
+        batteryLowLabel = "AŞAĞI",
+        batteryLockedLabel = "KODLAŞDIRMA KİLİDLİ",
+
+        bestTimerLabel = "Ən Yaxşı (0-100)",
+
+        secureCodingWarningTitle = "BMW Secure Coding 2.0 (2023+ LCI / CLAR)",
+        secureCodingWarningText = "Bu avtomobildə BMW Secure Coding 2.0 aktivdir (iDrive 8/8.5/9 və BDC3/BDC4). UDS diaqnostika, DTC təmizlənməsi, canlı telemetriya və servis rutinləri DoIP üzərindən 100% tam dəstəklənir. FDL kodlaşdırması üçün BMW Münhen AOS serverlərindən imzalanmış X.509 JWT tokeni tələb olunur.",
+        kLineWarningTitle = "Pre-LCI K-Line Protokolu (2001–2007)",
+        kLineWarningText = "03/2007-ci il tarixinə qədər istehsal olunmuş avtomobillərdə OBD Pin 6/14 D-CAN (500 kbps) xətti yoxdur. Pin 7 və 8 üzərindən cüt K-Line (10.4 kbps) istifadə olunur. Standart ENET və ya körpülənməmiş D-CAN adapterləri 'Link Error' xətası verəcəkdir. Zəhmət olmasa Pin 7 və 8 açarı körpülənmiş K+DCAN USB kabeli istifadə edin.",
+
+        moduleKombi = "KOMBI (Cihazlar Paneli)",
+        moduleDmePetrol = "MEVD1724 (DME Benzin)",
+        moduleDdeDiesel = "DDE (Dizel)",
+        moduleZf8 = "EGS (ZF 8HP)",
+
         language = AppLanguage.AZ
     )
 }

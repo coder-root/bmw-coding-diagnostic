@@ -226,6 +226,40 @@ object StringsEn {
         zfClutchOptimal = "Optimal",
         zfClutchWarn = "Wear Detected",
 
+        dtcStatusActive = "Active",
+        dtcStatusStored = "Stored",
+        dtcStatusPending = "Pending",
+        dtcStatusIntermittent = "Intermittent",
+        dtcStatusShadow = "Shadow / Info",
+
+        routineConfirmTitle = "Confirm Routine Execution",
+        routineConfirmWarning = "Are you sure you want to run %s on %s?",
+        routineConfirmPreconditions = "Preconditions: Ignition ON (KL15), Engine OFF, Battery Voltage >= 12.2V.",
+        rememberChoiceSession = "Remember choice for this session",
+
+        zfResetConfirmTitle = "Reset ZF 8HP Adaptations?",
+        zfResetConfirmText = "Clutch fill times and fast fill pressures will be reset to factory defaults. Transmission learning will adapt over the next 50 km.",
+
+        istaControlPlan = "ISTA Guided Troubleshooting Plan",
+        freezeFrameOccurrences = "Occurrences: %dx",
+
+        batteryVoltageLabel = "Battery Voltage",
+        batterySafeLabel = "SAFE",
+        batteryLowLabel = "LOW",
+        batteryLockedLabel = "CODING LOCKED",
+
+        bestTimerLabel = "Best (0-100)",
+
+        secureCodingWarningTitle = "BMW Secure Coding 2.0 (2023+ LCI / CLAR)",
+        secureCodingWarningText = "This vehicle uses BMW Secure Coding 2.0 (iDrive 8/8.5/9 & BDC3/BDC4). Diagnostics, fault clearing, live telemetry, and service routines are 100% supported via DoIP. FDL coding requires an X.509 JWT certificate token signed by BMW Munich AOS servers.",
+        kLineWarningTitle = "Pre-LCI K-Line Protocol (2001–2007)",
+        kLineWarningText = "Vehicles built before 03/2007 do not have D-CAN (500 kbps) on OBD pins 6/14. They use dual K-Line on Pin 7 & 8 (10.4 kbps). Standard ENET or unbridged D-CAN adapters will report 'Link Error'. Please use a K+DCAN USB cable with Pin 7+8 switch bridged or FTDI OTG adapter.",
+
+        moduleKombi = "KOMBI (Instrument Cluster)",
+        moduleDmePetrol = "MEVD1724 (DME Petrol)",
+        moduleDdeDiesel = "DDE (Diesel)",
+        moduleZf8 = "EGS (ZF 8HP)",
+
         language = AppLanguage.EN
     )
 }

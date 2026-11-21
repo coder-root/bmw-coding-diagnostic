@@ -226,6 +226,40 @@ object StringsTr {
         zfClutchOptimal = "Optimal",
         zfClutchWarn = "Aşınma",
 
+        dtcStatusActive = "Aktif",
+        dtcStatusStored = "Kayıtlı",
+        dtcStatusPending = "Beklemede",
+        dtcStatusIntermittent = "Aralıklı",
+        dtcStatusShadow = "Gölge / Bilgi",
+
+        routineConfirmTitle = "Servis Rutinini Başlat",
+        routineConfirmWarning = "%s rutinini %s üzerinde çalıştırmak istediğinizden emin misiniz?",
+        routineConfirmPreconditions = "Önkoşullar: Kontak AÇIK (KL15), Motor KAPALI, Akü Voltajı >= 12.2V.",
+        rememberChoiceSession = "Bu oturum için onayımı hatırla",
+
+        zfResetConfirmTitle = "ZF 8HP Adaptasyonları Sıfırlansın mı?",
+        zfResetConfirmText = "Kavrama dolum süreleri ve basınç değerleri fabrika ayarlarına döndürülecektir. Sıfırlama sonrası ilk 50 km boyunca vites geçişleri öğrenme sürecinde olacaktır.",
+
+        istaControlPlan = "ISTA Yönlendirmeli Kontrol Planı",
+        freezeFrameOccurrences = "Tekrar: %dx",
+
+        batteryVoltageLabel = "Akü Voltajı",
+        batterySafeLabel = "GÜVENLİ",
+        batteryLowLabel = "DÜŞÜK",
+        batteryLockedLabel = "KODLAMA KİLİTLİ",
+
+        bestTimerLabel = "En İyi (0-100)",
+
+        secureCodingWarningTitle = "BMW Secure Coding 2.0 (2023+ LCI / CLAR)",
+        secureCodingWarningText = "Bu araçta BMW Secure Coding 2.0 aktiftir (iDrive 8/8.5/9 ve BDC3/BDC4). UDS teşhis, DTC silme, canlı telemetri ve servis rutinleri DoIP üzerinden %100 tam desteklenir. FDL parametre kodlaması için BMW Münih AOS sunucularından imzalı X.509 JWT güvenlik belirteci gereklidir.",
+        kLineWarningTitle = "Pre-LCI K-Line Protokolü (2001–2007)",
+        kLineWarningText = "03/2007 öncesi üretilen araçlarda OBD Pin 6/14 D-CAN (500 kbps) hattı bulunmaz. Bunun yerine Pin 7 ve 8 üzerinden çift K-Hattı (10.4 kbps) kullanılır. Standart ENET veya köprüsüz D-CAN adaptörleri 'Bağlantı Hatası (Link Error)' verir. Lütfen Pin 7 ve 8 anahtarı köprülü K+DCAN USB kablosu veya FTDI OTG adaptör kullanın.",
+
+        moduleKombi = "KOMBI (Gösterge Paneli)",
+        moduleDmePetrol = "MEVD1724 (DME Benzin)",
+        moduleDdeDiesel = "DDE (Dizel)",
+        moduleZf8 = "EGS (ZF 8HP)",
+
         language = AppLanguage.TR
     )
 }

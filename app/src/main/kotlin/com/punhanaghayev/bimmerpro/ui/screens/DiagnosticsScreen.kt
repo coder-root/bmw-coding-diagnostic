@@ -26,10 +26,17 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
+import com.punhanaghayev.bimmerpro.ui.components.BmwDangerButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwSecondaryButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwStatusBadge
+import com.punhanaghayev.bimmerpro.ui.components.BadgeStatusType
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -321,7 +328,7 @@ fun DiagnosticsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(reading.moduleName, color = theme.textSecondary, fontSize = 12.sp)
+                            Text(reading.localizedModuleName(strings), color = theme.textSecondary, fontSize = 12.sp)
                             Text(
                                 text = "%,d km".format(reading.mileageKm) + (reading.engineHours?.let { " • ${it}h" } ?: ""),
                                 color = theme.textPrimary,
@@ -350,7 +357,8 @@ fun DiagnosticsScreen(
                     OutlinedButton(
                         onClick = { filterDropdownExpanded = true },
                         modifier = Modifier.height(36.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
@@ -379,19 +387,12 @@ fun DiagnosticsScreen(
                     }
                 }
 
-                if (session.dtcs.isNotEmpty()) {
-                    OutlinedButton(
-                        onClick = { showClearDialog = true },
-                        modifier = Modifier.height(36.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusRed),
-                        border = BorderStroke(1.dp, StatusRed.copy(alpha = 0.6f))
-                    ) {
-                        Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = StatusRed, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(strings.clearAllDtcBtn, color = StatusRed, fontSize = 12.sp, maxLines = 1, softWrap = false)
-                    }
-                }
+                Text(
+                    text = "${filteredDtcs.size} ${strings.statusFault}",
+                    color = theme.textSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
 
@@ -468,6 +469,37 @@ fun DiagnosticsScreen(
                 }
             }
         }
+
+        // Action Buttons (Template style from Image 1)
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                BmwOutlinedButton(
+                    text = strings.scanAllEcusBtn,
+                    icon = Icons.Default.Refresh,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onRunScan
+                )
+                BmwSecondaryButton(
+                    text = strings.expertisePdfBtn,
+                    icon = Icons.Default.PictureAsPdf,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onExportPdf
+                )
+                if (session.dtcs.isNotEmpty()) {
+                    BmwDangerButton(
+                        text = strings.clearAllDtcBtn,
+                        icon = Icons.Default.DeleteSweep,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { showClearDialog = true }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -500,18 +532,13 @@ private fun ExpandableEcuCard(
                     Text("${ecu.shortName} (${ecu.addressHex}) • ${ecu.fullName}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Text("${ecu.softwareVersion} | ${ecu.codingCapability.label}", color = theme.textSecondary, fontSize = 11.sp)
                 }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background((if (total > 0) StatusAmber else StatusGreen).copy(alpha = 0.16f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = if (total == 0) strings.statusClean else "$total ${strings.statusFault}",
-                        color = if (total > 0) StatusAmber else StatusGreen,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                val isOffline = total == 0 && (ecu.softwareVersion.contains("error", ignoreCase = true) || ecu.hardwareVersion.contains("error", ignoreCase = true))
+                if (isOffline) {
+                    BmwStatusBadge(statusType = BadgeStatusType.ERROR, text = "link error —")
+                } else if (total > 0) {
+                    BmwStatusBadge(statusType = BadgeStatusType.WARNING, count = total)
+                } else {
+                    BmwStatusBadge(statusType = BadgeStatusType.OK, count = 0)
                 }
             }
 
@@ -553,6 +580,7 @@ private fun ExpandableEcuCard(
 private fun ExpandableDtcCard(dtc: DtcFault) {
     var expanded by remember { mutableStateOf(false) }
     val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
     val severityColor = when (dtc.severity) {
         DtcSeverity.CRITICAL -> StatusRed
         DtcSeverity.WARNING -> StatusAmber
@@ -583,7 +611,7 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                     ) {
                         Text(dtc.code, color = severityColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
-                    Text("${dtc.ecuName} • ${dtc.status.label}", color = theme.textSecondary, fontSize = 11.sp)
+                    Text("${dtc.ecuName} • ${dtc.status.localized(strings)}", color = theme.textSecondary, fontSize = 11.sp)
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -591,7 +619,7 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                     tint = theme.textSecondary
                 )
             }
-            Text(dtc.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Text(dtc.localizedTitle(strings), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
 
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
@@ -605,12 +633,11 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                             .padding(10.dp)
                     ) {
                         Text(
-                            text = "Freeze-Frame: %,d km | %.1f V | %d°C | %d rpm (Tekrar: %dx)".format(
+                            text = "Freeze-Frame: %,d km | %.1f V | %d°C | %d rpm (${strings.freezeFrameOccurrences.format(dtc.freezeFrame.occurrenceCount)})".format(
                                 dtc.freezeFrame.mileageKm,
                                 dtc.freezeFrame.batteryVoltage,
                                 dtc.freezeFrame.coolantTempC,
-                                dtc.freezeFrame.engineRpm,
-                                dtc.freezeFrame.occurrenceCount
+                                dtc.freezeFrame.engineRpm
                             ),
                             color = theme.textPrimary,
                             fontSize = 11.sp
@@ -625,7 +652,7 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                             .padding(10.dp)
                     ) {
                         Column {
-                            Text("ISTA Yönlendirmeli Kontrol Planı", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(strings.istaControlPlan, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             Spacer(Modifier.height(4.dp))
                             Text(dtc.istaGuidance, color = theme.textPrimary, fontSize = 12.sp)
                         }

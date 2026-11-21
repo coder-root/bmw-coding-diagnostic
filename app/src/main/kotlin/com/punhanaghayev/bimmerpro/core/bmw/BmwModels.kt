@@ -116,7 +116,15 @@ data class MileageModuleReading(
     val moduleName: String,
     val mileageKm: Int,
     val engineHours: Int? = null
-)
+) {
+    fun localizedModuleName(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when {
+        moduleName.contains("KOMBI", ignoreCase = true) -> strings.moduleKombi
+        moduleName.contains("DME", ignoreCase = true) || moduleName.contains("Benzin", ignoreCase = true) -> strings.moduleDmePetrol
+        moduleName.contains("DDE", ignoreCase = true) || moduleName.contains("Dizel", ignoreCase = true) -> strings.moduleDdeDiesel
+        moduleName.contains("EGS", ignoreCase = true) || moduleName.contains("ZF", ignoreCase = true) -> strings.moduleZf8
+        else -> moduleName
+    }
+}
 
 data class MileageVerificationResult(
     val readings: List<MileageModuleReading>,
@@ -163,7 +171,17 @@ enum class DtcSeverity(val label: String) {
 enum class DtcStatus(val label: String) {
     ACTIVE("Aktif"),
     STORED("Kayıtlı"),
-    INTERMITTENT("Aralıklı")
+    INTERMITTENT("Aralıklı"),
+    PENDING("Beklemede"),
+    SHADOW("Gölge / Bilgi");
+
+    fun localized(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (this) {
+        ACTIVE -> strings.dtcStatusActive
+        STORED -> strings.dtcStatusStored
+        INTERMITTENT -> strings.dtcStatusIntermittent
+        PENDING -> strings.dtcStatusPending
+        SHADOW -> strings.dtcStatusShadow
+    }
 }
 
 data class FreezeFrameData(
@@ -185,7 +203,83 @@ data class DtcFault(
     val status: DtcStatus,
     val freezeFrame: FreezeFrameData,
     val istaGuidance: String
-)
+) {
+    fun localizedTitle(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> when (code) {
+            "120308" -> "Charging Pressure Control: Pressure Too Low (Boost Underboost)"
+            "101F01" -> "Throttle Valve Angle - Intake Manifold Absolute Pressure Plausibility"
+            "B7F805" -> "USB Connection Port 1: Communication Line Interruption"
+            "245700" -> "Particulate Filter System: Soot Mass Exceeded"
+            "244800" -> "Particulate Filter System: Maximum Service Life Reached"
+            "290900" -> "Air Mass System: Measured Air Mass Flow Too High (EGR)"
+            "255000" -> "Fuel Rail Pressure Control: Deviation Too High"
+            "26CF00" -> "Glow Plug Cylinder 1-4 Activation Error"
+            "8040B9" -> "De-energize / Parasitic Sleep Current Violation"
+            "8041A8" -> "Interior / Welcome Light Output Short Circuit Protection"
+            "CD9304" -> "LIN Bus: Active Air Flap Communication Interruption"
+            "E1C447" -> "MOST Ring Temporary Synchronization Loss"
+            "D35A53" -> "DSC: Dynamic Stability Missing Engine Torque Signal"
+            "480A11" -> "Brake Pad Wear Sensor (Front Axle) Reached"
+            "420311" -> "EGS ZF8 Transmission: Oil Degradation / Adaptation Warning"
+            "30FF" -> "Exhaust Turbocharger: Low Boost Pressure Underboost"
+            "B7F8C3" -> "RAM / TCB Emergency Call Antenna High Impedance"
+            "278F00" -> "Alternator Communication / BSD Bus Error"
+            "28A000" -> "Throttle Valve Angle - Intake Pressure Correlation"
+            "140010" -> "Combustion Misfire Detected on Multiple Cylinders"
+            "P2002" -> "Diesel Particulate Filter Efficiency Below Threshold"
+            else -> title
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> when (code) {
+            "120308" -> "Turbo Təzyiq Nəzarəti: Təzyiq Çox Aşağıdır (Boost Low)"
+            "101F01" -> "Qaz Qapağı Bucağı — Kollektor Təzyiqi Uyğunsuzluğu"
+            "B7F805" -> "USB Bağlantı Portu 1 Rabitə Xətası"
+            "245700" -> "DPF Partikül Filtri: Qurum Həddi Aşıldı"
+            "244800" -> "DPF Partikül Filtri: Maksimal Resurs Bitdi"
+            "290900" -> "Hava Kütləsi Sistemi: Ölçülən Hava Kütləsi Çox Yüksəkdir (EGR)"
+            "255000" -> "Yanacaq Rail Təzyiq Nəzarəti: Meyletmə Çox Yüksəkdir"
+            "26CF00" -> "Qızdırma Şamı Silindr 1-4 İdarəetmə Xətası"
+            "8040B9" -> "Akkumulyator Parazit Boşalma / Yuxu Cərəyanı Xətası"
+            "8041A8" -> "İç Aydınlatma Çıxışı Qısa Qapanma Qoruması"
+            "CD9304" -> "LIN Bus: Aktiv Radiator Jalüzü Rabitə Xətası"
+            "E1C447" -> "MOST Ring Müvəqqəti Sinxronizasiya İtkisi"
+            "D35A53" -> "DSC: Çatışmayan Mühərrik Fırlanma Anı Siqnalı"
+            "480A11" -> "Əyləc Bəndi Aşınma Sensoru (Ön Ox) Həddədir"
+            "420311" -> "EGS ZF8: Yağ Resursu / Adaptasiya Xəbərdarlığı"
+            "30FF" -> "Turbo Təzyiqi Hədəfdən Aşağıdır (Underboost)"
+            "B7F8C3" -> "RAM / TCB Təcili Zəng Antenasında Yüksək Müqavimət"
+            "278F00" -> "Generator / BSD Veri Yolu Xətası"
+            "28A000" -> "Qaz Qapağı Bucağı - Qəbul Təzyiqi Korrelyasiyası"
+            "140010" -> "Mühərrikdə Alışma Kəsilməsi (Misfire)"
+            "P2002" -> "DPF Dizel Partikül Filtri Effektivliyi Aşağıdır"
+            else -> title
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> when (code) {
+            "120308" -> "Регулировка давления наддува: давление слишком низкое"
+            "101F01" -> "Угол дроссельной заслонки — недостоверность давления во впускном коллекторе"
+            "B7F805" -> "USB-разъем 1: ошибка связи"
+            "245700" -> "Сажевый фильтр DPF: предельная масса сажи"
+            "244800" -> "Сажевый фильтр DPF: исчерпан ресурс фильтра"
+            "290900" -> "Система подачи воздуха: слишком большой расход воздуха (EGR)"
+            "255000" -> "Регулировка давления в Rail: слишком большое отклонение"
+            "26CF00" -> "Свеча накаливания цилиндров 1-4: ошибка активации"
+            "8040B9" -> "Ток покоя: обнаружен паразитный разряд АКБ"
+            "8041A8" -> "Защита от короткого замыкания цепи освещения салона"
+            "CD9304" -> "Шина LIN: задержка связи с активными жалюзи радиатора"
+            "E1C447" -> "Шина MOST: кратковременная потеря синхронизации"
+            "D35A53" -> "DSC: отсутствует сигнал крутящего момента двигателя"
+            "480A11" -> "Датчик износа тормозных колодок (передняя ось)"
+            "420311" -> "АКПП ZF8: предупреждение о старении масла / адаптации"
+            "30FF" -> "Турбонагнетатель: давление наддува ниже нормы (Underboost)"
+            "B7F8C3" -> "Антенна экстренного вызова RAM / TCB: высокое сопротивление"
+            "278F00" -> "Связь с генератором / ошибка шины BSD"
+            "28A000" -> "Корреляция угла дросселя и давления во впускном коллекторе"
+            "140010" -> "Пропуски зажигания в нескольких цилиндрах"
+            "P2002" -> "Эффективность сажевого фильтра DPF ниже порога"
+            else -> title
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+    }
+}
 
 data class LiveSensorChannel(
     val id: String,
@@ -195,7 +289,80 @@ data class LiveSensorChannel(
     val minExpected: Double,
     val maxExpected: Double,
     val history: List<Float>
-)
+) {
+    fun localizedName(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> when (id) {
+            "rpm" -> "Engine Speed"
+            "speed" -> "Vehicle Speed"
+            "boost", "boost_press" -> "Turbo Boost Pressure"
+            "coolant" -> "Coolant Temperature"
+            "oil_temp" -> "Engine Oil Temperature"
+            "iat" -> "Intake Air Temperature (IAT)"
+            "rail" -> "Fuel Rail Pressure"
+            "load" -> "Engine Load"
+            "throttle" -> "Throttle Position"
+            "batt" -> "Battery / Alternator Voltage"
+            "trans_temp" -> "ZF8 Transmission Fluid Temp"
+            "dpf_diff" -> "DPF Differential Pressure"
+            "dpf_soot" -> "DPF Soot Mass"
+            "dpf_regen_km" -> "Distance Since Last Regen"
+            "inj_1" -> "Injector 1 Deviation"
+            "inj_2" -> "Injector 2 Deviation"
+            "inj_3" -> "Injector 3 Deviation"
+            "inj_4" -> "Injector 4 Deviation"
+            "turbo_target" -> "Target Boost Pressure"
+            "alt_load" -> "Alternator Load"
+            else -> name
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> when (id) {
+            "rpm" -> "Mühərrik Dövriyyəsi"
+            "speed" -> "Avtomobil Sürəti"
+            "boost", "boost_press" -> "Turbo Boost Təzyiqi"
+            "coolant" -> "Soyutma Mayesi Temperaturu"
+            "oil_temp" -> "Mühərrik Yağı Temperaturu"
+            "iat" -> "Qəbul Havası (IAT)"
+            "rail" -> "Yanacaq Rail Təzyiqi"
+            "load" -> "Mühərrik Yükü"
+            "throttle" -> "Qaz Qapağı Vəziyyəti"
+            "batt" -> "Akkumulyator Voltajı"
+            "trans_temp" -> "ZF8 Sürətlər Qutusu Yağı"
+            "dpf_diff" -> "DPF Diferensial Təzyiqi"
+            "dpf_soot" -> "DPF Qurum Kütləsi"
+            "dpf_regen_km" -> "Son Regenerasiyadan Bəri"
+            "inj_1" -> "Farsunka 1 Meyletmə"
+            "inj_2" -> "Farsunka 2 Meyletmə"
+            "inj_3" -> "Farsunka 3 Meyletmə"
+            "inj_4" -> "Farsunka 4 Meyletmə"
+            "turbo_target" -> "Hədəf Boost Təzyiqi"
+            "alt_load" -> "Generator Yükü"
+            else -> name
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> when (id) {
+            "rpm" -> "Обороты двигателя"
+            "speed" -> "Скорость автомобиля"
+            "boost", "boost_press" -> "Давление наддува"
+            "coolant" -> "Температура ОЖ"
+            "oil_temp" -> "Температура моторного масла"
+            "iat" -> "Температура воздуха на впуске"
+            "rail" -> "Давление в топливной рампе"
+            "load" -> "Нагрузка на двигатель"
+            "throttle" -> "Положение дроссельной заслонки"
+            "batt" -> "Напряжение АКБ / генератора"
+            "trans_temp" -> "Температура масла ZF8"
+            "dpf_diff" -> "Перепад давления DPF"
+            "dpf_soot" -> "Масса сажи в DPF"
+            "dpf_regen_km" -> "Пробег с посл. регенерации"
+            "inj_1" -> "Коррекция форсунки 1"
+            "inj_2" -> "Коррекция форсунки 2"
+            "inj_3" -> "Коррекция форсунки 3"
+            "inj_4" -> "Коррекция форсунки 4"
+            "turbo_target" -> "Целевое давление наддува"
+            "alt_load" -> "Нагрузка генератора"
+            else -> name
+        }
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> name
+    }
+}
 
 enum class ServiceRoutineType {
     BATTERY_REGISTRATION,

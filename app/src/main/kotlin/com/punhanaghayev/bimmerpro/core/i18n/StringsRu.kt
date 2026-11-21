@@ -226,6 +226,40 @@ object StringsRu {
         zfClutchOptimal = "Оптимально",
         zfClutchWarn = "Износ",
 
+        dtcStatusActive = "Активный",
+        dtcStatusStored = "Сохранено",
+        dtcStatusPending = "В ожидании",
+        dtcStatusIntermittent = "Периодический",
+        dtcStatusShadow = "Теневой / Инфо",
+
+        routineConfirmTitle = "Запуск сервисной процедуры",
+        routineConfirmWarning = "Вы уверены, что хотите запустить %s на %s?",
+        routineConfirmPreconditions = "Условия: Зажигание ВКЛ (KL15), двигатель ВЫКЛ, напряжение АКБ >= 12.2V.",
+        rememberChoiceSession = "Запомнить выбор на этот сеанс",
+
+        zfResetConfirmTitle = "Сбросить адаптации ZF 8HP?",
+        zfResetConfirmText = "Время наполнения муфт и давление быстрого заполнения будут сброшены на заводские. Переключения будут адаптироваться в течение следующих 50 км.",
+
+        istaControlPlan = "План диагностики ISTA",
+        freezeFrameOccurrences = "Повторений: %dx",
+
+        batteryVoltageLabel = "Напряжение АКБ",
+        batterySafeLabel = "БЕЗОПАСНО",
+        batteryLowLabel = "НИЗКИЙ",
+        batteryLockedLabel = "КОДИРОВАНИЕ ЗАБЛОКИРОВАНО",
+
+        bestTimerLabel = "Лучшее (0-100)",
+
+        secureCodingWarningTitle = "BMW Secure Coding 2.0 (2023+ LCI / CLAR)",
+        secureCodingWarningText = "На этом автомобиле активна защита BMW Secure Coding 2.0 (iDrive 8/8.5/9 и BDC3/BDC4). Диагностика, сброс ошибок, телеметрия и сервисные процедуры работают на 100% через DoIP. Для FDL кодирования требуется подписанный сервером BMW Munich AOS токен X.509 JWT.",
+        kLineWarningTitle = "Протокол K-Line Pre-LCI (2001–2007)",
+        kLineWarningText = "На автомобилях выпуска до 03/2007 отсутствует шина D-CAN (500 кбит/с) на контактах 6/14 OBD. Используется двойная линия K-Line на контактах 7 и 8 (10.4 кбит/с). Стандартный ENET адаптер вызовет 'Ошибку связи'. Используйте кабель K+DCAN с замкнутым переключателем контактов 7+8.",
+
+        moduleKombi = "KOMBI (Приборная панель)",
+        moduleDmePetrol = "MEVD1724 (DME Бензин)",
+        moduleDdeDiesel = "DDE (Дизель)",
+        moduleZf8 = "EGS (ZF 8HP)",
+
         language = AppLanguage.RU
     )
 }

@@ -225,7 +225,7 @@ object InspectionReportGenerator {
         canvas2.drawText("6. TARANAN KONTROL ÜNİTELERİ (${ecus.size} Modül)", 32f, y2, sectionPaint)
         y2 += 16f
         ecus.take(12).forEach { ecu ->
-            val line = "${ecu.shortName} (0x%02X) — SW: %s | Hata: %d".format(ecu.address, ecu.softwareVersion ?: "-", ecu.activeDtcCount)
+            val line = "${ecu.shortName} (0x%02X) — SW: %s | Hata: %d".format(ecu.address, ecu.softwareVersion.ifEmpty { "-" }, ecu.activeDtcCount)
             canvas2.drawText(line, 40f, y2, bodyPaint)
             y2 += 13f
         }

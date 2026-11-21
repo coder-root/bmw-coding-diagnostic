@@ -249,6 +249,40 @@ data class AppStrings(
     val zfClutchOptimal: String,
     val zfClutchWarn: String,
 
+    val dtcStatusActive: String,
+    val dtcStatusStored: String,
+    val dtcStatusPending: String,
+    val dtcStatusIntermittent: String,
+    val dtcStatusShadow: String,
+
+    val routineConfirmTitle: String,
+    val routineConfirmWarning: String,
+    val routineConfirmPreconditions: String,
+    val rememberChoiceSession: String,
+
+    val zfResetConfirmTitle: String,
+    val zfResetConfirmText: String,
+
+    val istaControlPlan: String,
+    val freezeFrameOccurrences: String,
+
+    val batteryVoltageLabel: String,
+    val batterySafeLabel: String,
+    val batteryLowLabel: String,
+    val batteryLockedLabel: String,
+
+    val bestTimerLabel: String,
+
+    val secureCodingWarningTitle: String,
+    val secureCodingWarningText: String,
+    val kLineWarningTitle: String,
+    val kLineWarningText: String,
+
+    val moduleKombi: String,
+    val moduleDmePetrol: String,
+    val moduleDdeDiesel: String,
+    val moduleZf8: String,
+
     val language: AppLanguage
 ) {
     fun adapterTitle(type: AdapterType): String = when (language) {

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -33,6 +34,11 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
+import com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -92,81 +98,160 @@ fun LiveScreen(
     }
 
     var showCustomizeSensorsDialog by remember { mutableStateOf(false) }
+    var draftSelectedPids by remember { mutableStateOf<Set<String>>(emptySet()) }
     var isReorderMode by remember { mutableStateOf(false) }
 
     if (showCustomizeSensorsDialog) {
-        val currentIds = remember(session.liveChannels) { session.liveChannels.map { it.id } }
-        var draftSelected by remember(currentIds) { mutableStateOf(currentIds.toSet()) }
         val ecuNames = remember { BmwEcuAndPidCatalog.allBmwEcus.associateBy { it.address } }
-        val groupedPids = remember(availableLiveChannels) {
-            val catalogIds = availableLiveChannels.map { it.id }.toSet()
+        val catalogIds = remember(availableLiveChannels) { availableLiveChannels.map { it.id }.toSet() }
+        val groupedPids = remember(catalogIds) {
             BmwEcuAndPidCatalog.livePidDefinitions
                 .filter { catalogIds.isEmpty() || it.id in catalogIds }
                 .groupBy { it.ecuAddress }
         }
-        AlertDialog(
+
+        Dialog(
             onDismissRequest = { showCustomizeSensorsDialog = false },
-            title = { Text(strings.customizeSensorsTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
-            text = {
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .padding(vertical = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline)
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 420.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    groupedPids.forEach { (ecuAddr, defs) ->
-                        val ecuTitle = ecuNames[ecuAddr]?.let { "${it.shortName} (0x%02X)".format(it.address) }
-                            ?: "ECU 0x%02X".format(ecuAddr)
-                        Text(ecuTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        defs.forEach { def ->
-                            val checked = def.id in draftSelected
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        draftSelected = if (checked && draftSelected.size > 1) {
-                                            draftSelected - def.id
-                                        } else {
-                                            draftSelected + def.id
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = strings.customizeSensorsTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = theme.textPrimary
+                            )
+                            Text(
+                                text = "${draftSelectedPids.size} / ${BmwEcuAndPidCatalog.livePidDefinitions.size} selected",
+                                fontSize = 11.sp,
+                                color = theme.textSecondary
+                            )
+                        }
+                        IconButton(onClick = { showCustomizeSensorsDialog = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = theme.textSecondary)
+                        }
+                    }
+                    MSportAccentStrip()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                draftSelectedPids = BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.toSet()
+                            },
+                            modifier = Modifier.weight(1f).height(32.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(strings.allModulesLabel, fontSize = 11.sp)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                draftSelectedPids = setOf("rpm", "speed", "boost", "coolant", "oil_temp", "batt")
+                            },
+                            modifier = Modifier.weight(1f).height(32.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text("Default (6)", fontSize = 11.sp)
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(340.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        groupedPids.forEach { (ecuAddr, defs) ->
+                            val ecuTitle = ecuNames[ecuAddr]?.let { "${it.shortName} (0x%02X)".format(it.address) }
+                                ?: "ECU 0x%02X".format(ecuAddr)
+                            Text(ecuTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            defs.forEach { def ->
+                                val checked = def.id in draftSelectedPids
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            draftSelectedPids = if (checked && draftSelectedPids.size > 1) {
+                                                draftSelectedPids - def.id
+                                            } else {
+                                                draftSelectedPids + def.id
+                                            }
                                         }
+                                        .padding(vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = { isChecked ->
+                                            draftSelectedPids = if (!isChecked && draftSelectedPids.size > 1) {
+                                                draftSelectedPids - def.id
+                                            } else if (isChecked) {
+                                                draftSelectedPids + def.id
+                                            } else draftSelectedPids
+                                        }
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(def.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = theme.textPrimary)
+                                        Text("DID 0x%04X • ${def.unit}".format(def.did), fontSize = 10.sp, color = theme.textSecondary)
                                     }
-                                    .padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = { isChecked ->
-                                        draftSelected = if (!isChecked && draftSelected.size > 1) {
-                                            draftSelected - def.id
-                                        } else if (isChecked) {
-                                            draftSelected + def.id
-                                        } else draftSelected
-                                    }
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(def.name, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                                    Text("DID 0x%04X • ${def.unit}".format(def.did), fontSize = 10.sp, color = theme.textSecondary)
                                 }
                             }
                         }
                     }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showCustomizeSensorsDialog = false },
+                            modifier = Modifier.weight(1f).height(42.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(strings.cancelBtn)
+                        }
+                        Button(
+                            onClick = {
+                                val currentIds = session.liveChannels.map { it.id }
+                                val preservedOrder = currentIds.filter { it in draftSelectedPids } +
+                                    BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.filter { it in draftSelectedPids && it !in currentIds }
+                                if (preservedOrder.isNotEmpty()) {
+                                    onSetSelectedPids(preservedOrder)
+                                }
+                                showCustomizeSensorsDialog = false
+                            },
+                            modifier = Modifier.weight(1f).height(42.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                        ) {
+                            Text(strings.applyBtn, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    val preservedOrder = currentIds.filter { it in draftSelected } +
-                        BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.filter { it in draftSelected && it !in currentIds }
-                    onSetSelectedPids(preservedOrder)
-                    showCustomizeSensorsDialog = false
-                }) {
-                    Text(strings.applyBtn)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCustomizeSensorsDialog = false }) { Text(strings.cancelBtn) }
             }
-        )
+        }
     }
 
     LazyColumn(
@@ -265,50 +350,45 @@ fun LiveScreen(
                 border = BorderStroke(1.dp, if (timer.isArmed) theme.primaryBright else theme.outline),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                            Text(strings.perfTimerTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
-                        }
-                        Button(
-                            onClick = onTogglePerformanceRun,
-                            modifier = Modifier.height(34.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (timer.isArmed) StatusRed else theme.primary
-                            )
-                        ) {
-                            Icon(
-                                if (timer.isArmed) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(if (timer.isArmed) strings.stopBtn else strings.startBtn, fontSize = 11.sp)
-                        }
+                        Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
+                        Text(
+                            text = strings.perfTimerTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textPrimary,
+                            fontSize = 13.sp
+                        )
                     }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("0-100 km/s", color = theme.textSecondary, fontSize = 11.sp)
+                            Text("0-100 km/h", color = theme.textSecondary, fontSize = 11.sp)
                             val timeStr = if (timer.isRunning) "%.2fs".format(timer.elapsedMs / 1000.0)
-                                else if (timer.isArmed) "ÖLÇÜLÜYOR..." else "--.--s"
-                            Text(timeStr, color = theme.primaryBright, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                                else if (timer.isArmed) "..." else "--.--s"
+                            Text(timeStr, color = theme.primaryBright, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("En İyi (Best)", color = theme.textSecondary, fontSize = 11.sp)
+                            Text(strings.bestTimerLabel, color = theme.textSecondary, fontSize = 11.sp)
                             val bestStr = timer.bestZeroToHundredSec?.let { "%.2fs".format(it) } ?: "--.--s"
-                            Text(bestStr, color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                            Text(bestStr, color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                         }
                     }
+
+                    BmwPrimaryButton(
+                        text = if (timer.isArmed) strings.stopBtn else strings.startBtn,
+                        icon = if (timer.isArmed) Icons.Default.Stop else Icons.Default.PlayArrow,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onTogglePerformanceRun
+                    )
                 }
             }
         }
@@ -353,7 +433,10 @@ fun LiveScreen(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
-                        onClick = { showCustomizeSensorsDialog = true },
+                        onClick = {
+                            draftSelectedPids = session.liveChannels.map { it.id }.toSet()
+                            showCustomizeSensorsDialog = true
+                        },
                         modifier = Modifier.height(34.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
                     ) {
@@ -410,7 +493,7 @@ fun LiveScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(channel.name, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text(channel.localizedName(strings), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                             Text("${channel.id.uppercase()} • ${channel.unit}", color = theme.textSecondary, fontSize = 10.sp)
                         }
                         if (isReorderMode) {
