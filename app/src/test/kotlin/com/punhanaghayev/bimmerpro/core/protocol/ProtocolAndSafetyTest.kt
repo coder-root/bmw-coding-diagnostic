@@ -185,4 +185,67 @@ class ProtocolAndSafetyTest {
         assertTrue(repo.session.value.ecus.any { it.shortName == "MEVD1724" })
         assertTrue(repo.session.value.serviceRoutines.isNotEmpty())
     }
+
+    @Test
+    fun `doip encodes and decodes routing activation and diagnostic messages`() {
+        val req = DoIpProtocol.createRoutingActivationRequest(0x0E00).encode()
+        assertEquals(15, req.size)
+        val decoded = DoIpProtocol.decode(req)
+        assertEquals(DoIpProtocol.TYPE_ROUTING_ACTIVATION_REQUEST, decoded.payloadType)
+
+        val diagMsg = DoIpProtocol.createDiagnosticMessage(0x0E00, 0x0040, byteArrayOf(0x22, 0xF1.toByte(), 0x90.toByte())).encode()
+        val decodedDiag = DoIpProtocol.decode(diagMsg)
+        assertEquals(DoIpProtocol.TYPE_DIAGNOSTIC_MESSAGE, decodedDiag.payloadType)
+        assertTrue(decodedDiag.payload.size >= 7)
+    }
+
+    @Test
+    fun `bmw security access calculates keys accurately and detects already unlocked zero seeds`() {
+        val zeroSeed = byteArrayOf(0x00, 0x00, 0x00, 0x00)
+        assertTrue(BmwSecurityAccess.isAlreadyUnlocked(zeroSeed))
+
+        val seed = byteArrayOf(0x12, 0x34, 0x56, 0x78)
+        assertFalse(BmwSecurityAccess.isAlreadyUnlocked(seed))
+
+        val casKey = BmwSecurityAccess.calculateKey(EcuAddress.FEM_CAS, seed, 0x01)
+        assertEquals(4, casKey.size)
+
+        val femKey = BmwSecurityAccess.calculateKey(EcuAddress.ZGW_BDC, seed, 0x01)
+        assertEquals(4, femKey.size)
+
+        val dmeKey = BmwSecurityAccess.calculateKey(EcuAddress.DME_DDE, seed, 0x01)
+        assertEquals(4, dmeKey.size)
+
+        // Keys should be non-trivial and deterministic
+        assertArrayEquals(casKey, BmwSecurityAccess.calculateKey(EcuAddress.FEM_CAS, seed, 0x01))
+        assertFalse(casKey.contentEquals(femKey))
+    }
+
+    @Test
+    fun `dpf and zf8 gearbox health models compute correct status in simulator bundle`() = runTest {
+        val repo = BimmerRepository()
+        repo.connect(AdapterType.SIMULATOR_F10)
+        val dpf = repo.session.value.dpfHealth
+        assertNotNull(dpf)
+        assertEquals(22.4, dpf?.sootMassGrams ?: 0.0, 0.01)
+        assertEquals(48.2, dpf?.ashMassGrams ?: 0.0, 0.01)
+        assertEquals(14.5, dpf?.backpressureMbar ?: 0.0, 0.01)
+
+        val zf = repo.session.value.zfHealth
+        assertNotNull(zf)
+        assertEquals(5, zf?.clutches?.size)
+        assertEquals(96, zf?.overallHealthScorePercent)
+        assertEquals(84, zf?.oilTemperatureC)
+        assertTrue(zf?.clutches?.all { it.wearLevel.name == "OPTIMAL" } == true)
+    }
+
+    @Test
+    fun `coding catalog contains 2tb ambient and chirp presets`() {
+        val presets = com.punhanaghayev.bimmerpro.core.bmw.BmwCodingCatalog.buildPresets(false)
+        assertTrue(presets.any { it.id == "sport_transmission_2tb" })
+        assertTrue(presets.any { it.id == "ambient_lighting_custom" })
+        assertTrue(presets.any { it.id == "acoustic_lock_chirp" })
+        assertTrue(presets.any { it.id == "rdc_safety_temp" })
+        assertTrue(presets.any { it.id == "mirror_fold" })
+    }
 }

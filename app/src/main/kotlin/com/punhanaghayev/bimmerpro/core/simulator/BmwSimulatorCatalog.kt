@@ -6,8 +6,10 @@ import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwCodingCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
+import com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
+import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
@@ -26,6 +28,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
+import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchDetail
+import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 
 data class SimulatedVehicleBundle(
@@ -38,6 +42,8 @@ data class SimulatedVehicleBundle(
     val serviceRoutines: List<ServiceRoutine>,
     val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
     val zfAdaptations: List<ZfClutchAdaptation> = BmwSimulatorCatalog.defaultZfAdaptations(),
+    val zfHealth: ZfGearboxHealth = BmwSimulatorCatalog.defaultZfGearboxHealth(),
+    val dpfHealth: DpfHealthStatus? = BmwSimulatorCatalog.defaultDpfHealth(),
     val injectorCodes: List<InjectorCalibration> = BmwSimulatorCatalog.defaultInjectors(4),
     val actuatorTests: List<ActuatorTestItem> = BmwActuatorCatalog.defaultTests(),
     val ibsHealth: IbsBatteryHealth = BmwActuatorCatalog.defaultIbsHealth()
@@ -607,6 +613,35 @@ object BmwSimulatorCatalog {
                 description = "Rot ayarı veya akü sökümü sonrası sıfır noktası kalibrasyonu yapar.",
                 warningNote = "Direksiyon tam düz konumda tutulmalıdır."
             )
+        )
+    }
+
+    fun defaultDpfHealth(): DpfHealthStatus = DpfHealthStatus(
+        sootMassGrams = 22.4,
+        ashMassGrams = 48.2,
+        backpressureMbar = 14.5,
+        distanceSinceLastRegenKm = 310,
+        exhaustTempPreDpfC = 285,
+        exhaustTempPostDpfC = 265,
+        isRegenActive = false,
+        isRegenRequested = false,
+        lastRegenDate = "18.11.2026"
+    )
+
+    fun defaultZfGearboxHealth(): ZfGearboxHealth {
+        val clutches = listOf(
+            ZfClutchDetail("Kavrama A", 38, -12, ClutchWearLevel.OPTIMAL, "Dolum basıncı ve süresi fabrika toleransında."),
+            ZfClutchDetail("Kavrama B", -42, 6, ClutchWearLevel.OPTIMAL, "Normal çalışma seviyesi."),
+            ZfClutchDetail("Kavrama C", 14, -8, ClutchWearLevel.OPTIMAL, "Mükemmel sürtünme yüzeyi."),
+            ZfClutchDetail("Kavrama D", -18, 4, ClutchWearLevel.OPTIMAL, "Sapma yok."),
+            ZfClutchDetail("Kavrama E", 26, -10, ClutchWearLevel.OPTIMAL, "Geçişler hızlı ve pürüzsüz.")
+        )
+        return ZfGearboxHealth(
+            clutches = clutches,
+            oilTemperatureC = 84,
+            oilDegradationScorePercent = 91,
+            overallHealthScorePercent = 96,
+            wearSummary = "ZF 8HP Adaptasyonları Mükemmel — Sürtünme balataları ve mekatronik valf gövdesi nominal aralıkta."
         )
     }
 }

@@ -233,6 +233,21 @@ data class AppStrings(
     val recDpfSootHigh: String,
     val recBatteryLow: String,
     val recHealthy: String,
+    val dpfMonitorTitle: String,
+    val dpfSootLabel: String,
+    val dpfAshLabel: String,
+    val dpfBackpressureLabel: String,
+    val dpfLastRegenLabel: String,
+    val dpfPreTempLabel: String,
+    val dpfPostTempLabel: String,
+    val dpfStatusActive: String,
+    val dpfStatusIdle: String,
+    val dpfTriggerBtn: String,
+    val zfHealthScoreLabel: String,
+    val zfOilTempLabel: String,
+    val zfOilConditionLabel: String,
+    val zfClutchOptimal: String,
+    val zfClutchWarn: String,
 
     val language: AppLanguage
 ) {

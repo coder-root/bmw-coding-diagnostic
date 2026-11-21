@@ -8,6 +8,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
+import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
@@ -26,12 +27,16 @@ import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
+import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.BleAdapterDevice
 import com.punhanaghayev.bimmerpro.core.protocol.BleObdTransportAdapter
+import com.punhanaghayev.bimmerpro.core.protocol.BmwSecurityAccess
 import com.punhanaghayev.bimmerpro.core.protocol.CafdBitmaskEngine
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.DiscoveredGateway
+import com.punhanaghayev.bimmerpro.core.protocol.DoIpProtocol
+import com.punhanaghayev.bimmerpro.core.protocol.DoIpTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.EnetGatewayDiscovery
 import com.punhanaghayev.bimmerpro.core.protocol.PhysicalUdsParser
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
@@ -40,6 +45,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.UdsClient
 import com.punhanaghayev.bimmerpro.core.protocol.UdsCodec
+import com.punhanaghayev.bimmerpro.core.protocol.UdsNegativeResponseCode
 import com.punhanaghayev.bimmerpro.core.protocol.UdsResponse
 import com.punhanaghayev.bimmerpro.core.protocol.UdsSessionType
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanDeviceInfo
@@ -86,6 +92,8 @@ data class BimmerSessionState(
     val serviceRoutines: List<ServiceRoutine> = emptyList(),
     val serviceHistory: List<ServiceHistoryRecord> = emptyList(),
     val zfAdaptations: List<ZfClutchAdaptation> = emptyList(),
+    val zfHealth: ZfGearboxHealth? = null,
+    val dpfHealth: DpfHealthStatus? = null,
     val injectorCodes: List<InjectorCalibration> = emptyList(),
     val actuatorTests: List<ActuatorTestItem> = emptyList(),
     val ibsHealth: IbsBatteryHealth? = null,
@@ -189,12 +197,24 @@ class BimmerRepository(
             AdapterType.SIMULATOR_E90 -> SimulatorTransportAdapter(adapterType)
 
             AdapterType.ENET_WIFI,
-            AdapterType.ENET_USB -> TcpEnetTransportAdapter(
-                adapterType = adapterType,
-                context = appContext,
-                host = customHost.ifBlank { TcpEnetTransportAdapter.DEFAULT_ZGW_HOST },
-                port = customPort ?: TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
-            )
+            AdapterType.ENET_USB -> {
+                val targetPort = customPort ?: TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
+                if (targetPort == DoIpProtocol.DEFAULT_DOIP_PORT) {
+                    DoIpTransportAdapter(
+                        adapterType = adapterType,
+                        context = appContext,
+                        host = customHost.ifBlank { DoIpTransportAdapter.DEFAULT_DOIP_HOST },
+                        port = targetPort
+                    )
+                } else {
+                    TcpEnetTransportAdapter(
+                        adapterType = adapterType,
+                        context = appContext,
+                        host = customHost.ifBlank { TcpEnetTransportAdapter.DEFAULT_ZGW_HOST },
+                        port = targetPort
+                    )
+                }
+            }
 
             AdapterType.BLE_OBD -> {
                 val ctx = appContext ?: error("BLE için Android Context gerekli")
@@ -277,6 +297,8 @@ class BimmerRepository(
                         serviceRoutines = bundle.serviceRoutines,
                         serviceHistory = bundle.serviceHistory,
                         zfAdaptations = bundle.zfAdaptations,
+                        zfHealth = bundle.zfHealth,
+                        dpfHealth = bundle.dpfHealth,
                         injectorCodes = bundle.injectorCodes,
                         actuatorTests = bundle.actuatorTests,
                         ibsHealth = bundle.ibsHealth,
@@ -347,7 +369,9 @@ class BimmerRepository(
                         liveChannels = customChannels,
                         serviceRoutines = template.serviceRoutines,
                         serviceHistory = emptyList(),
-                        zfAdaptations = emptyList(),
+                        zfAdaptations = template.zfAdaptations,
+                        zfHealth = template.zfHealth,
+                        dpfHealth = template.dpfHealth,
                         injectorCodes = emptyList(),
                         actuatorTests = template.actuatorTests,
                         ibsHealth = null,
@@ -727,11 +751,22 @@ class BimmerRepository(
                 )
             )
         }
-        val writeResp = udsClient.sendUds(
+        var writeResp = udsClient.sendUds(
             preset.targetAddress,
             UdsCodec.buildWriteDataById(0x3001, byteArrayOf(newOptionIndex.toByte())),
             "UDS 0x2E FDL Write ${preset.cafdKey}=${newOptionIndex}"
         )
+
+        if (writeResp is UdsResponse.Negative && writeResp.nrc == UdsNegativeResponseCode.SECURITY_ACCESS_DENIED) {
+            val unlocked = tryUnlockSecurityAccess(preset.targetAddress, 0x01)
+            if (unlocked) {
+                writeResp = udsClient.sendUds(
+                    preset.targetAddress,
+                    UdsCodec.buildWriteDataById(0x3001, byteArrayOf(newOptionIndex.toByte())),
+                    "UDS 0x2E FDL Write Retry after SecurityAccess ${preset.cafdKey}=${newOptionIndex}"
+                )
+            }
+        }
 
         return when (writeResp) {
             is UdsResponse.Positive -> {
@@ -899,11 +934,22 @@ class BimmerRepository(
             )
         }
 
-        val writeResp = udsClient.sendUds(
+        var writeResp = udsClient.sendUds(
             param.ecuAddress,
             UdsCodec.buildWriteDataById(0x3002, byteArrayOf(param.byteOffset.toByte(), patchedBuffer[param.byteOffset])),
             "UDS 0x2E Expert FDL ${param.functionName}=$hexStr (Byte=0x%02X)".format(patchedBuffer[param.byteOffset])
         )
+
+        if (writeResp is UdsResponse.Negative && writeResp.nrc == UdsNegativeResponseCode.SECURITY_ACCESS_DENIED) {
+            val unlocked = tryUnlockSecurityAccess(param.ecuAddress, 0x01)
+            if (unlocked) {
+                writeResp = udsClient.sendUds(
+                    param.ecuAddress,
+                    UdsCodec.buildWriteDataById(0x3002, byteArrayOf(param.byteOffset.toByte(), patchedBuffer[param.byteOffset])),
+                    "UDS 0x2E Expert FDL Retry after SecurityAccess ${param.functionName}=$hexStr"
+                )
+            }
+        }
 
         return when (writeResp) {
             is UdsResponse.Positive -> {
@@ -997,6 +1043,34 @@ class BimmerRepository(
                 Result.failure(IllegalStateException(msg))
             }
         }
+    }
+
+    private suspend fun tryUnlockSecurityAccess(targetAddress: Int, level: Int = 0x01): Boolean {
+        _session.update {
+            it.copy(
+                activeOperation = it.activeOperation?.copy(
+                    currentStep = "UDS 0x27 Security Access (Seed & Key) Çözülüyor...",
+                    details = "Seed isteniyor (Seviye 0x%02X)...".format(level),
+                    progress = 0.88f
+                )
+            )
+        }
+        val seedResp = udsClient.sendUds(
+            targetAddress,
+            UdsCodec.buildSecurityRequestSeed(level),
+            "UDS 0x27 Security Access Request Seed (Level $level)"
+        )
+        if (seedResp !is UdsResponse.Positive) return false
+        val seed = PhysicalUdsParser.parseSecuritySeed(seedResp.payload) ?: return false
+        if (BmwSecurityAccess.isAlreadyUnlocked(seed)) return true
+
+        val key = BmwSecurityAccess.calculateKey(targetAddress, seed, level)
+        val keyResp = udsClient.sendUds(
+            targetAddress,
+            UdsCodec.buildSecuritySendKey(level + 1, key),
+            "UDS 0x27 Security Access Send Key (Level ${level + 1})"
+        )
+        return keyResp is UdsResponse.Positive
     }
 
     suspend fun restoreBackup(backupId: String) {

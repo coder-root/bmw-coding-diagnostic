@@ -312,6 +312,40 @@ data class ZfClutchAdaptation(
     val fillTimeMs: Int
 )
 
+data class DpfHealthStatus(
+    val sootMassGrams: Double,
+    val ashMassGrams: Double,
+    val backpressureMbar: Double,
+    val distanceSinceLastRegenKm: Int,
+    val exhaustTempPreDpfC: Int,
+    val exhaustTempPostDpfC: Int,
+    val isRegenActive: Boolean,
+    val isRegenRequested: Boolean,
+    val lastRegenDate: String
+)
+
+enum class ClutchWearLevel(val label: String) {
+    OPTIMAL("Optimal"),
+    MODERATE_WEAR("Hafif Aşınma"),
+    CRITICAL_WEAR("Kritik Aşınma")
+}
+
+data class ZfClutchDetail(
+    val clutchName: String,
+    val pressureMbar: Int,
+    val fillTimeMs: Int,
+    val wearLevel: ClutchWearLevel,
+    val diagnosticNote: String
+)
+
+data class ZfGearboxHealth(
+    val clutches: List<ZfClutchDetail>,
+    val oilTemperatureC: Int,
+    val oilDegradationScorePercent: Int,
+    val overallHealthScorePercent: Int,
+    val wearSummary: String
+)
+
 data class InjectorCalibration(
     val cylinder: Int,
     val imaCode: String

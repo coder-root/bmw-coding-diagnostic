@@ -210,6 +210,21 @@ object StringsTr {
         recDpfSootHigh = "DPF kurum yükü yüksek (%.1f g) — uzun yol veya rejenerasyon önerilir.",
         recBatteryLow = "Akü voltajı düşük (%.1f V) — kodlama öncesi şarj cihazı bağlayın.",
         recHealthy = "Araç genel sağlığı çok iyi — kritik mekanik veya elektriksel bulgu yok.",
+        dpfMonitorTitle = "Dizel Partikül Filtresi (DPF) Canlı Monitör",
+        dpfSootLabel = "Kurum Kütlesi (Soot)",
+        dpfAshLabel = "Kül Kütlesi (Ash)",
+        dpfBackpressureLabel = "Egzoz Geri Basıncı",
+        dpfLastRegenLabel = "Son Rejenerasyon",
+        dpfPreTempLabel = "DPF Ön Sıcaklık",
+        dpfPostTempLabel = "DPF Arka Sıcaklık",
+        dpfStatusActive = "REJENERASYON AKTİF",
+        dpfStatusIdle = "Pasif (Normal Sürüş)",
+        dpfTriggerBtn = "Rejenerasyon Başlat",
+        zfHealthScoreLabel = "Şanzıman Sağlığı",
+        zfOilTempLabel = "Yağ Sıcaklığı",
+        zfOilConditionLabel = "Yağ Kondisyonu",
+        zfClutchOptimal = "Optimal",
+        zfClutchWarn = "Aşınma",
 
         language = AppLanguage.TR
     )

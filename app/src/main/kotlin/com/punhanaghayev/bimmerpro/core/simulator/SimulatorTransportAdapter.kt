@@ -4,6 +4,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
+import com.punhanaghayev.bimmerpro.core.protocol.BmwSecurityAccess
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.HsfzFrame
 import com.punhanaghayev.bimmerpro.core.protocol.TransportAdapter
@@ -89,6 +90,7 @@ class SimulatorTransportAdapter(
             UdsServiceId.WRITE_DATA_BY_ID -> handleWriteDid(targetEcu, uds)
             UdsServiceId.IO_CONTROL_BY_ID -> byteArrayOf((sid + 0x40).toByte(), uds.getOrElse(1) { 0 }, uds.getOrElse(2) { 0 }, 0x03)
             UdsServiceId.ROUTINE_CONTROL -> handleRoutineControl(uds)
+            UdsServiceId.SECURITY_ACCESS -> handleSecurityAccess(targetEcu, uds)
             UdsServiceId.TESTER_PRESENT -> byteArrayOf((sid + 0x40).toByte(), 0x00)
             else -> negativeResponse(sid, UdsNegativeResponseCode.SERVICE_NOT_SUPPORTED)
         }
@@ -184,6 +186,38 @@ class SimulatorTransportAdapter(
             uds[3],
             0x00 // Routine completed OK
         )
+    }
+
+    private var lastGeneratedSeed: ByteArray = byteArrayOf(0x3A, 0x9F.toByte(), 0x12, 0x8C.toByte())
+    private val unlockedEcus = mutableSetOf<Int>()
+
+    private fun handleSecurityAccess(targetEcu: Int, uds: ByteArray): ByteArray {
+        if (uds.size < 2) return negativeResponse(UdsServiceId.SECURITY_ACCESS, UdsNegativeResponseCode.INCORRECT_MESSAGE_LENGTH)
+        val subfunction = uds[1].toInt() and 0xFF
+        return when (subfunction) {
+            0x01, 0x03 -> {
+                if (targetEcu in unlockedEcus) {
+                    byteArrayOf((UdsServiceId.SECURITY_ACCESS + 0x40).toByte(), subfunction.toByte(), 0x00, 0x00, 0x00, 0x00)
+                } else {
+                    val s0 = (targetEcu and 0xFF).toByte()
+                    val s1 = ((targetEcu xor 0xA5) and 0xFF).toByte()
+                    lastGeneratedSeed = byteArrayOf(s0, s1, 0x12, 0x8C.toByte())
+                    byteArrayOf((UdsServiceId.SECURITY_ACCESS + 0x40).toByte(), subfunction.toByte()) + lastGeneratedSeed
+                }
+            }
+            0x02, 0x04 -> {
+                if (uds.size < 6) return negativeResponse(UdsServiceId.SECURITY_ACCESS, UdsNegativeResponseCode.INCORRECT_MESSAGE_LENGTH)
+                val keyReceived = uds.copyOfRange(2, 6)
+                val expectedKey = BmwSecurityAccess.calculateKey(targetEcu, lastGeneratedSeed, subfunction - 1)
+                if (keyReceived.contentEquals(expectedKey)) {
+                    unlockedEcus.add(targetEcu)
+                    byteArrayOf((UdsServiceId.SECURITY_ACCESS + 0x40).toByte(), subfunction.toByte())
+                } else {
+                    negativeResponse(UdsServiceId.SECURITY_ACCESS, UdsNegativeResponseCode.INVALID_KEY)
+                }
+            }
+            else -> negativeResponse(UdsServiceId.SECURITY_ACCESS, UdsNegativeResponseCode.SUB_FUNCTION_NOT_SUPPORTED)
+        }
     }
 
     private fun negativeResponse(serviceId: Int, nrc: UdsNegativeResponseCode): ByteArray =

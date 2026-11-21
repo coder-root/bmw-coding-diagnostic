@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -58,8 +59,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel
+import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
+import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
@@ -361,42 +365,195 @@ fun ServiceScreen(
             }
         }
 
-        // ZF 8HP Transmission Adaptations
+        // Diesel Particulate Filter (DPF) Live Monitor (BimmerLink / BimmerTool style)
+        session.dpfHealth?.let { dpf ->
+            item {
+                val sootColor = when {
+                    dpf.sootMassGrams > 35.0 -> StatusRed
+                    dpf.sootMassGrams > 22.0 -> StatusAmber
+                    else -> StatusGreen
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, sootColor.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(Icons.Default.Tune, contentDescription = null, tint = sootColor, modifier = Modifier.size(18.dp))
+                                Text(strings.dpfMonitorTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (dpf.isRegenActive) StatusGreen.copy(alpha = 0.2f) else theme.cardElevated)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = if (dpf.isRegenActive) strings.dpfStatusActive else strings.dpfStatusIdle,
+                                    color = if (dpf.isRegenActive) StatusGreen else theme.textSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Soot gauge progress
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(strings.dpfSootLabel, color = theme.textSecondary, fontSize = 11.sp)
+                                Text("%.1f g / 45.0 g".format(dpf.sootMassGrams), color = sootColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            LinearProgressIndicator(
+                                progress = { (dpf.sootMassGrams / 45.0).toFloat().coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth().height(6.dp),
+                                color = sootColor,
+                                trackColor = theme.outline.copy(alpha = 0.3f)
+                            )
+                        }
+
+                        // DPF Stats Grid
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
+                                Text(strings.dpfAshLabel, color = theme.textSecondary, fontSize = 10.sp)
+                                Text("%.1f g".format(dpf.ashMassGrams), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column {
+                                Text(strings.dpfBackpressureLabel, color = theme.textSecondary, fontSize = 10.sp)
+                                Text("%.1f mbar".format(dpf.backpressureMbar), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column {
+                                Text(strings.dpfLastRegenLabel, color = theme.textSecondary, fontSize = 10.sp)
+                                Text("%,d km".format(dpf.distanceSinceLastRegenKm), color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column {
+                                Text(strings.dpfPreTempLabel, color = theme.textSecondary, fontSize = 10.sp)
+                                Text("%d°C".format(dpf.exhaustTempPreDpfC), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+
+                        // Trigger Regen Button
+                        val regenRoutine = session.serviceRoutines.firstOrNull { it.type == ServiceRoutineType.DPF_REGENERATION }
+                        if (regenRoutine != null) {
+                            Button(
+                                onClick = { onExecuteRoutine(regenRoutine, 0x01) },
+                                modifier = Modifier.fillMaxWidth().height(36.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(strings.dpfTriggerBtn, fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ZF 8HP Transmission Adaptations & Health
         item {
+            val zf = session.zfHealth
+            val overallScore = zf?.overallHealthScorePercent ?: 95
+            val scoreColor = if (overallScore >= 85) StatusGreen else StatusAmber
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
+                border = BorderStroke(1.dp, scoreColor.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(strings.zfAdaptTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.Settings, contentDescription = null, tint = scoreColor, modifier = Modifier.size(18.dp))
+                            Text(strings.zfAdaptTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(scoreColor.copy(alpha = 0.18f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "$overallScore% ${strings.zfHealthScoreLabel}",
+                                color = scoreColor,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Oil Temp & Degradation
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text(strings.zfOilTempLabel, color = theme.textSecondary, fontSize = 10.sp)
+                            Text("${zf?.oilTemperatureC ?: 84}°C", color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        Column {
+                            Text(strings.zfOilConditionLabel, color = theme.textSecondary, fontSize = 10.sp)
+                            Text("${zf?.oilDegradationScorePercent ?: 91}%", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
                         OutlinedButton(
                             onClick = { showZfResetConfirm = true },
-                            modifier = Modifier.height(32.dp),
+                            modifier = Modifier.height(30.dp),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(12.dp))
                             Spacer(Modifier.width(4.dp))
                             Text(strings.resetBtn, fontSize = 11.sp)
                         }
                     }
-                    session.zfAdaptations.forEach { adapt ->
+
+                    // Clutches A to E
+                    val details = zf?.clutches ?: session.zfAdaptations.map {
+                        com.punhanaghayev.bimmerpro.core.bmw.ZfClutchDetail(
+                            it.clutchName,
+                            it.pressureMbar,
+                            it.fillTimeMs,
+                            com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel.OPTIMAL,
+                            "Nominal"
+                        )
+                    }
+                    details.forEach { c ->
+                        val wearColor = when (c.wearLevel) {
+                            com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel.OPTIMAL -> StatusGreen
+                            com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel.MODERATE_WEAR -> StatusAmber
+                            com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel.CRITICAL_WEAR -> StatusRed
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(adapt.clutchName, color = theme.textSecondary, fontSize = 11.sp)
-                            Text(
-                                "${adapt.pressureMbar} mbar • ${adapt.fillTimeMs} ms",
-                                color = theme.textPrimary,
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 11.sp
-                            )
+                            Text(c.clutchName, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "%+d mbar • %+d ms".format(c.pressureMbar, c.fillTimeMs),
+                                    color = theme.textSecondary,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(wearColor.copy(alpha = 0.15f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (c.wearLevel == com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel.OPTIMAL) strings.zfClutchOptimal else strings.zfClutchWarn,
+                                        color = wearColor,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                         }
                     }
                 }

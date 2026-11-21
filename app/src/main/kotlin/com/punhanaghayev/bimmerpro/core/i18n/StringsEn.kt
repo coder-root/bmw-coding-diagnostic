@@ -210,6 +210,21 @@ object StringsEn {
         recDpfSootHigh = "DPF soot mass is high (%.1f g) — highway drive or regeneration advised.",
         recBatteryLow = "Battery voltage low (%.1f V) — connect charger before coding.",
         recHealthy = "Overall vehicle health is excellent — no critical mechanical or electrical faults.",
+        dpfMonitorTitle = "Diesel Particulate Filter (DPF) Live Monitor",
+        dpfSootLabel = "Soot Mass",
+        dpfAshLabel = "Ash Mass",
+        dpfBackpressureLabel = "Exhaust Backpressure",
+        dpfLastRegenLabel = "Last Regeneration",
+        dpfPreTempLabel = "Pre-DPF Temp",
+        dpfPostTempLabel = "Post-DPF Temp",
+        dpfStatusActive = "REGENERATION ACTIVE",
+        dpfStatusIdle = "Idle (Normal Drive)",
+        dpfTriggerBtn = "Trigger Regeneration",
+        zfHealthScoreLabel = "Gearbox Health",
+        zfOilTempLabel = "Oil Temp",
+        zfOilConditionLabel = "Fluid Condition",
+        zfClutchOptimal = "Optimal",
+        zfClutchWarn = "Wear Detected",
 
         language = AppLanguage.EN
     )

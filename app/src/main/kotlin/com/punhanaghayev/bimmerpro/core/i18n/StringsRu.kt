@@ -210,6 +210,21 @@ object StringsRu {
         recDpfSootHigh = "Высокий уровень сажи DPF (%.1f г) — требуется трасса или прожиг.",
         recBatteryLow = "Низкое напряжение АКБ (%.1f В) — подключите зарядное устройство.",
         recHealthy = "Общее состояние автомобиля отличное — критических дефектов не обнаружено.",
+        dpfMonitorTitle = "Монитор сажевого фильтра (DPF)",
+        dpfSootLabel = "Масса сажи",
+        dpfAshLabel = "Масса золы",
+        dpfBackpressureLabel = "Противодавление",
+        dpfLastRegenLabel = "Посл. регенерация",
+        dpfPreTempLabel = "Темп. перед DPF",
+        dpfPostTempLabel = "Темп. после DPF",
+        dpfStatusActive = "РЕГЕНЕРАЦИЯ АКТИВНА",
+        dpfStatusIdle = "Пассивно (Норма)",
+        dpfTriggerBtn = "Запустить прожиг",
+        zfHealthScoreLabel = "Состояние АКПП",
+        zfOilTempLabel = "Темп. масла",
+        zfOilConditionLabel = "Ресурс масла",
+        zfClutchOptimal = "Оптимально",
+        zfClutchWarn = "Износ",
 
         language = AppLanguage.RU
     )

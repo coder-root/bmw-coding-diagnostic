@@ -84,6 +84,22 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.4.0",
+            versionName = "1.4.0",
+            title = "BMW Expert PRO v1.4.0 — DoIP (ISO 13400), UDS 0x27 Security Access, DPF & ZF8 Derinliği, 20+ CAFD & Ekspertiz Raporu",
+            changelog = """
+                • ISO 13400 DoIP (Diagnostic over IP) Protokol Katmanı (Port 13400 TCP/UDP, 0x0E00/0x0E80 Yönlendirme Aktivasyonu)
+                • UDS 0x27 Security Access (Seed & Key Motoru): CAS4, FEM/BDC ve DME/DDE NRC 0x33 otomatik kilit açma
+                • Canlı DPF Monitörü: Kurum/kül kütlesi, egzoz geri basıncı, sıcaklıklar, son rejenerasyon ve anlık yakma tetikleme
+                • ZF 8HP / 6HP Şanzıman Aşınma Analizi: A-E kavramaları dolum basınç/süre sapmaları, yağ sıcaklığı ve kondisyon puanı
+                • BimmerCode Easy Mode Zenginleştirmesi: 2TB Sport Otomatik & Launch Control, Özel Ambiyans Aydınlatma, Akustik Kilit Onayı (DWA), RDC Lastik Sıcaklığı, Acil Fren Çakar Flaşör
+                • Profesyonel Ekspertiz & Sağlık Raporu: Çok sayfalı yayın kalitesinde A4 PDF ve HTML formatında dışa aktarma / paylaşma
+            """.trimIndent(),
+            publishedDate = "21.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.4.0/BMW_Expert_PRO_1.4.0.apk",
+            apkSizeBytes = 1750000L
+        ),
+        AppReleaseInfo(
             tagName = "v1.3.0",
             versionName = "1.3.0",
             title = "BMW Expert PRO v1.3.0 — Ayrı Canlı/Servis Ekranları, Toplu Kodlama Güvenliği ve F10 528i Simülasyonu",

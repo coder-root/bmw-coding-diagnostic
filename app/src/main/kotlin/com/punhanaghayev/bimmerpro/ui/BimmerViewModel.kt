@@ -294,10 +294,32 @@ class BimmerViewModel(
                     context = context,
                     profile = profile,
                     ecus = state.ecus,
-                    dtcs = state.dtcs
+                    dtcs = state.dtcs,
+                    ibsHealth = state.ibsHealth,
+                    dpfHealth = state.dpfHealth,
+                    zfHealth = state.zfHealth
                 )
             }
             _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "Ekspertiz PDF Raporunu Paylaş"))
+        }
+    }
+
+    fun generateInspectionHtml(context: Context) {
+        val state = session.value
+        val profile = state.vehicleProfile ?: return
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                InspectionReportGenerator.generateHtmlReport(
+                    context = context,
+                    profile = profile,
+                    ecus = state.ecus,
+                    dtcs = state.dtcs,
+                    ibsHealth = state.ibsHealth,
+                    dpfHealth = state.dpfHealth,
+                    zfHealth = state.zfHealth
+                )
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "Ekspertiz HTML Raporunu Paylaş"))
         }
     }
 

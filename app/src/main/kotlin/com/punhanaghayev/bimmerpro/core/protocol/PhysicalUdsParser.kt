@@ -151,4 +151,20 @@ object PhysicalUdsParser {
             else -> null
         }
     }
+
+    fun isNegativeResponse(payload: ByteArray): Boolean =
+        payload.isNotEmpty() && (payload[0].toInt() and 0xFF) == 0x7F
+
+    fun isSecurityAccessDenied(payload: ByteArray): Boolean =
+        payload.size >= 3 && (payload[0].toInt() and 0xFF) == 0x7F && (payload[2].toInt() and 0xFF) == 0x33
+
+    fun isResponsePending(payload: ByteArray): Boolean =
+        payload.size >= 3 && (payload[0].toInt() and 0xFF) == 0x7F && (payload[2].toInt() and 0xFF) == 0x78
+
+    fun parseSecuritySeed(payload: ByteArray): ByteArray? {
+        if (payload.size < 6) return null
+        // Positive response to 0x27: payload[0] = 0x67, payload[1] = level (0x01 or 0x03), payload[2..5] = seed
+        if ((payload[0].toInt() and 0xFF) != 0x67) return null
+        return payload.copyOfRange(2, 6)
+    }
 }

@@ -210,6 +210,21 @@ object StringsAz {
         recDpfSootHigh = "DPF qurum yükü yüksəkdir (%.1f q) — magistral sürüş və ya regenerasiya tövsiyə olunur.",
         recBatteryLow = "Akkumulyator gərginliyi aşağıdır (%.1f V) — kodlaşdırmadan əvvəl şarj cihazı qoşun.",
         recHealthy = "Avtomobilin ümumi sağlamlığı çox yaxşıdır — heç bir kritik mexaniki və ya elektrik qüsuru yoxdur.",
+        dpfMonitorTitle = "Dizel Hissəcik Filtri (DPF) Canlı Monitor",
+        dpfSootLabel = "Qurum Kütləsi",
+        dpfAshLabel = "Kül Kütləsi",
+        dpfBackpressureLabel = "Qaz Əks Təzyiqi",
+        dpfLastRegenLabel = "Son Regenerasiya",
+        dpfPreTempLabel = "DPF Ön Temperatur",
+        dpfPostTempLabel = "DPF Arxa Temperatur",
+        dpfStatusActive = "REGENERASİYA AKTİVDİR",
+        dpfStatusIdle = "Passiv (Normal Sürüş)",
+        dpfTriggerBtn = "Regenerasiya Başlat",
+        zfHealthScoreLabel = "Sürətlər Qutusu Sağlamlığı",
+        zfOilTempLabel = "Yağ Temperaturu",
+        zfOilConditionLabel = "Yağ Vəziyyəti",
+        zfClutchOptimal = "Optimal",
+        zfClutchWarn = "Aşınma",
 
         language = AppLanguage.AZ
     )
