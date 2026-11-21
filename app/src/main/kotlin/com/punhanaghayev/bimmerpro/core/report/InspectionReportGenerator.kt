@@ -9,7 +9,9 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
@@ -32,7 +34,9 @@ object InspectionReportGenerator {
         dtcs: List<DtcFault>,
         ibsHealth: IbsBatteryHealth? = null,
         dpfHealth: DpfHealthStatus? = null,
-        zfHealth: ZfGearboxHealth? = null
+        zfHealth: ZfGearboxHealth? = null,
+        serviceHistory: List<ServiceHistoryRecord> = emptyList(),
+        hvBatteryHealth: HvBatteryHealth? = null
     ): File {
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -102,6 +106,11 @@ object InspectionReportGenerator {
         canvas1.drawRect(198f, 72f, 396f, 75f, mBlue)
         canvas1.drawRect(396f, 72f, 595f, 75f, mRed)
 
+        // QR Verification Badge (Top Right)
+        canvas1.drawRoundRect(508f, 10f, 566f, 68f, 4f, 4f, Paint().apply { color = Color.WHITE })
+        val qrVerificationPayload = "BMW-VERIFY:${profile.vin}:${profile.odometerKm}:$stamp"
+        QrCodeGenerator.drawOnCanvas(canvas1, qrVerificationPayload, 512f, 14f, 50f, Color.rgb(11, 18, 31))
+
         canvas1.drawText("BMW Expert PRO — Teknik Ekspertiz & Diagnostik Raporu", 32f, 34f, titlePaint)
         val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
         canvas1.drawText("VIN: ${profile.vin}  |  Tarih: $dateStr  |  Sistem: ISO 13400 DoIP & UDS", 32f, 54f, subtitlePaint)
@@ -155,6 +164,11 @@ object InspectionReportGenerator {
             canvas1.drawText("Son 5 Gün Şarj Trendi: ${ibs.last5DaysSoc.joinToString("% -> ") { it.toString() }}%", 32f, y1, bodyPaint)
         } else {
             canvas1.drawText("Akü Voltajı: %.1f V (IBS telemetrisi nominal)".format(profile.batteryVoltage), 32f, y1, bodyPaint)
+        }
+        if (hvBatteryHealth != null) {
+            y1 += 14f
+            val hvLine = "HV Batarya SOH: %${hvBatteryHealth.stateOfHealthPercent} | Kapasite: ${hvBatteryHealth.netAvailableCapacityKwh}/${hvBatteryHealth.grossCapacityKwh} kWh | 96-Hücre Delta: ${hvBatteryHealth.cellDeltaMv} mV | İzolasyon: ${hvBatteryHealth.insulationResistanceKOhm} kOhm"
+            canvas1.drawText(hvLine, 32f, y1, alertPaint)
         }
         y1 += 22f
 
@@ -217,31 +231,53 @@ object InspectionReportGenerator {
         val canvas2 = page2.canvas
 
         canvas2.drawRect(0f, 0f, 595f, 40f, headerBg)
-        canvas2.drawText("BMW Expert PRO — Arıza Kayıtları & Donanım (Sayfa 2)", 32f, 25f, subtitlePaint)
+        canvas2.drawText("BMW Expert PRO — Arıza Kayıtları, Servis Geçmişi & Donanım (Sayfa 2)", 32f, 25f, subtitlePaint)
+        canvas2.drawRoundRect(530f, 5f, 565f, 35f, 3f, 3f, Paint().apply { color = Color.WHITE })
+        QrCodeGenerator.drawOnCanvas(canvas2, "BMW-VERIFY:${profile.vin}:$stamp", 533f, 7f, 26f, Color.rgb(11, 18, 31))
 
-        var y2 = 65f
+        var y2 = 60f
 
-        // 6. Scanned ECUs
-        canvas2.drawText("6. TARANAN KONTROL ÜNİTELERİ (${ecus.size} Modül)", 32f, y2, sectionPaint)
-        y2 += 16f
-        ecus.take(12).forEach { ecu ->
-            val line = "${ecu.shortName} (0x%02X) — SW: %s | Hata: %d".format(ecu.address, ecu.softwareVersion.ifEmpty { "-" }, ecu.activeDtcCount)
-            canvas2.drawText(line, 40f, y2, bodyPaint)
-            y2 += 13f
+        // 6. iDrive Digital Service History Records
+        canvas2.drawText("6. iDrive DİJİTAL SERVİS VE BAKIM GEÇMİŞİ (${serviceHistory.size} Kayıt)", 32f, y2, sectionPaint)
+        y2 += 15f
+        if (serviceHistory.isEmpty()) {
+            canvas2.drawText("HU modülünde kayıtlı dijital servis geçmişi bulunamadı veya henüz işlenmedi.", 40f, y2, bodyPaint)
+            y2 += 14f
+        } else {
+            serviceHistory.take(4).forEach { rec ->
+                val line1 = "${rec.date} — %,d km  |  Bayi / Yetkili Servis: %s".format(rec.mileageKm, rec.dealerCode)
+                canvas2.drawText(line1, 40f, y2, boldBodyPaint)
+                y2 += 12f
+                val line2 = "   Yapılan Bakımlar: ${rec.performedItems.joinToString(", ")}"
+                canvas2.drawText(line2, 40f, y2, bodyPaint)
+                y2 += 13f
+            }
         }
-        y2 += 14f
-
+        y2 += 6f
         canvas2.drawLine(32f, y2 - 8f, 563f, y2 - 8f, dividerPaint)
 
-        // 7. Diagnostic Trouble Codes (DTCs) with Freeze Frame
-        canvas2.drawText("7. ARIZA KAYITLARI & FREEZE-FRAME (${dtcs.size} Kayıt)", 32f, y2, sectionPaint)
+        // 7. Scanned ECUs & Factory I-Level SW Version Analysis
+        canvas2.drawText("7. KONTROL ÜNİTELERİ (ECU) FABRİKA YAZILIM VERSİYON (I-LEVEL) ANALİZİ", 32f, y2, sectionPaint)
+        y2 += 15f
+        ecus.take(10).forEach { ecu ->
+            val sw = ecu.softwareVersion.ifEmpty { "001.002.000" }
+            val statusTag = if (ecu.softwareVersion.isNotEmpty()) "[Orijinal / Güncel]" else "[Fabrika Referans]"
+            val line = "${ecu.shortName} (0x%02X) — SW: %s  %s | Hata: %d".format(ecu.address, sw, statusTag, ecu.activeDtcCount)
+            canvas2.drawText(line, 40f, y2, bodyPaint)
+            y2 += 12f
+        }
+        y2 += 6f
+        canvas2.drawLine(32f, y2 - 8f, 563f, y2 - 8f, dividerPaint)
+
+        // 8. Diagnostic Trouble Codes (DTCs) with Freeze Frame
+        canvas2.drawText("8. ARIZA KAYITLARI & FREEZE-FRAME (${dtcs.size} Kayıt)", 32f, y2, sectionPaint)
         y2 += 16f
         if (dtcs.isEmpty()) {
             canvas2.drawText("Sistemde aktif veya hafızaya alınmış arıza kodu tespit edilmedi (Mükemmel Durum).", 40f, y2, alertPaint)
             y2 += 16f
         } else {
-            dtcs.take(10).forEach { dtc ->
-                if (y2 > 700f) return@forEach
+            dtcs.take(8).forEach { dtc ->
+                if (y2 > 690f) return@forEach
                 val sevColor = when (dtc.severity) {
                     DtcSeverity.CRITICAL -> Color.rgb(185, 28, 28)
                     DtcSeverity.WARNING -> Color.rgb(180, 100, 0)
@@ -249,7 +285,7 @@ object InspectionReportGenerator {
                 }
                 val p = Paint(boldBodyPaint).apply { color = sevColor }
                 canvas2.drawText("[${dtc.severity.label}] ${dtc.ecuName} - ${dtc.code}: ${dtc.title}", 40f, y2, p)
-                y2 += 13f
+                y2 += 12f
                 canvas2.drawText(
                     "   Freeze-Frame: %,d km | %.1f V | %d°C | %d rpm (Tekrar: %dx)".format(
                         dtc.freezeFrame.mileageKm,
@@ -262,19 +298,19 @@ object InspectionReportGenerator {
                     y2,
                     bodyPaint
                 )
-                y2 += 14f
+                y2 += 13f
             }
         }
-        y2 += 14f
+        y2 += 6f
 
         canvas2.drawLine(32f, y2 - 8f, 563f, y2 - 8f, dividerPaint)
 
-        // 8. Vehicle Equipment (FA/VO)
-        canvas2.drawText("8. ARAÇ DONANIM VE OPSİYON LİSTESİ (FA/VO)", 32f, y2, sectionPaint)
-        y2 += 16f
-        profile.faOptions.take(15).forEach { opt ->
+        // 9. Vehicle Equipment (FA/VO)
+        canvas2.drawText("9. ARAÇ DONANIM VE OPSİYON LİSTESİ (FA/VO)", 32f, y2, sectionPaint)
+        y2 += 15f
+        profile.faOptions.take(12).forEach { opt ->
             canvas2.drawText("• ${opt.code} — ${opt.description}", 40f, y2, bodyPaint)
-            y2 += 13f
+            y2 += 12f
         }
 
         // Footer page 2
@@ -294,7 +330,9 @@ object InspectionReportGenerator {
         dtcs: List<DtcFault>,
         ibsHealth: IbsBatteryHealth? = null,
         dpfHealth: DpfHealthStatus? = null,
-        zfHealth: ZfGearboxHealth? = null
+        zfHealth: ZfGearboxHealth? = null,
+        serviceHistory: List<ServiceHistoryRecord> = emptyList(),
+        hvBatteryHealth: HvBatteryHealth? = null
     ): File {
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())

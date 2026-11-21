@@ -1,6 +1,7 @@
 ﻿package com.punhanaghayev.bimmerpro.core.simulator
 
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
 import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwCodingCatalog
@@ -16,6 +17,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
+import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
@@ -46,7 +49,9 @@ data class SimulatedVehicleBundle(
     val dpfHealth: DpfHealthStatus? = BmwSimulatorCatalog.defaultDpfHealth(),
     val injectorCodes: List<InjectorCalibration> = BmwSimulatorCatalog.defaultInjectors(4),
     val actuatorTests: List<ActuatorTestItem> = BmwActuatorCatalog.defaultTests(),
-    val ibsHealth: IbsBatteryHealth = BmwActuatorCatalog.defaultIbsHealth()
+    val ibsHealth: IbsBatteryHealth = BmwActuatorCatalog.defaultIbsHealth(),
+    val hvBatteryHealth: HvBatteryHealth? = BmwSimulatorCatalog.defaultHvBatteryHealth(),
+    val adasStatus: AdasCalibrationStatus = BmwSimulatorCatalog.defaultAdasStatus()
 )
 
 object BmwSimulatorCatalog {
@@ -613,6 +618,74 @@ object BmwSimulatorCatalog {
                 description = "Rot ayarı veya akü sökümü sonrası sıfır noktası kalibrasyonu yapar.",
                 warningNote = "Direksiyon tam düz konumda tutulmalıdır."
             )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.KAFAS_CAMERA_CALIBRATION,
+                title = "KAFAS Ön Cam Kamera Kalibrasyonu",
+                targetEcu = "KAFAS",
+                targetAddress = EcuAddress.KAFAS_CAMERA,
+                routineId = 0x0250,
+                description = "Ön cam değişimi veya şerit takip arızası sonrası dinamik kamera kalibrasyonunu başlatır.",
+                warningNote = "Düz ve belirgin şeritli yolda 40-70 km/h hız aralığında 10-15 dakika sürüş gerektirir."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.ACC_RADAR_CALIBRATION,
+                title = "ACC / FRR Radar Sensör Kalibrasyonu & Sıfırlama",
+                targetEcu = "ACC/FRR",
+                targetAddress = EcuAddress.ACC_RADAR,
+                routineId = 0x0260,
+                description = "Adaptif Hız Sabitleyici ön radarının açısal sapma ofsetini sıfırlar ve öğrenme modunu açar.",
+                warningNote = "Radar sensör aynasında çamur, kar veya mekanik darbe hasarı bulunmamalıdır."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK,
+                title = "HV Yüksek Voltaj Kontaktör & İzolasyon Kontrolü",
+                targetEcu = "SME",
+                targetAddress = EcuAddress.SME_HV_BATTERY,
+                routineId = 0x0270,
+                description = "Hibrit/Elektrikli araçlarda ana HV kontaktörlerini ve izolasyon direncini (>500 kOhm) test eder.",
+                warningNote = "Şarj kablosu takılı olmamalı, araç Park (P) modunda olmalıdır."
+            )
+        )
+    }
+
+    fun defaultAdasStatus(): AdasCalibrationStatus = AdasCalibrationStatus(
+        kafasStatus = "Kalibre Edildi (Dinamik Öğrenme %100)",
+        kafasProgressPercent = 100,
+        accYawOffsetMrad = 1.2,
+        accPitchOffsetMrad = -0.8,
+        isAccWithinTolerance = true
+    )
+
+    fun defaultHvBatteryHealth(): HvBatteryHealth {
+        val voltages = (1..96).map { idx ->
+            val v = 3820 + ((idx * 7) % 24)
+            HvCellVoltage(idx, v)
+        }
+        val minV = voltages.minOf { it.voltageMv }
+        val maxV = voltages.maxOf { it.voltageMv }
+        return HvBatteryHealth(
+            stateOfChargePercent = 78.5,
+            stateOfHealthPercent = 97.4,
+            grossCapacityKwh = 80.7,
+            netAvailableCapacityKwh = 77.4,
+            maxCellVoltageMv = maxV,
+            minCellVoltageMv = minV,
+            cellDeltaMv = maxV - minV,
+            avgCellVoltageMv = voltages.map { it.voltageMv }.average().toInt(),
+            cellCount = 96,
+            cellVoltages = voltages,
+            minModuleTempC = 21.4,
+            maxModuleTempC = 23.8,
+            avgModuleTempC = 22.5,
+            insulationResistanceKOhm = 3650,
+            contactorClosed = true,
+            healthAssessment = "96 Hücre Dengelemesi Kusursuz (Delta: 24 mV < 25 mV) — SOH %97.4 Yüksek Sağlık"
         )
     }
 

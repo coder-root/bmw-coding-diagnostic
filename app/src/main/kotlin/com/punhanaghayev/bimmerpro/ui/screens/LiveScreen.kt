@@ -102,6 +102,11 @@ fun LiveScreen(
     var isReorderMode by remember { mutableStateOf(false) }
 
     if (showCustomizeSensorsDialog) {
+        if (draftSelectedPids.isEmpty()) {
+            draftSelectedPids = session.liveChannels.map { it.id }.toSet().ifEmpty {
+                setOf("rpm", "speed", "boost", "coolant", "oil_temp", "batt")
+            }
+        }
         val ecuNames = remember { BmwEcuAndPidCatalog.allBmwEcus.associateBy { it.address } }
         val catalogIds = remember(availableLiveChannels) { availableLiveChannels.map { it.id }.toSet() }
         val groupedPids = remember(catalogIds) {
@@ -110,46 +115,37 @@ fun LiveScreen(
                 .groupBy { it.ecuAddress }
         }
 
-        Dialog(
+        AlertDialog(
             onDismissRequest = { showCustomizeSensorsDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+            title = {
+                Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = strings.customizeSensorsTitle,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = theme.textPrimary
-                            )
-                            Text(
-                                text = "${draftSelectedPids.size} / ${BmwEcuAndPidCatalog.livePidDefinitions.size} selected",
-                                fontSize = 11.sp,
-                                color = theme.textSecondary
-                            )
-                        }
+                        Text(
+                            text = strings.customizeSensorsTitle,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = theme.textPrimary
+                        )
                         IconButton(onClick = { showCustomizeSensorsDialog = false }) {
                             Icon(Icons.Default.Close, contentDescription = "Close", tint = theme.textSecondary)
                         }
                     }
+                    Text(
+                        text = "${draftSelectedPids.size} / ${BmwEcuAndPidCatalog.livePidDefinitions.size} selected",
+                        fontSize = 11.sp,
+                        color = theme.textSecondary
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     MSportAccentStrip()
 
                     Row(
@@ -179,7 +175,7 @@ fun LiveScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(340.dp)
+                            .heightIn(max = 300.dp)
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -220,38 +216,30 @@ fun LiveScreen(
                             }
                         }
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { showCustomizeSensorsDialog = false },
-                            modifier = Modifier.weight(1f).height(42.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(strings.cancelBtn)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val currentIds = session.liveChannels.map { it.id }
+                        val preservedOrder = currentIds.filter { it in draftSelectedPids } +
+                            BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.filter { it in draftSelectedPids && it !in currentIds }
+                        if (preservedOrder.isNotEmpty()) {
+                            onSetSelectedPids(preservedOrder)
                         }
-                        Button(
-                            onClick = {
-                                val currentIds = session.liveChannels.map { it.id }
-                                val preservedOrder = currentIds.filter { it in draftSelectedPids } +
-                                    BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.filter { it in draftSelectedPids && it !in currentIds }
-                                if (preservedOrder.isNotEmpty()) {
-                                    onSetSelectedPids(preservedOrder)
-                                }
-                                showCustomizeSensorsDialog = false
-                            },
-                            modifier = Modifier.weight(1f).height(42.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                        ) {
-                            Text(strings.applyBtn, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                        showCustomizeSensorsDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                ) {
+                    Text(strings.applyBtn, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showCustomizeSensorsDialog = false }) {
+                    Text(strings.cancelBtn)
                 }
             }
-        }
+        )
     }
 
     LazyColumn(

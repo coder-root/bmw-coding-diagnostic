@@ -114,18 +114,18 @@ fun DiagnosticsScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("Tüm Hata Hafızaları Silinsin mi?") },
-            text = { Text("Gateway üzerinden tüm ECU'lara UDS 0x14 ClearDiagnosticInfo komutu gönderilecek.") },
+            title = { Text(strings.clearConfirmTitle, fontWeight = FontWeight.Bold) },
+            text = { Text(strings.clearConfirmBody) },
             confirmButton = {
                 TextButton(onClick = {
                     showClearDialog = false
                     onClearAllDtcs()
                 }) {
-                    Text("Evet, Temizle", color = StatusRed)
+                    Text(strings.clearConfirmAction, color = StatusRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) { Text("İptal") }
+                TextButton(onClick = { showClearDialog = false }) { Text(strings.cancelBtn) }
             }
         )
     }

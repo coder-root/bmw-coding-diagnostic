@@ -269,4 +269,44 @@ class ProtocolAndSafetyTest {
         val iSeries = com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog.filterByCategory("i Series (Elektrikli i3, i4, i5, i7, i8, iX, iX1-3)")
         assertTrue(iSeries.size >= 8)
     }
+
+    @Test
+    fun `qrCodeGeneratorProducesStandardMatrixWithFinders`() {
+        val matrix = com.punhanaghayev.bimmerpro.core.report.QrCodeGenerator.encode("BMW-VERIFY-WBA3D3150GNT12345-128400")
+        assertEquals(25, matrix.size)
+        assertEquals(25, matrix[0].size)
+        // Check top-left finder pattern center (3,3) is black
+        assertTrue(matrix[3][3])
+        // Check top-left finder pattern corner (0,0) is black
+        assertTrue(matrix[0][0])
+        // Check top-right finder pattern corner (0, 24) is black
+        assertTrue(matrix[0][24])
+        // Check bottom-left finder pattern corner (24, 0) is black
+        assertTrue(matrix[24][0])
+    }
+
+    @Test
+    fun `adasAndHvBatteryRoutinesAndActuatorsExist`() {
+        val routines = com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog.buildBundle(AdapterType.SIMULATOR_G30).serviceRoutines
+        assertTrue(routines.any { it.type == com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType.KAFAS_CAMERA_CALIBRATION })
+        assertTrue(routines.any { it.type == com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType.ACC_RADAR_CALIBRATION })
+        assertTrue(routines.any { it.type == com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK })
+
+        val actuators = com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog.defaultTests()
+        assertTrue(actuators.any { it.id == "act_kafas_heater" })
+        assertTrue(actuators.any { it.id == "act_acc_alignment" })
+        assertTrue(actuators.any { it.id == "act_hv_pyro" })
+    }
+
+    @Test
+    fun `hvBatteryHealth96CellsCalculatesDelta`() {
+        val bundle = com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog.buildBundle(AdapterType.SIMULATOR_G30)
+        val hv = bundle.hvBatteryHealth
+        assertNotNull(hv)
+        assertEquals(96, hv?.cellCount)
+        assertEquals(96, hv?.cellVoltages?.size)
+        assertTrue(hv!!.cellDeltaMv in 1..40)
+        assertTrue(hv.insulationResistanceKOhm > 1000)
+        assertTrue(hv.stateOfHealthPercent > 90.0)
+    }
 }

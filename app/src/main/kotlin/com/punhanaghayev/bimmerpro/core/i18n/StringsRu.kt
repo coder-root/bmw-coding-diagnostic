@@ -261,5 +261,28 @@ object StringsRu {
         moduleZf8 = "EGS (ZF 8HP)",
 
         language = AppLanguage.RU
-    )
+    ).apply {
+        hvBatteryTitle = "Состояние высоковольтной батареи (HV) и 96 ячеек (SME)"
+        hvSohLabel = "Здоровье батареи (SOH)"
+        hvCapacityLabel = "Полезная / Полная емкость"
+        cellDeltaLabel = "Разброс ячеек (Delta)"
+        insulationResistanceLabel = "Сопротивление изоляции HV"
+        contactorStatusLabel = "Высоковольтный контактор"
+        adasTitle = "Калибровка камер и радаров ADAS (KAFAS и ACC)"
+        kafasStatusLabel = "Обучение камеры KAFAS"
+        accOffsetLabel = "Угловое смещение радара ACC"
+        pdfQrVerificationLabel = "QR-КОД ЦИФРОВОЙ ВЕРИФИКАЦИИ"
+        pdfServiceHistoryTitle = "ЦИФРОВАЯ ИСТОРИЯ ОБСЛУЖИВАНИЯ iDrive"
+        pdfEcuSwVersionTitle = "АНАЛИЗ ЗАВОДСКИХ ВЕРСИЙ ПО БЛОКОВ УПРАВЛЕНИЯ (I-LEVEL)"
+        clearConfirmTitle = "Очистить всю память неисправностей?"
+        clearConfirmBody = "Команда UDS 0x14 ClearDiagnosticInfo будет разослана всем блокам через шлюз."
+        clearConfirmAction = "Да, очистить все"
+        hvCellDistributionLabel = "Распределение напряжений 96 ячеек (Мин: %d мВ, Ср: %d мВ, Макс: %d мВ)"
+        contactorClosedLabel = "Контактор: ЗАМКНУТ (Активен)"
+        contactorOpenLabel = "Контактор: РАЗОМКНУТ"
+        moduleTempsLabel = "Температуры модулей: Мин %d°C / Макс %d°C (Ср: %d°C)"
+        radarOkLabel = "РАДАР OK"
+        radarAlignRequiredLabel = "ТРЕБУЕТСЯ КАЛИБРОВКА"
+        toleranceLabel = "Допуск: ±15.0 мрад"
+    }
 }

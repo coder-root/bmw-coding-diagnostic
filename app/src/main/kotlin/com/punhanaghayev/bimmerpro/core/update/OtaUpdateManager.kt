@@ -84,6 +84,21 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.5.0",
+            versionName = "1.5.0",
+            title = "BMW Expert PRO v1.5.0 — Saha Adaptör Dayanıklılığı, KAFAS & ADAS Kalibrasyonu, HV Batarya & 96-Hücre Analizi ve Ekspertiz PDF Raporu V2",
+            changelog = """
+                • Saha Adaptör Dayanıklılığı (Resilience & Auto-Reconnect): Wi-Fi ENET, vLinker BM ve BLE adaptörlerde UDS 0x3E TesterPresent Keep-Alive döngüsü ve kopan bağlantıyı otomatik kurtaran üstel gecikmeli yeniden bağlanma motoru
+                • STN2255 / ELM327 Hızlandırması: STPX tek komutlu yüksek hızlı ISO-TP iletimi ve E-serisi K-Line için ATSPB (10.4 kbps KWP2000) desteği
+                • KAFAS Kamera ve ADAS Radar Servis Kalibrasyonları: Ön cam değişimi sonrası KAFAS dinamik kamera öğrenme sürüşü (0x0250) ve ACC/FRR radar açısal sapma sıfırlama (0x0260)
+                • Elektrikli ve Hibrit (i-Serisi & PHEV) HV Batarya Sağlık Raporu: SME üzerinden 96 hücrenin milivolt (mV) düzeyinde canlı voltaj dağılımı (Delta mV), SOH %, net/brüt kapasite ve izolasyon direnci (>500 kOhm) analizi
+                • Profesyonel Ekspertiz PDF Raporu V2: Çevrimdışı saf-Kotlin QR Kod doğrulaması, iDrive dijital servis geçmişi tablosu, kontrol üniteleri fabrika I-Level / SVT referans karşılaştırması ve HV batarya değerlendirmesi
+            """.trimIndent(),
+            publishedDate = "22.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.5.0/BMW_Expert_PRO_1.5.0.apk",
+            apkSizeBytes = 1820000L
+        ),
+        AppReleaseInfo(
             tagName = "v1.4.1",
             versionName = "1.4.1",
             title = "BMW Expert PRO v1.4.1 — Standart UI Şablonları, Live & Service Düzeltmeleri, Tam Yerelleştirme ve Güvenlik Onayları",

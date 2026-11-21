@@ -261,5 +261,28 @@ object StringsEn {
         moduleZf8 = "EGS (ZF 8HP)",
 
         language = AppLanguage.EN
-    )
+    ).apply {
+        hvBatteryTitle = "High-Voltage (HV) Battery Health & 96-Cell Delta (SME)"
+        hvSohLabel = "State of Health (SOH)"
+        hvCapacityLabel = "Net / Gross Capacity"
+        cellDeltaLabel = "Max Cell Delta"
+        insulationResistanceLabel = "HV Insulation Resistance"
+        contactorStatusLabel = "HV Contactor State"
+        adasTitle = "ADAS Camera & Radar Calibration (KAFAS & ACC)"
+        kafasStatusLabel = "KAFAS Dynamic Learning"
+        accOffsetLabel = "ACC Radar Angular Offset"
+        pdfQrVerificationLabel = "DIGITAL VERIFICATION QR"
+        pdfServiceHistoryTitle = "iDrive DIGITAL SERVICE & MAINTENANCE HISTORY"
+        pdfEcuSwVersionTitle = "ECU FACTORY I-LEVEL & SOFTWARE VERSION ANALYSIS"
+        clearConfirmTitle = "Clear All Fault Memories?"
+        clearConfirmBody = "UDS 0x14 ClearDiagnosticInfo command will be broadcasted to all ECUs through Gateway."
+        clearConfirmAction = "Yes, Clear All"
+        hvCellDistributionLabel = "96-Cell Voltage Distribution (Min: %d mV, Avg: %d mV, Max: %d mV)"
+        contactorClosedLabel = "Contactor: CLOSED (Active)"
+        contactorOpenLabel = "Contactor: OPEN"
+        moduleTempsLabel = "Module Temperatures: Min %d°C / Max %d°C (Avg: %d°C)"
+        radarOkLabel = "RADAR OK"
+        radarAlignRequiredLabel = "ALIGNMENT REQUIRED"
+        toleranceLabel = "Tolerance: ±15.0 mrad"
+    }
 }

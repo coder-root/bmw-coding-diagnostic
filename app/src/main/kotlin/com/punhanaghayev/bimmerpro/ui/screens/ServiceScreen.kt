@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,8 +65,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
 import com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
+import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
@@ -406,6 +410,126 @@ fun ServiceScreen(
             }
         }
 
+        // High-Voltage (HV) Battery Health (SME)
+        session.hvBatteryHealth?.let { hv ->
+            item {
+                val deltaColor = when {
+                    hv.cellDeltaMv < 25 -> StatusGreen
+                    hv.cellDeltaMv < 50 -> StatusAmber
+                    else -> StatusRed
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, deltaColor.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                                Text(
+                                    text = strings.hvBatteryTitle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = theme.textPrimary,
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(StatusGreen.copy(alpha = 0.16f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "SOH %${hv.stateOfHealthPercent}",
+                                    color = StatusGreen,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    softWrap = false
+                                )
+                            }
+                        }
+
+                        // Metrics row
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(strings.hvCapacityLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1)
+                                Text("${hv.netAvailableCapacityKwh} / ${hv.grossCapacityKwh} kWh", color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(strings.cellDeltaLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1)
+                                Text("${hv.cellDeltaMv} mV", color = deltaColor, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                            }
+                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(strings.insulationResistanceLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1)
+                                Text("${hv.insulationResistanceKOhm} kΩ", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+
+                        // 96-Cell distribution sample visualization
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(
+                                    text = strings.hvCellDistributionLabel.format(hv.minCellVoltageMv, hv.avgCellVoltageMv, hv.maxCellVoltageMv),
+                                    color = theme.textSecondary,
+                                    fontSize = 10.sp
+                                )
+                                Text("Delta: ${hv.cellDeltaMv} mV", color = deltaColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(18.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(theme.cardElevated)
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                for (cell in hv.cellVoltages.take(24)) {
+                                    val hFrac = ((cell.voltageMv - (hv.minCellVoltageMv - 5)) / (hv.cellDeltaMv + 10f).coerceAtLeast(1f)).coerceIn(0.2f, 1f)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight(hFrac)
+                                            .clip(RoundedCornerShape(1.dp))
+                                            .background(deltaColor.copy(alpha = 0.85f))
+                                    )
+                                }
+                            }
+                        }
+
+                        // Temp & Health Assessment
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(
+                                text = strings.moduleTempsLabel.format(hv.minModuleTempC, hv.maxModuleTempC, hv.avgModuleTempC),
+                                color = theme.textSecondary,
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                text = if (hv.contactorClosed) strings.contactorClosedLabel else strings.contactorOpenLabel,
+                                color = if (hv.contactorClosed) StatusGreen else StatusAmber,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(hv.healthAssessment, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+
         // Service Routines (UDS 0x31)
         item {
             Text(
@@ -486,7 +610,10 @@ fun ServiceScreen(
                             fontSize = 11.sp
                         )
                     }
-                    Button(
+                    BmwPrimaryButton(
+                        text = strings.runRoutineBtn,
+                        icon = Icons.Default.Build,
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             if (routine.type == ServiceRoutineType.BATTERY_REGISTRATION) {
                                 batteryDialogRoutine = routine
@@ -495,14 +622,8 @@ fun ServiceScreen(
                             } else {
                                 pendingRoutineToExecute = routine to 0x01
                             }
-                        },
-                        modifier = Modifier.align(Alignment.End),
-                        colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                    ) {
-                        Icon(Icons.Default.Build, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(strings.runRoutineBtn, fontSize = 12.sp)
-                    }
+                        }
+                    )
                 }
             }
         }
@@ -590,6 +711,95 @@ fun ServiceScreen(
                                 Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
                                 Spacer(Modifier.width(6.dp))
                                 Text(strings.dpfTriggerBtn, fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ADAS Camera & Radar Calibration (KAFAS & ACC)
+        session.adasStatus?.let { adas ->
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(Icons.Default.Tune, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                                Text(strings.adasTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(StatusGreen.copy(alpha = 0.16f))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = if (adas.isAccWithinTolerance) strings.radarOkLabel else strings.radarAlignRequiredLabel,
+                                    color = if (adas.isAccWithinTolerance) StatusGreen else StatusAmber,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // KAFAS Camera Progress
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(strings.kafasStatusLabel, color = theme.textSecondary, fontSize = 11.sp)
+                                Text("${adas.kafasProgressPercent}%", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            LinearProgressIndicator(
+                                progress = { (adas.kafasProgressPercent / 100f).coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth().height(5.dp),
+                                color = theme.primaryBright,
+                                trackColor = theme.outline.copy(alpha = 0.3f)
+                            )
+                            Text(adas.kafasStatus, color = theme.textSecondary, fontSize = 10.sp)
+                        }
+
+                        // ACC Radar Offsets
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
+                                Text(strings.accOffsetLabel, color = theme.textSecondary, fontSize = 10.sp)
+                                Text("Yaw: %+1.1f mrad  |  Pitch: %+1.1f mrad".format(adas.accYawOffsetMrad, adas.accPitchOffsetMrad), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            Text(strings.toleranceLabel, color = StatusGreen, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                        }
+
+                        // Action Buttons
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val kafasRoutine = session.serviceRoutines.firstOrNull { it.type == ServiceRoutineType.KAFAS_CAMERA_CALIBRATION }
+                            if (kafasRoutine != null) {
+                                OutlinedButton(
+                                    onClick = { onExecuteRoutine(kafasRoutine, 0x01) },
+                                    modifier = Modifier.weight(1f).height(34.dp),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(kafasRoutine.localizedTitle(strings), fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
+                            }
+                            val accRoutine = session.serviceRoutines.firstOrNull { it.type == ServiceRoutineType.ACC_RADAR_CALIBRATION }
+                            if (accRoutine != null) {
+                                OutlinedButton(
+                                    onClick = { onExecuteRoutine(accRoutine, 0x01) },
+                                    modifier = Modifier.weight(1f).height(34.dp),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(accRoutine.localizedTitle(strings), fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                }
                             }
                         }
                     }

@@ -261,5 +261,28 @@ object StringsAz {
         moduleZf8 = "EGS (ZF 8HP)",
 
         language = AppLanguage.AZ
-    )
+    ).apply {
+        hvBatteryTitle = "Yüksək Gərginlikli (HV) Batareya Sağlamlığı & 96-Hüceyrə Analizi (SME)"
+        hvSohLabel = "Batareya Sağlamlığı (SOH)"
+        hvCapacityLabel = "Net / Ümumi Tutum"
+        cellDeltaLabel = "Maks. Hüceyrə Fərqi (Delta)"
+        insulationResistanceLabel = "HV İzolyasiya Müqaviməti"
+        contactorStatusLabel = "HV Kontaktor Vəziyyəti"
+        adasTitle = "ADAS Kamera və Radar Kalibrasiyası (KAFAS & ACC)"
+        kafasStatusLabel = "KAFAS Ön Şüşə Kamera Öyrənməsi"
+        accOffsetLabel = "ACC Radar Bucaq Meyletməsi"
+        pdfQrVerificationLabel = "RƏQƏMSAL TƏSDİQ QR KODU"
+        pdfServiceHistoryTitle = "iDrive RƏQƏMSAL SERVİS VƏ BAXIM TARİXÇƏSİ"
+        pdfEcuSwVersionTitle = "İDARƏETMƏ BLOKLARI ZAVOD PROQRAM VERSİYASI ANALİZİ"
+        clearConfirmTitle = "Bütün Xəta Yaddaşları Silinsin?"
+        clearConfirmBody = "Şlüz vasitəsilə bütün ECU-lara UDS 0x14 ClearDiagnosticInfo əmri göndəriləcək."
+        clearConfirmAction = "Bəli, Təmizlə"
+        hvCellDistributionLabel = "96-Hüceyrə Voltaj Paylanması (Min: %d mV, Orta: %d mV, Maks: %d mV)"
+        contactorClosedLabel = "Kontaktor: BAĞLI (Aktiv)"
+        contactorOpenLabel = "Kontaktor: AÇIQ"
+        moduleTempsLabel = "Modul Temperaturları: Min %d°C / Maks %d°C (Orta: %d°C)"
+        radarOkLabel = "RADAR OK"
+        radarAlignRequiredLabel = "DÜZƏLİŞ TƏLƏB OLUNUR"
+        toleranceLabel = "Tolerantlıq: ±15.0 mrad"
+    }
 }

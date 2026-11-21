@@ -297,7 +297,9 @@ class BimmerViewModel(
                     dtcs = state.dtcs,
                     ibsHealth = state.ibsHealth,
                     dpfHealth = state.dpfHealth,
-                    zfHealth = state.zfHealth
+                    zfHealth = state.zfHealth,
+                    serviceHistory = state.serviceHistory,
+                    hvBatteryHealth = state.hvBatteryHealth
                 )
             }
             _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "Ekspertiz PDF Raporunu Paylaş"))
@@ -316,7 +318,9 @@ class BimmerViewModel(
                     dtcs = state.dtcs,
                     ibsHealth = state.ibsHealth,
                     dpfHealth = state.dpfHealth,
-                    zfHealth = state.zfHealth
+                    zfHealth = state.zfHealth,
+                    serviceHistory = state.serviceHistory,
+                    hvBatteryHealth = state.hvBatteryHealth
                 )
             }
             _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "Ekspertiz HTML Raporunu Paylaş"))

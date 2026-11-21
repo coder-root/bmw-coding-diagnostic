@@ -2,6 +2,7 @@ package com.punhanaghayev.bimmerpro.data
 
 import android.content.Context
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
@@ -12,6 +13,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
@@ -22,6 +25,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.OfflineFaultAnalyzer
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceExecutionResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
+import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
@@ -55,11 +59,17 @@ import com.punhanaghayev.bimmerpro.core.simulator.SimulatorTransportAdapter
 import com.punhanaghayev.bimmerpro.core.update.DataPackDownloader
 import com.punhanaghayev.bimmerpro.core.update.DataPackStatus
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,6 +107,8 @@ data class BimmerSessionState(
     val injectorCodes: List<InjectorCalibration> = emptyList(),
     val actuatorTests: List<ActuatorTestItem> = emptyList(),
     val ibsHealth: IbsBatteryHealth? = null,
+    val hvBatteryHealth: HvBatteryHealth? = null,
+    val adasStatus: AdasCalibrationStatus? = null,
     val offlineReport: OfflineDiagnosticReport? = null,
     val isPhysicalSafeMode: Boolean = true,
     val isPhysicalWriteUnlocked: Boolean = false,
@@ -136,6 +148,10 @@ class BimmerRepository(
     private var activeTransport: TransportAdapter = SimulatorTransportAdapter(AdapterType.SIMULATOR_F10)
     private val udsClient = UdsClient { activeTransport }
     private val ecuCafdBuffers = mutableMapOf<Int, ByteArray>()
+
+    private val repoScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var keepAliveJob: Job? = null
+    private var isReconnecting = false
 
     private var cachedLiveChannelsCatalog: List<LiveSensorChannel> = emptyList()
 
@@ -302,6 +318,8 @@ class BimmerRepository(
                         injectorCodes = bundle.injectorCodes,
                         actuatorTests = bundle.actuatorTests,
                         ibsHealth = bundle.ibsHealth,
+                        hvBatteryHealth = bundle.hvBatteryHealth,
+                        adasStatus = bundle.adasStatus,
                         offlineReport = health,
                         isPhysicalSafeMode = false,
                         savedVehicles = savedList,
@@ -375,6 +393,8 @@ class BimmerRepository(
                         injectorCodes = emptyList(),
                         actuatorTests = template.actuatorTests,
                         ibsHealth = null,
+                        hvBatteryHealth = template.hvBatteryHealth,
+                        adasStatus = template.adasStatus,
                         offlineReport = health,
                         isPhysicalSafeMode = true,
                         savedVehicles = savedList,
@@ -382,6 +402,7 @@ class BimmerRepository(
                     )
                 }
             }
+            startKeepAliveWorker()
         } catch (ex: Exception) {
             _session.update {
                 it.copy(
@@ -392,7 +413,83 @@ class BimmerRepository(
         }
     }
 
+    private fun startKeepAliveWorker() {
+        keepAliveJob?.cancel()
+        if (activeTransport is SimulatorTransportAdapter) return
+        keepAliveJob = repoScope.launch {
+            while (isActive) {
+                delay(2500L)
+                if (_session.value.connectionState is ConnectionState.Connected && !isReconnecting) {
+                    try {
+                        udsClient.sendUds(
+                            EcuAddress.ZGW_BDC,
+                            UdsCodec.buildTesterPresent(suppressResponse = true),
+                            "UDS 0x3E Keep-Alive"
+                        )
+                    } catch (ex: Exception) {
+                        udsClient.logInfo(
+                            "WARN",
+                            EcuAddress.ZGW_BDC,
+                            "TesterPresent düştü: ${ex.message}. Otomatik yeniden bağlanma deneniyor..."
+                        )
+                        triggerAutoReconnect()
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun triggerAutoReconnect() {
+        if (isReconnecting || activeTransport is SimulatorTransportAdapter) return
+        isReconnecting = true
+        val currentAdapter = _session.value.selectedAdapter
+        _session.update {
+            it.copy(
+                connectionState = ConnectionState.Connecting("${currentAdapter.displayName} (Yeniden Bağlanılıyor...)"),
+                lastOperationMessage = "Bağlantı koptu. Otomatik kurtarma devrede..."
+            )
+        }
+
+        var reconnected = false
+        val backoffs = listOf(800L, 2000L, 4000L)
+        for ((idx, delayMs) in backoffs.withIndex()) {
+            delay(delayMs)
+            try {
+                activeTransport.disconnect()
+                activeTransport.connect()
+                udsClient.sendUds(
+                    EcuAddress.ZGW_BDC,
+                    UdsCodec.buildSessionControl(UdsSessionType.EXTENDED),
+                    "UDS 0x10 Extended Session (Kurtarma)"
+                )
+                reconnected = true
+                _session.update {
+                    it.copy(
+                        connectionState = activeTransport.connectionState.value,
+                        lastOperationMessage = "Bağlantı başarıyla kurtarıldı (Deneme ${idx + 1})"
+                    )
+                }
+                udsClient.logInfo("AUTO-RECONNECT", EcuAddress.ZGW_BDC, "Oturum başarıyla kurtarıldı.")
+                break
+            } catch (ex: Exception) {
+                udsClient.logInfo("WARN", EcuAddress.ZGW_BDC, "Deneme ${idx + 1} başarısız: ${ex.message}")
+            }
+        }
+
+        if (!reconnected) {
+            _session.update {
+                it.copy(
+                    connectionState = ConnectionState.Error("Araç bağlantısı kesildi ve otomatik kurtarılamadı."),
+                    lastOperationMessage = "Bağlantı kesildi."
+                )
+            }
+        }
+        isReconnecting = false
+    }
+
     suspend fun disconnect() {
+        keepAliveJob?.cancel()
+        keepAliveJob = null
         activeTransport.disconnect()
         _session.update {
             BimmerSessionState(
@@ -1180,9 +1277,25 @@ class BimmerRepository(
             )
         }
         _session.update {
+            val updatedAdas = if (result.success) {
+                when (routine.type) {
+                    ServiceRoutineType.KAFAS_CAMERA_CALIBRATION ->
+                        it.adasStatus?.copy(kafasStatus = "Dinamik Sürüş Kalibrasyonu Aktif (40-70 km/h)", kafasProgressPercent = 25)
+                    ServiceRoutineType.ACC_RADAR_CALIBRATION ->
+                        it.adasStatus?.copy(accYawOffsetMrad = 0.0, accPitchOffsetMrad = 0.0, isAccWithinTolerance = true)
+                    else -> it.adasStatus
+                }
+            } else it.adasStatus
+
+            val updatedHv = if (result.success && routine.type == ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK) {
+                it.hvBatteryHealth?.copy(contactorClosed = true, healthAssessment = "HV Kontaktör & İzolasyon Sağlam (>500 kOhm)")
+            } else it.hvBatteryHealth
+
             it.copy(
                 lastServiceResult = result,
-                lastOperationMessage = result.message
+                lastOperationMessage = result.message,
+                adasStatus = updatedAdas,
+                hvBatteryHealth = updatedHv
             )
         }
     }

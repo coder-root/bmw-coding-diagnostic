@@ -38,6 +38,9 @@ class TcpElmStnTransportAdapter(
     var lastReadVoltage: Double? = null
         private set
 
+    var isStnChip: Boolean = false
+        private set
+
     override suspend fun connect() = withContext(Dispatchers.IO) {
         _connectionState.value = ConnectionState.Connecting("${adapterType.displayName} ($host:$port)")
         val candidatePorts = listOf(port, 35000, 23).distinct()
@@ -85,6 +88,10 @@ class TcpElmStnTransportAdapter(
 
             // Initialize STN2255 / ELM327 for BMW D-CAN (500kbps) + adaptive timing
             sendAtCommand("ATZ", waitMs = 1200)
+            val chipId = sendAtCommand("STI", waitMs = 500)
+            isStnChip = chipId.contains("STN", ignoreCase = true) || chipId.contains("vLinker", ignoreCase = true)
+            onAtLog("CHIP: ${if (isStnChip) "STN Fast ISO-TP (STPX) Aktif ($chipId)" else "Standart ELM327 ($chipId)"}")
+
             sendAtCommand("ATE0")
             sendAtCommand("ATL0")
             sendAtCommand("ATS0")
@@ -95,7 +102,9 @@ class TcpElmStnTransportAdapter(
             sendAtCommand("ATAT2")
             sendAtCommand("ATST64")
             // Enable STN2255 ISO-TP long-frame segmentation receive when supported
-            sendAtCommand("STCSEGR 1", waitMs = 600)
+            if (isStnChip) {
+                sendAtCommand("STCSEGR 1", waitMs = 400)
+            }
 
             val rv = sendAtCommand("ATRV")
             lastReadVoltage = parseVoltage(rv)
@@ -110,6 +119,13 @@ class TcpElmStnTransportAdapter(
         }
     }
 
+    suspend fun configureKLineKwp2000() = withContext(Dispatchers.IO) {
+        sendAtCommand("ATSPB") // ISO 14230-4 KWP fast init (10.4 kbps)
+        sendAtCommand("ATAT1")
+        sendAtCommand("ATST96")
+        onAtLog("K-LINE: ATSPB 10.4 kbps KWP2000 yapılandırıldı")
+    }
+
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
         runCatching { socket?.close() }
         socket = null
@@ -121,13 +137,20 @@ class TcpElmStnTransportAdapter(
     override suspend fun transceive(frame: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hsfz = HsfzFrame.decode(frame)
         val targetEcu = hsfz.targetAddress and 0xFF
-        sendAtCommand("ATSH6F1")
-        sendAtCommand("ATCEA%02X".format(targetEcu))
-        sendAtCommand("ATCRA6F1")
-
         val hexPayload = hsfz.payload.joinToString("") { "%02X".format(it) }
-        val rawResponse = sendAtCommand(hexPayload)
-        val udsBytes = parseStnUdsResponse(rawResponse)
+
+        val udsBytes = if (isStnChip) {
+            // STN high-speed direct ISO-TP single command: STPX h:6F1, d:<hexPayload>, r:1, t:350
+            val stpxCmd = "STPX h:6F1, d:$hexPayload, r:1, t:350"
+            val rawResponse = sendAtCommand(stpxCmd)
+            parseStnUdsResponse(rawResponse)
+        } else {
+            sendAtCommand("ATSH6F1")
+            sendAtCommand("ATCEA%02X".format(targetEcu))
+            sendAtCommand("ATCRA6F1")
+            val rawResponse = sendAtCommand(hexPayload)
+            parseStnUdsResponse(rawResponse)
+        }
 
         HsfzFrame(
             controlWord = HsfzFrame.CONTROL_DIAGNOSTIC_DATA,

@@ -285,6 +285,29 @@ data class AppStrings(
 
     val language: AppLanguage
 ) {
+    var hvBatteryTitle: String = ""
+    var hvSohLabel: String = ""
+    var hvCapacityLabel: String = ""
+    var cellDeltaLabel: String = ""
+    var insulationResistanceLabel: String = ""
+    var contactorStatusLabel: String = ""
+    var adasTitle: String = ""
+    var kafasStatusLabel: String = ""
+    var accOffsetLabel: String = ""
+    var pdfQrVerificationLabel: String = ""
+    var pdfServiceHistoryTitle: String = ""
+    var pdfEcuSwVersionTitle: String = ""
+
+    var clearConfirmTitle: String = ""
+    var clearConfirmBody: String = ""
+    var clearConfirmAction: String = ""
+    var hvCellDistributionLabel: String = ""
+    var contactorClosedLabel: String = ""
+    var contactorOpenLabel: String = ""
+    var moduleTempsLabel: String = ""
+    var radarOkLabel: String = ""
+    var radarAlignRequiredLabel: String = ""
+    var toleranceLabel: String = ""
     fun adapterTitle(type: AdapterType): String = when (language) {
         AppLanguage.AZ -> when (type) {
             AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"

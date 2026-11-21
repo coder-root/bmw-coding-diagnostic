@@ -67,10 +67,13 @@ object EcuAddress {
     const val ZGW_BDC = 0x10
     const val DME_DDE = 0x12
     const val EGS = 0x18
+    const val ACC_RADAR = 0x19
     const val DSC = 0x29
     const val FEM_CAS = 0x40
+    const val KAFAS_CAMERA = 0x5D
     const val KOMBI = 0x60
     const val HU_MEDIA = 0x63
+    const val SME_HV_BATTERY = 0x6E
     const val IHKA = 0x78
 }
 
@@ -370,7 +373,10 @@ enum class ServiceRoutineType {
     EPB_SERVICE_MODE,
     CBS_OIL_RESET,
     EXHAUST_VALVE_OPEN,
-    STEERING_ANGLE_CALIBRATION
+    STEERING_ANGLE_CALIBRATION,
+    KAFAS_CAMERA_CALIBRATION,
+    ACC_RADAR_CALIBRATION,
+    HV_BATTERY_CONTACTOR_CHECK
 }
 
 data class ServiceRoutine(
@@ -419,6 +425,24 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Калибровка датчика угла руля (LWS)"
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
         }
+        ServiceRoutineType.KAFAS_CAMERA_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "KAFAS Windshield Camera Dynamic Calibration"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "KAFAS Ön Şüşə Kamera Dinamik Kalibrasiyası"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Динамическая калибровка камеры KAFAS на лобовом стекле"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.ACC_RADAR_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "ACC / FRR Radar Sensor Offset Reset & Calibration"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "ACC / FRR Radar Bucaq Meyletməsi Sıfırlama & Kalibrasiya"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс углового смещения и калибровка радара ACC / FRR"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "HV Battery Contactor & Insulation Diagnostic Routine"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "HV Batareya Kontaktor & İzolyasiya Diaqnostika Rutini"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Диагностическая процедура контакторов и изоляции батареи HV"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
     }
 
     fun localizedDescription(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
@@ -444,6 +468,24 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Resets iDrive service counter and writes log to digital service history."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "iDrive servis sayğacını sıfırlayır və rəqəmsal tarixçəyə qeyd edir."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс сервисного интервала iDrive и запись в историю обслуживания."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.KAFAS_CAMERA_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Initiates dynamic camera learning following windshield replacement or LDW/SLI errors."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Ön şüşə dəyişimi və ya zolaq nəzarət xətası sonrası kameranın dinamik öyrənməsini başladır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Запуск динамического обучения камеры после замены стекла или сбоя LDW/SLI."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.ACC_RADAR_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Resets radar mounting offset angles and activates alignment drive cycle."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Radar montaj meyletmə bucaqlarını sıfırlayır və kalibrasiya sürüşünü aktivləşdirir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс угловых смещений монтажа радара и запуск юстировочной поездки."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Tests main HV contactors and insulation integrity (>500 kOhm) for EV/PHEV safety."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "EV/PHEV təhlükəsizliyi üçün əsas HV kontaktorlarını və izolyasiya müqavimətini yoxlayır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Проверка главных высоковольтных контакторов и сопротивления изоляции (>500 кОм)."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
         }
         else -> description
@@ -484,6 +526,24 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Steering wheel must be kept in exact straight-ahead center position."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sükan tam düz vəziyyətdə saxlanılmalıdır."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Рулевое колесо должно удерживаться строго в центральном положении."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.KAFAS_CAMERA_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Requires a 10-15 min drive on well-marked road at 40-70 km/h."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Düz və aydın zolaqlı yolda 40-70 km/saat sürətlə 10-15 dəqiqə sürüş tələb edir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Требуется поездка 10-15 минут по дороге с четкой разметкой со скоростью 40-70 км/ч."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.ACC_RADAR_CALIBRATION -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Radar dome must be clean and free of physical collision damage."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Radar səthi təmiz olmalı və mexaniki zədələnmə olmamalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Поверхность радара должна быть чистой и без механических повреждений."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.HV_BATTERY_CONTACTOR_CHECK -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Charging cable must be disconnected, transmission in Park (P)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Şarj kabeli ayrılmalı, ötürmə qutusu Park (P) rejimində olmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Зарядный кабель должен быть отключен, селектор КПП в положении Park (P)."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
         }
     }
@@ -593,4 +653,36 @@ data class CodingBackupSnapshot(
     val cafdFile: String,
     val summary: String,
     val previousValues: Map<String, Int>
+)
+
+data class HvCellVoltage(
+    val cellIndex: Int,
+    val voltageMv: Int
+)
+
+data class HvBatteryHealth(
+    val stateOfChargePercent: Double,
+    val stateOfHealthPercent: Double,
+    val grossCapacityKwh: Double,
+    val netAvailableCapacityKwh: Double,
+    val maxCellVoltageMv: Int,
+    val minCellVoltageMv: Int,
+    val cellDeltaMv: Int,
+    val avgCellVoltageMv: Int,
+    val cellCount: Int,
+    val cellVoltages: List<HvCellVoltage>,
+    val minModuleTempC: Double,
+    val maxModuleTempC: Double,
+    val avgModuleTempC: Double,
+    val insulationResistanceKOhm: Int,
+    val contactorClosed: Boolean,
+    val healthAssessment: String
+)
+
+data class AdasCalibrationStatus(
+    val kafasStatus: String,
+    val kafasProgressPercent: Int,
+    val accYawOffsetMrad: Double,
+    val accPitchOffsetMrad: Double,
+    val isAccWithinTolerance: Boolean
 )
