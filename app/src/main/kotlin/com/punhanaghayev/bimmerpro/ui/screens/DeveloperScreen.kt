@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -94,7 +95,8 @@ fun DeveloperScreen(
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit,
     onTogglePhysicalWriteUnlock: (Boolean) -> Unit,
-    onDownloadDataPack: () -> Unit
+    onDownloadDataPack: () -> Unit,
+    onExportSupportBundle: () -> Unit
 ) {
     val strings = LocalAppStrings.current
     val theme = LocalThemeStyle.current
@@ -373,6 +375,20 @@ fun DeveloperScreen(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth()
                         )
+                    }
+                    HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(strings.supportBundleTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(strings.supportBundleSub, color = theme.textSecondary, fontSize = 11.sp)
+                        OutlinedButton(
+                            onClick = onExportSupportBundle,
+                            modifier = Modifier.fillMaxWidth().height(42.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(strings.supportBundleBtn, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+                        }
                     }
                 }
             }

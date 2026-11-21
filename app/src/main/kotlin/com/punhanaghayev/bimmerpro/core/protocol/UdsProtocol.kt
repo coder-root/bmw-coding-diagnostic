@@ -83,6 +83,22 @@ object UdsCodec {
     fun buildReadDtcByStatusMask(statusMask: Int = 0xFF): ByteArray =
         byteArrayOf(UdsServiceId.READ_DTC_INFO.toByte(), 0x02, statusMask.toByte())
 
+    fun buildReadInfoDtcs(): ByteArray =
+        byteArrayOf(UdsServiceId.READ_DTC_INFO.toByte(), 0x02, 0x04)
+
+    fun buildReadPermanentDtcs(): ByteArray =
+        byteArrayOf(UdsServiceId.READ_DTC_INFO.toByte(), 0x15)
+
+    fun buildReadDtcSnapshot(dtcCode: Int, recordNumber: Int = 0xFF): ByteArray =
+        byteArrayOf(
+            UdsServiceId.READ_DTC_INFO.toByte(),
+            0x04,
+            ((dtcCode shr 16) and 0xFF).toByte(),
+            ((dtcCode shr 8) and 0xFF).toByte(),
+            (dtcCode and 0xFF).toByte(),
+            recordNumber.toByte()
+        )
+
     fun buildClearAllDtc(): ByteArray =
         byteArrayOf(UdsServiceId.CLEAR_DIAGNOSTIC_INFO.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte())
 

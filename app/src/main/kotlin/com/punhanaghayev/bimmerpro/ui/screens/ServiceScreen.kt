@@ -28,7 +28,9 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
@@ -47,6 +49,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
 import com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton
 import androidx.compose.material3.Text
@@ -68,10 +72,15 @@ import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
 import com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
+import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
+import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
+import com.punhanaghayev.bimmerpro.core.bmw.EpbServiceState
+import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
+import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
@@ -87,6 +96,10 @@ fun ServiceScreen(
     session: BimmerSessionState,
     onExecuteRoutine: (ServiceRoutine, Byte) -> Unit,
     onRunActuatorTest: (ActuatorTestItem) -> Unit,
+    onResetShortCircuitChannel: (ShortCircuitChannel) -> Unit,
+    onSetExhaustFlapMode: (ExhaustFlapMode) -> Unit,
+    onSetAsdState: (Boolean, Int) -> Unit,
+    onSetEpbServiceMode: (Boolean) -> Unit,
     onWriteServiceHistory: (String, Int, String, List<String>) -> Unit,
     onWriteInjectorCode: (Int, String) -> Unit,
     onResetZfAdaptations: () -> Unit,
@@ -407,6 +420,47 @@ fun ServiceScreen(
                             Text("%.1f V".format(profile.batteryVoltage), color = theme.textPrimary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                         }
                     }
+
+                    // IBS 5-Day SoC History Mini Bar Chart
+                    val socHistory = ibs?.last5DaysSoc ?: listOf(86, 84, 79, 81, soc)
+                    if (socHistory.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(strings.ibs5DayHistoryLabel, color = theme.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(theme.cardElevated)
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                socHistory.forEachIndexed { idx, daySoc ->
+                                    val barColor = if (daySoc >= 75) StatusGreen else if (daySoc >= 60) StatusAmber else StatusRed
+                                    val barHeight = (12 + (daySoc / 100f) * 24).dp
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text("$daySoc%", color = barColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.55f)
+                                                .height(barHeight)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(barColor.copy(alpha = 0.85f))
+                                        )
+                                        Text(
+                                            text = if (idx == socHistory.lastIndex) "D0" else "D-${socHistory.lastIndex - idx}",
+                                            color = theme.textSecondary,
+                                            fontSize = 8.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -724,6 +778,43 @@ fun ServiceScreen(
                             }
                         }
 
+                        // Live DPF Precondition Checklist
+                        val coolantC = session.liveChannels.firstOrNull { it.id == "coolant" }?.currentValue ?: 88.0
+                        val hasCriticalEngineDtc = session.dtcs.any {
+                            it.ecuAddress == EcuAddress.DME_DDE && it.severity == DtcSeverity.CRITICAL
+                        }
+                        val preconditions = listOf(
+                            "${strings.dpfCondCoolant} (${coolantC.toInt()}°C)" to (coolantC > 75.0),
+                            "${strings.dpfCondExhaust} (${dpf.exhaustTempPreDpfC}°C)" to (dpf.exhaustTempPreDpfC > 240),
+                            "${strings.dpfCondVoltage} (${"%.1f".format(profile.batteryVoltage)} V)" to (profile.batteryVoltage >= 12.2),
+                            strings.dpfCondNoCriticalDtc to !hasCriticalEngineDtc
+                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(theme.cardElevated)
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(strings.dpfPreconditionsTitle, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            preconditions.forEach { (label, met) ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(label, color = theme.textPrimary, fontSize = 11.sp)
+                                    Text(
+                                        text = if (met) "✓ OK" else "✕",
+                                        color = if (met) StatusGreen else StatusRed,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
                         // Trigger Regen Button
                         val regenRoutine = session.serviceRoutines.firstOrNull { it.type == ServiceRoutineType.DPF_REGENERATION }
                         if (regenRoutine != null) {
@@ -739,6 +830,62 @@ fun ServiceScreen(
                                     }
                                 }
                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        // EPB Two-Step Service Mode Card (Retract / Clamp & Calibrate)
+        item {
+            val isEpbOpen = session.epbServiceState == EpbServiceState.SERVICE_MODE_OPEN
+            val epbColor = if (isEpbOpen) StatusAmber else StatusGreen
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, epbColor.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.epbCardTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textPrimary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(epbColor.copy(alpha = 0.16f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = if (isEpbOpen) strings.epbStatusOpen else strings.epbStatusNormal,
+                                color = epbColor,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { onSetEpbServiceMode(true) },
+                            modifier = Modifier.weight(1f).height(38.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(strings.epbEnterBtn, fontSize = 11.sp, color = StatusAmber, maxLines = 1)
+                        }
+                        OutlinedButton(
+                            onClick = { onSetEpbServiceMode(false) },
+                            modifier = Modifier.weight(1f).height(38.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(strings.epbExitBtn, fontSize = 11.sp, color = StatusGreen, maxLines = 1)
                         }
                     }
                 }
@@ -1051,6 +1198,121 @@ fun ServiceScreen(
                                 color = theme.textSecondary,
                                 fontSize = 11.sp
                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Exhaust Flap & Active Sound Design (ASD) Tuning Panel
+        item {
+            val sound = session.soundTuning
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Default.GraphicEq, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                        Text(strings.soundTuningTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    }
+                    Text(strings.exhaustFlapLabel, color = theme.textSecondary, fontSize = 11.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            ExhaustFlapMode.OEM_AUTO to strings.exhaustAutoLabel,
+                            ExhaustFlapMode.FORCE_OPEN to strings.exhaustOpenLabel,
+                            ExhaustFlapMode.FORCE_CLOSED to strings.exhaustClosedLabel
+                        ).forEach { (mode, label) ->
+                            FilterChip(
+                                selected = sound.exhaustFlapMode == mode,
+                                onClick = { onSetExhaustFlapMode(mode) },
+                                label = { Text(label, fontSize = 11.sp, maxLines = 1) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    if (sound.asdSupported) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(theme.cardElevated)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(strings.asdEnableLabel, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                                Text("${strings.asdVolumeLabel}: ${sound.asdVolumePercent}%", color = theme.textSecondary, fontSize = 10.sp)
+                            }
+                            Switch(
+                                checked = sound.asdEnabled,
+                                onCheckedChange = { checked -> onSetAsdState(checked, sound.asdVolumePercent) }
+                            )
+                        }
+                        if (sound.asdEnabled) {
+                            Slider(
+                                value = sound.asdVolumePercent.toFloat(),
+                                onValueChange = { onSetAsdState(true, it.toInt()) },
+                                valueRange = 20f..100f
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // FRM / FEM / BDC Short-Circuit Lock Reset
+        if (session.shortCircuitChannels.isNotEmpty()) {
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.outline),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.Lightbulb, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(18.dp))
+                            Text(strings.shortCircuitTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                        }
+                        Text(strings.shortCircuitSub, color = theme.textSecondary, fontSize = 11.sp)
+                        session.shortCircuitChannels.forEach { ch ->
+                            val statusColor = if (ch.isLocked) StatusRed else if (ch.faultCounter > 0) StatusAmber else StatusGreen
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(theme.cardElevated)
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(ch.channelName, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = "${ch.ecuName} • ${ch.faultCounter}/50 • ${if (ch.isLocked) strings.shortCircuitLockedLabel else strings.shortCircuitOkLabel}",
+                                        color = statusColor,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (ch.isLocked || ch.faultCounter > 0) {
+                                    OutlinedButton(
+                                        onClick = { onResetShortCircuitChannel(ch) },
+                                        modifier = Modifier.height(30.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(12.dp), tint = statusColor)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(strings.shortCircuitResetBtn, fontSize = 10.sp, color = statusColor)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

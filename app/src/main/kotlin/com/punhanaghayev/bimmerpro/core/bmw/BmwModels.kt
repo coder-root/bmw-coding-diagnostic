@@ -58,6 +58,18 @@ enum class BmwChassis(
         SeriesFamily.I_SERIES,
         secureCodingNotice = "BDC3 ve MGU ünitelerinde Secure Coding 2.0 kontrol edilir."
     ),
+    U06(
+        "U06",
+        "2 Serisi Active Tourer (2022+)",
+        SeriesFamily.G_SERIES,
+        secureCodingNotice = "OS 8/9 ve BCP (Basic Central Platform) Secure Coding 2.0 imzası gerektirir."
+    ),
+    U11(
+        "U11",
+        "X1 / iX1 (2022+)",
+        SeriesFamily.G_SERIES,
+        secureCodingNotice = "iDrive 9 (OS 9) ve BCP modüllerinde Secure Coding 2.0 koruması devrededir."
+    ),
     E70("E70", "X5 (2006-2013)", SeriesFamily.E_SERIES),
     E87("E87", "1 Serisi (2004-2013)", SeriesFamily.E_SERIES)
 }
@@ -69,11 +81,14 @@ object EcuAddress {
     const val EGS = 0x18
     const val ACC_RADAR = 0x19
     const val DSC = 0x29
+    const val ASD = 0x3C
     const val FEM_CAS = 0x40
     const val KAFAS_CAMERA = 0x5D
     const val KOMBI = 0x60
     const val HU_MEDIA = 0x63
     const val SME_HV_BATTERY = 0x6E
+    const val FRM = 0x72
+    const val REM = 0x73
     const val IHKA = 0x78
 }
 
@@ -187,6 +202,14 @@ enum class DtcStatus(val label: String) {
     }
 }
 
+enum class DtcMemoryType(val label: String) {
+    ERROR_MEMORY("Hata Hafızası (Error)"),
+    INFO_MEMORY("Bilgi Hafızası (Info)"),
+    PERMANENT_MEMORY("Kalıcı Hafıza (Permanent)");
+
+    fun localizedLabel(): String = label
+}
+
 data class FreezeFrameData(
     val mileageKm: Int,
     val batteryVoltage: Double,
@@ -205,7 +228,8 @@ data class DtcFault(
     val severity: DtcSeverity,
     val status: DtcStatus,
     val freezeFrame: FreezeFrameData,
-    val istaGuidance: String
+    val istaGuidance: String,
+    val memoryType: DtcMemoryType = DtcMemoryType.ERROR_MEMORY
 ) {
     fun localizedTitle(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (strings.language) {
         com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> when (code) {
@@ -376,7 +400,8 @@ enum class ServiceRoutineType {
     STEERING_ANGLE_CALIBRATION,
     KAFAS_CAMERA_CALIBRATION,
     ACC_RADAR_CALIBRATION,
-    HV_BATTERY_CONTACTOR_CHECK
+    HV_BATTERY_CONTACTOR_CHECK,
+    SHORT_CIRCUIT_RESET
 }
 
 data class ServiceRoutine(
@@ -443,6 +468,12 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Диагностическая процедура контакторов и изоляции батареи HV"
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
         }
+        ServiceRoutineType.SHORT_CIRCUIT_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "FRM / FEM Short-Circuit Counter Reset"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "FRM / FEM Qısa Qapanma Kilidinin Sıfırlanması"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс блокировки короткого замыкания FRM / FEM"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
     }
 
     fun localizedDescription(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
@@ -486,6 +517,12 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Tests main HV contactors and insulation integrity (>500 kOhm) for EV/PHEV safety."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "EV/PHEV təhlükəsizliyi üçün əsas HV kontaktorlarını və izolyasiya müqavimətini yoxlayır."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Проверка главных высоковольтных контакторов и сопротивления изоляции (>500 кОм)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.SHORT_CIRCUIT_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Clears FRM/FEM/BDC short-circuit output lock counters after lamp/wiring repair."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Lampa və ya naqil təmirindən sonra FRM/FEM/BDC qısa qapanma blokunu sıfırlayır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс счетчиков блокировки выхода FRM/FEM/BDC после устранения замыкания."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
         }
         else -> description
@@ -544,6 +581,12 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Charging cable must be disconnected, transmission in Park (P)."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Şarj kabeli ayrılmalı, ötürmə qutusu Park (P) rejimində olmalıdır."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Зарядный кабель должен быть отключен, селектор КПП в положении Park (P)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.SHORT_CIRCUIT_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Ensure bulb/wiring short circuit is physically repaired before resetting counter."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sıfırlamadan əvvəl lampa/naqil qısa qapanmasının aradan qaldırıldığından əmin olun."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Убедитесь, что короткое замыкание устранено физически перед сбросом."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
         }
     }
@@ -686,3 +729,31 @@ data class AdasCalibrationStatus(
     val accPitchOffsetMrad: Double,
     val isAccWithinTolerance: Boolean
 )
+
+data class ShortCircuitChannel(
+    val id: String,
+    val channelName: String,
+    val ecuName: String,
+    val ecuAddress: Int,
+    val channelIndex: Int,
+    val faultCounter: Int,
+    val isLocked: Boolean
+)
+
+enum class ExhaustFlapMode(val optionByte: Byte) {
+    OEM_AUTO(0x00),
+    FORCE_OPEN(0x01),
+    FORCE_CLOSED(0x02)
+}
+
+data class SoundTuningState(
+    val exhaustFlapMode: ExhaustFlapMode = ExhaustFlapMode.OEM_AUTO,
+    val asdEnabled: Boolean = true,
+    val asdSupported: Boolean = true,
+    val asdVolumePercent: Int = 100
+)
+
+enum class EpbServiceState {
+    NORMAL,
+    SERVICE_MODE_OPEN
+}

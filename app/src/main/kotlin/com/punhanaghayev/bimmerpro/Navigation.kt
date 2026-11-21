@@ -483,6 +483,7 @@ fun MainNavigation(
                                 onClearAllDtcs = viewModel::clearAllDtcs,
                                 onClearEcuDtcs = viewModel::clearEcuDtcs,
                                 onSendEcuReset = viewModel::sendEcuReset,
+                                onFetchFreezeFrame = viewModel::fetchDtcFreezeFrame,
                                 onExportPdf = { viewModel.generateInspectionPdf(context) },
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
@@ -508,6 +509,7 @@ fun MainNavigation(
                                 onTogglePerformanceRun = viewModel::togglePerformanceRun,
                                 onExportCsv = { viewModel.exportTelemetryCsv(context) },
                                 onSetSelectedPids = viewModel::setSelectedLivePids,
+                                onSetAndroidAutoPids = viewModel::setAndroidAutoPids,
                                 onMoveLiveChannel = viewModel::moveLiveChannel,
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
@@ -516,6 +518,10 @@ fun MainNavigation(
                                 session = session,
                                 onExecuteRoutine = viewModel::executeServiceRoutine,
                                 onRunActuatorTest = viewModel::runActuatorTest,
+                                onResetShortCircuitChannel = viewModel::resetShortCircuitChannel,
+                                onSetExhaustFlapMode = viewModel::setExhaustFlapMode,
+                                onSetAsdState = viewModel::setAsdState,
+                                onSetEpbServiceMode = viewModel::setEpbServiceMode,
                                 onWriteServiceHistory = viewModel::writeServiceHistory,
                                 onWriteInjectorCode = viewModel::writeInjectorCode,
                                 onResetZfAdaptations = viewModel::resetZfAdaptations,
@@ -536,7 +542,8 @@ fun MainNavigation(
                                 onCheckOta = { viewModel.checkForOtaUpdates(silent = false) },
                                 onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
                                 onTogglePhysicalWriteUnlock = viewModel::setPhysicalWriteUnlocked,
-                                onDownloadDataPack = viewModel::downloadDataPack
+                                onDownloadDataPack = viewModel::downloadDataPack,
+                                onExportSupportBundle = { viewModel.exportSupportBundle(context) }
                             )
                         }
                     }

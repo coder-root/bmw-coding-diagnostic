@@ -308,6 +308,45 @@ data class AppStrings(
     var radarOkLabel: String = ""
     var radarAlignRequiredLabel: String = ""
     var toleranceLabel: String = ""
+
+    // BimmerLink-inspired Extended Diagnostic, Live Chart/Dashboard & Service Strings
+    var dtcMemoryErrorLabel: String = "Error Memory"
+    var dtcMemoryInfoLabel: String = "Info Memory"
+    var dtcMemoryPermanentLabel: String = "Permanent"
+    var liveModeListLabel: String = "List"
+    var liveModeChartLabel: String = "Chart"
+    var liveModeDashboardLabel: String = "Dashboard"
+    var liveChartSelectHint: String = "Tap sensors to plot live telemetry curves (up to 4 channels)"
+    var shortCircuitTitle: String = "FRM / FEM / BDC Short-Circuit Lock Reset"
+    var shortCircuitSub: String = "Resets output shutdown counters (50 faults) after bulb/wiring repair."
+    var shortCircuitLockedLabel: String = "LOCKED"
+    var shortCircuitOkLabel: String = "OK"
+    var shortCircuitResetBtn: String = "Reset Lock"
+    var soundTuningTitle: String = "Exhaust Flap & Active Sound Design (ASD)"
+    var exhaustFlapLabel: String = "Exhaust Flap Control"
+    var exhaustAutoLabel: String = "OEM Auto"
+    var exhaustOpenLabel: String = "Always Open"
+    var exhaustClosedLabel: String = "Closed"
+    var asdEnableLabel: String = "Active Sound Design (ASD)"
+    var asdVolumeLabel: String = "ASD Acoustic Gain"
+
+    // Extended Service, Android Auto Config & Support Bundle Strings
+    var dpfPreconditionsTitle: String = "Regeneration Preconditions"
+    var dpfCondCoolant: String = "Coolant Temp > 75°C"
+    var dpfCondExhaust: String = "Exhaust Temp > 240°C"
+    var dpfCondVoltage: String = "Battery >= 12.2 V"
+    var dpfCondNoCriticalDtc: String = "No Critical Engine Faults"
+    var epbCardTitle: String = "Electronic Parking Brake (EPB) Service Mode"
+    var epbStatusNormal: String = "NORMAL"
+    var epbStatusOpen: String = "SERVICE MODE OPEN"
+    var epbEnterBtn: String = "Open (Retract)"
+    var epbExitBtn: String = "Close & Calibrate"
+    var ibs5DayHistoryLabel: String = "5-Day SoC History"
+    var androidAutoSensorsBtn: String = "Android Auto"
+    var androidAutoSensorsTitle: String = "Android Auto Display Sensors (Max 4)"
+    var supportBundleTitle: String = "Diagnostics Support Bundle"
+    var supportBundleBtn: String = "Create Support Bundle"
+    var supportBundleSub: String = "Exports vehicle VIN, ECU SVT tree, 3-layer DTCs, and UDS/AT logs."
     fun adapterTitle(type: AdapterType): String = when (language) {
         AppLanguage.AZ -> when (type) {
             AdapterType.ENET_USB -> "USB-C to ENET Kabel"
@@ -317,6 +356,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulyasiyası"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulyasiyası"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulyasiyası"
+            AdapterType.SIMULATOR_U11 -> "BMW U11 iX1 / X1 Simulyasiyası"
             AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulyasiyası"
             else -> type.displayName
         }
@@ -328,6 +368,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simülasyonu"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simülasyonu"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simülasyonu"
+            AdapterType.SIMULATOR_U11 -> "BMW U11 iX1 / X1 Simülasyonu"
             AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simülasyonu"
             else -> type.displayName
         }
@@ -337,6 +378,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulation"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulation"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulation"
+            AdapterType.SIMULATOR_U11 -> "BMW U11 iX1 / X1 Simulation"
             AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulation"
             else -> type.displayName
         }
@@ -348,6 +390,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "Симуляция BMW F30 328i"
             AdapterType.SIMULATOR_G30 -> "Симуляция BMW G30 530i"
             AdapterType.SIMULATOR_G20 -> "Симуляция BMW G20 M340i"
+            AdapterType.SIMULATOR_U11 -> "Симуляция BMW U11 iX1 / X1"
             AdapterType.SIMULATOR_E90 -> "Симуляция BMW E90 335i"
             else -> type.displayName
         }
@@ -360,6 +403,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
+            AdapterType.SIMULATOR_U11 -> "Virtual DoIP / OS 9 + U-Seriyası"
             AdapterType.SIMULATOR_E90 -> "Virtual K+DCAN / KM Yoxlaması Demo"
             else -> type.protocolSummary
         }
@@ -371,6 +415,7 @@ data class AppStrings(
             AdapterType.SIMULATOR_F30 -> "Виртуальный HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Виртуальный DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Виртуальный DoIP / B58 + iDrive 7"
+            AdapterType.SIMULATOR_U11 -> "Виртуальный DoIP / OS 9 + U-Серия"
             AdapterType.SIMULATOR_E90 -> "Виртуальный K+DCAN / Тест пробега"
             else -> type.protocolSummary
         }

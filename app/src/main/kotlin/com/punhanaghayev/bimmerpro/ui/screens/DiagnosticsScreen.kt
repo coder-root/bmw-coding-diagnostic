@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -66,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
@@ -77,6 +80,7 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DiagnosticsScreen(
     session: BimmerSessionState,
@@ -84,6 +88,7 @@ fun DiagnosticsScreen(
     onClearAllDtcs: () -> Unit,
     onClearEcuDtcs: (Int, String) -> Unit,
     onSendEcuReset: (Int, String, Int) -> Unit,
+    onFetchFreezeFrame: (DtcFault) -> Unit,
     onExportPdf: () -> Unit,
     onGoToGarage: () -> Unit
 ) {
@@ -100,15 +105,20 @@ fun DiagnosticsScreen(
     }
 
     var filterMode by remember { mutableStateOf(DtcFilterMode.ALL) }
+    var selectedMemoryTab by remember { mutableStateOf<DtcMemoryType?>(null) }
     var showClearDialog by remember { mutableStateOf(false) }
     var dtcLookupQuery by remember { mutableStateOf("") }
     val lookupResults = remember(dtcLookupQuery) { BmwDtcDictionary.search(dtcLookupQuery) }
 
-    val filteredDtcs = remember(session.dtcs, filterMode) {
-        when (filterMode) {
-            DtcFilterMode.ALL -> session.dtcs
-            DtcFilterMode.ACTIVE_AND_WARN -> session.dtcs.filter { it.severity != DtcSeverity.SHADOW }
-            DtcFilterMode.SHADOW_ONLY -> session.dtcs.filter { it.severity == DtcSeverity.SHADOW }
+    val filteredDtcs = remember(session.dtcs, filterMode, selectedMemoryTab) {
+        session.dtcs.filter { dtc ->
+            val memOk = selectedMemoryTab == null || dtc.memoryType == selectedMemoryTab
+            val sevOk = when (filterMode) {
+                DtcFilterMode.ALL -> true
+                DtcFilterMode.ACTIVE_AND_WARN -> dtc.severity != DtcSeverity.SHADOW
+                DtcFilterMode.SHADOW_ONLY -> dtc.severity == DtcSeverity.SHADOW
+            }
+            memOk && sevOk
         }
     }
 
@@ -316,6 +326,38 @@ fun DiagnosticsScreen(
         }
 
         item {
+            val errCount = session.dtcs.count { it.memoryType == DtcMemoryType.ERROR_MEMORY }
+            val infoCount = session.dtcs.count { it.memoryType == DtcMemoryType.INFO_MEMORY }
+            val permCount = session.dtcs.count { it.memoryType == DtcMemoryType.PERMANENT_MEMORY }
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                FilterChip(
+                    selected = selectedMemoryTab == null,
+                    onClick = { selectedMemoryTab = null },
+                    label = { Text("${strings.filterAll} (${session.dtcs.size})", fontSize = 11.sp, maxLines = 1) }
+                )
+                FilterChip(
+                    selected = selectedMemoryTab == DtcMemoryType.ERROR_MEMORY,
+                    onClick = { selectedMemoryTab = DtcMemoryType.ERROR_MEMORY },
+                    label = { Text("${strings.dtcMemoryErrorLabel} ($errCount)", fontSize = 11.sp, maxLines = 1) }
+                )
+                FilterChip(
+                    selected = selectedMemoryTab == DtcMemoryType.INFO_MEMORY,
+                    onClick = { selectedMemoryTab = DtcMemoryType.INFO_MEMORY },
+                    label = { Text("${strings.dtcMemoryInfoLabel} ($infoCount)", fontSize = 11.sp, maxLines = 1) }
+                )
+                FilterChip(
+                    selected = selectedMemoryTab == DtcMemoryType.PERMANENT_MEMORY,
+                    onClick = { selectedMemoryTab = DtcMemoryType.PERMANENT_MEMORY },
+                    label = { Text("${strings.dtcMemoryPermanentLabel} ($permCount)", fontSize = 11.sp, maxLines = 1) }
+                )
+            }
+        }
+
+        item {
             var filterDropdownExpanded by remember { mutableStateOf(false) }
             val currentFilterLabel = when (filterMode) {
                 DtcFilterMode.ALL -> strings.filterAll
@@ -386,7 +428,10 @@ fun DiagnosticsScreen(
             }
         } else {
             items(filteredDtcs, key = { it.id }) { dtc ->
-                ExpandableDtcCard(dtc = dtc)
+                ExpandableDtcCard(
+                    dtc = dtc,
+                    onExpand = { onFetchFreezeFrame(dtc) }
+                )
             }
         }
 
@@ -560,7 +605,10 @@ private fun ExpandableEcuCard(
 }
 
 @Composable
-private fun ExpandableDtcCard(dtc: DtcFault) {
+private fun ExpandableDtcCard(
+    dtc: DtcFault,
+    onExpand: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     val theme = LocalThemeStyle.current
     val strings = LocalAppStrings.current
@@ -574,7 +622,11 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded },
+            .clickable {
+                val next = !expanded
+                expanded = next
+                if (next) onExpand()
+            },
         colors = CardDefaults.cardColors(containerColor = theme.card),
         border = BorderStroke(1.dp, severityColor.copy(alpha = 0.5f)),
         shape = RoundedCornerShape(12.dp)
@@ -594,7 +646,12 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                     ) {
                         Text(dtc.code, color = severityColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
-                    Text("${dtc.ecuName} • ${dtc.status.localized(strings)}", color = theme.textSecondary, fontSize = 11.sp)
+                    val memLabel = when (dtc.memoryType) {
+                        DtcMemoryType.ERROR_MEMORY -> strings.dtcMemoryErrorLabel
+                        DtcMemoryType.INFO_MEMORY -> strings.dtcMemoryInfoLabel
+                        DtcMemoryType.PERMANENT_MEMORY -> strings.dtcMemoryPermanentLabel
+                    }
+                    Text("${dtc.ecuName} • ${dtc.status.localized(strings)} • $memLabel", color = theme.textSecondary, fontSize = 10.sp)
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,

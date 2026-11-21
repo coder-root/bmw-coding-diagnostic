@@ -2,10 +2,18 @@ package com.punhanaghayev.bimmerpro.core.protocol
 
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
+import com.punhanaghayev.bimmerpro.core.bmw.ClutchWearLevel
+import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
+import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration
+import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
+import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchDetail
+import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import java.nio.charset.StandardCharsets
 
 /**
@@ -54,16 +62,25 @@ object PhysicalUdsParser {
             modelCode.startsWith("FE") || modelCode.startsWith("FF") -> BmwChassis.E70
             modelCode.startsWith("UF") || modelCode.startsWith("UE") -> BmwChassis.E87
             modelCode.startsWith("1Z") -> BmwChassis.I01
+            modelCode.startsWith("21") || modelCode.startsWith("23") -> BmwChassis.U06
+            modelCode.startsWith("61") || modelCode.startsWith("63") || modelCode.startsWith("71") -> BmwChassis.U11
             else -> BmwChassis.F10
         }
     }
 
     /**
-     * Parses UDS 0x19 0x02 (reportDTCByStatusMask) response payload:
-     * payload[0] = subfunction (0x02), payload[1] = statusAvailabilityMask,
+     * Parses UDS 0x19 0x02 (reportDTCByStatusMask) or 0x19 0x15 (reportDTCWithPermanentStatus) response payload:
+     * payload[0] = subfunction (0x02 or 0x15), payload[1] = statusAvailabilityMask,
      * followed by 4-byte records: [DTC_High, DTC_Mid, DTC_Low, Status].
      */
-    fun parseDtcRecords(ecuAddress: Int, ecuName: String, payload: ByteArray, odometerKm: Int, voltage: Double): List<DtcFault> {
+    fun parseDtcRecords(
+        ecuAddress: Int,
+        ecuName: String,
+        payload: ByteArray,
+        odometerKm: Int,
+        voltage: Double,
+        memoryType: DtcMemoryType = DtcMemoryType.ERROR_MEMORY
+    ): List<DtcFault> {
         if (payload.size < 6) return emptyList()
         val result = mutableListOf<DtcFault>()
         var idx = 2
@@ -76,22 +93,33 @@ object PhysicalUdsParser {
             val isActive = (statusByte and 0x01) != 0
             val isConfirmed = (statusByte and 0x08) != 0
             val dict = BmwDtcDictionary.lookup(codeHex)
+            val resolvedMemory = when {
+                memoryType != DtcMemoryType.ERROR_MEMORY -> memoryType
+                !isActive && !isConfirmed -> DtcMemoryType.INFO_MEMORY
+                else -> DtcMemoryType.ERROR_MEMORY
+            }
             result.add(
                 DtcFault(
-                    id = "phys-${ecuAddress}-${codeHex}",
+                    id = "phys-${resolvedMemory.name.lowercase()}-${ecuAddress}-${codeHex}",
                     code = codeHex,
                     ecuAddress = ecuAddress,
                     ecuName = ecuName,
                     title = dict?.title ?: "$ecuName Arıza Kodu ($codeHex)",
-                    technicalDetail = dict?.detail ?: "Fiziksel ECU üzerinden UDS 0x19 0x02 ile okundu (Status=0x%02X).".format(statusByte),
+                    technicalDetail = dict?.detail ?: "Fiziksel ECU üzerinden UDS 0x19 ile okundu (Status=0x%02X, ${resolvedMemory.label}).".format(statusByte),
                     severity = dict?.severity ?: when {
+                        resolvedMemory == DtcMemoryType.INFO_MEMORY -> DtcSeverity.SHADOW
                         isActive -> DtcSeverity.WARNING
                         isConfirmed -> DtcSeverity.INFO
                         else -> DtcSeverity.SHADOW
                     },
-                    status = if (isActive) DtcStatus.ACTIVE else DtcStatus.STORED,
+                    status = when {
+                        resolvedMemory == DtcMemoryType.INFO_MEMORY -> DtcStatus.SHADOW
+                        isActive -> DtcStatus.ACTIVE
+                        else -> DtcStatus.STORED
+                    },
                     freezeFrame = FreezeFrameData(odometerKm, voltage, 0, 0, 1),
-                    istaGuidance = dict?.guidance ?: "Detaylı test planı için $ecuName canlı sensör verilerini kontrol edin."
+                    istaGuidance = dict?.guidance ?: "Detaylı test planı için $ecuName canlı sensör verilerini kontrol edin.",
+                    memoryType = resolvedMemory
                 )
             )
             idx += 4
@@ -168,6 +196,146 @@ object PhysicalUdsParser {
 
     fun isResponsePending(payload: ByteArray): Boolean =
         payload.size >= 3 && (payload[0].toInt() and 0xFF) == 0x7F && (payload[2].toInt() and 0xFF) == 0x78
+
+    /**
+     * Parses KWP2000 0x18 (0x58 positive) DTC records for E-Series Pre-LCI K-Line ECUs.
+     */
+    fun parseKwpDtcRecords(
+        ecuAddress: Int,
+        ecuName: String,
+        rawResponse: ByteArray,
+        odometerKm: Int,
+        voltage: Double
+    ): List<DtcFault> {
+        val pairs = Kwp2000Codec.parseDtcResponse(rawResponse)
+        return pairs.map { (codeHex, statusByte) ->
+            val isActive = (statusByte and 0x20) != 0 || (statusByte and 0x01) != 0
+            val dict = BmwDtcDictionary.lookup(codeHex)
+            DtcFault(
+                id = "kwp-$ecuAddress-$codeHex",
+                code = codeHex,
+                ecuAddress = ecuAddress,
+                ecuName = ecuName,
+                title = dict?.title ?: "$ecuName KWP2000 Arıza ($codeHex)",
+                technicalDetail = dict?.detail ?: "K-Line KWP2000 0x18 üzerinden okundu (Status=0x%02X).".format(statusByte),
+                severity = dict?.severity ?: if (isActive) DtcSeverity.WARNING else DtcSeverity.INFO,
+                status = if (isActive) DtcStatus.ACTIVE else DtcStatus.STORED,
+                freezeFrame = FreezeFrameData(odometerKm, voltage, 0, 0, 1),
+                istaGuidance = dict?.guidance ?: "E-Serisi K-Line modülü canlı verilerini kontrol edin.",
+                memoryType = if (isActive) DtcMemoryType.ERROR_MEMORY else DtcMemoryType.INFO_MEMORY
+            )
+        }
+    }
+
+    /**
+     * Parses UDS 0x19 0x04 (0x59 0x04 positive) Freeze-Frame snapshot payload containing DID pairs
+     * (0x100C odometer, 0xF405 coolant, 0xF442 voltage, 0xF40C rpm).
+     */
+    fun parseDtcSnapshotFreezeFrame(payload: ByteArray, fallback: FreezeFrameData): FreezeFrameData {
+        if (payload.size < 8) return fallback
+        var km = fallback.mileageKm
+        var coolant = fallback.coolantTempC
+        var volts = fallback.batteryVoltage
+        var rpm = fallback.engineRpm
+        val occurrences = (payload[5].toInt() and 0xFF).coerceAtLeast(1)
+
+        var idx = 7 // Skip [0x04, dtc3, status, recNum, didCount]
+        while (idx + 2 < payload.size) {
+            val did = ((payload[idx].toInt() and 0xFF) shl 8) or (payload[idx + 1].toInt() and 0xFF)
+            when (did) {
+                0x100C -> if (idx + 4 < payload.size) {
+                    km = ((payload[idx + 2].toInt() and 0xFF) shl 16) or
+                        ((payload[idx + 3].toInt() and 0xFF) shl 8) or
+                        (payload[idx + 4].toInt() and 0xFF)
+                    idx += 5
+                } else return FreezeFrameData(km, volts, coolant, rpm, occurrences)
+                0xF405 -> {
+                    coolant = (payload[idx + 2].toInt() and 0xFF) - 40
+                    idx += 3
+                }
+                0xF442 -> {
+                    volts = (payload[idx + 2].toInt() and 0xFF) / 10.0
+                    idx += 3
+                }
+                0xF40C -> if (idx + 3 < payload.size) {
+                    rpm = (((payload[idx + 2].toInt() and 0xFF) shl 8) or (payload[idx + 3].toInt() and 0xFF)) / 4
+                    idx += 4
+                } else return FreezeFrameData(km, volts, coolant, rpm, occurrences)
+                else -> idx += 3
+            }
+        }
+        return FreezeFrameData(km, volts, coolant, rpm, occurrences)
+    }
+
+    fun parseIbsHealth(payload: ByteArray): IbsBatteryHealth? {
+        if (payload.size < 6) return null
+        val soc = (payload[2].toInt() and 0xFF).coerceIn(0, 100)
+        val soh = (payload[3].toInt() and 0xFF).coerceIn(0, 100)
+        val cap = (payload[4].toInt() and 0xFF).coerceIn(40, 120)
+        val isAgm = (payload[5].toInt() and 0xFF) != 0
+        val history = if (payload.size >= 11) {
+            (6..10).map { (payload[it].toInt() and 0xFF).coerceIn(0, 100) }
+        } else {
+            listOf((soc + 3).coerceAtMost(100), (soc + 1).coerceAtMost(100), soc, (soc - 1).coerceAtLeast(0), soc)
+        }
+        return IbsBatteryHealth(soc, soh, cap, isAgm, history)
+    }
+
+    fun parseDpfHealth(payload: ByteArray): DpfHealthStatus? {
+        if (payload.size < 10) return null
+        val soot = (((payload[2].toInt() and 0xFF) shl 8) or (payload[3].toInt() and 0xFF)) / 10.0
+        val ash = (((payload[4].toInt() and 0xFF) shl 8) or (payload[5].toInt() and 0xFF)) / 10.0
+        val diff = (payload[6].toInt() and 0xFF).toDouble()
+        val kmSince = ((payload[7].toInt() and 0xFF) shl 8) or (payload[8].toInt() and 0xFF)
+        val preTemp = (payload[9].toInt() and 0xFF) * 4
+        val postTemp = if (payload.size > 10) (payload[10].toInt() and 0xFF) * 4 else (preTemp - 20).coerceAtLeast(0)
+        val active = payload.size > 11 && (payload[11].toInt() and 0x01) != 0
+        return DpfHealthStatus(soot, ash, diff, kmSince, preTemp, postTemp, active, active, "Live ECU")
+    }
+
+    fun parseZfGearboxHealth(payload: ByteArray): ZfGearboxHealth? {
+        if (payload.size < 14) return null
+        val names = listOf("Kavrama A", "Kavrama B", "Kavrama C", "Kavrama D", "Kavrama E")
+        val clutches = names.mapIndexed { i, name ->
+            val p = (payload[2 + i * 2].toInt().toByte().toInt()) * 5
+            val f = (payload[3 + i * 2].toInt().toByte().toInt()) * 2
+            val level = when {
+                kotlin.math.abs(p) > 250 || kotlin.math.abs(f) > 40 -> ClutchWearLevel.CRITICAL_WEAR
+                kotlin.math.abs(p) > 120 || kotlin.math.abs(f) > 20 -> ClutchWearLevel.MODERATE_WEAR
+                else -> ClutchWearLevel.OPTIMAL
+            }
+            ZfClutchDetail(name, p, f, level, if (level == ClutchWearLevel.OPTIMAL) "Nominal" else "Adaptasyon sapması")
+        }
+        val oilTemp = (payload[12].toInt() and 0xFF) - 40
+        val oilScore = (payload[13].toInt() and 0xFF).coerceIn(10, 100)
+        val overall = if (clutches.any { it.wearLevel == ClutchWearLevel.CRITICAL_WEAR }) 68 else 94
+        return ZfGearboxHealth(clutches, oilTemp, oilScore, overall, "ZF8 Canlı Okuma")
+    }
+
+    fun parseInjectorIma(cylinder: Int, payload: ByteArray): InjectorCalibration? {
+        if (payload.size < 4) return null
+        val raw = String(payload.copyOfRange(2, payload.size), StandardCharsets.US_ASCII)
+            .replace(Regex("[^A-Za-z0-9]"), "")
+            .uppercase()
+        return raw.takeIf { it.length >= 5 }?.let { InjectorCalibration(cylinder, it.take(8)) }
+    }
+
+    fun parseShortCircuitCounters(ecuName: String, ecuAddress: Int, payload: ByteArray): List<ShortCircuitChannel> {
+        if (payload.size < 4) return emptyList()
+        val channelLabels = listOf(
+            "sc_low_beam_l" to "Sol Kısa Far (Low Beam L)",
+            "sc_low_beam_r" to "Sağ Kısa Far (Low Beam R)",
+            "sc_angel_l" to "Sol Angel Eyes / DRL Çıkışı",
+            "sc_plate" to "Arka Plaka Aydınlatması",
+            "sc_fog_r" to "Sağ Ön Sis Farı Çıkışı"
+        )
+        return channelLabels.mapIndexedNotNull { idx, (id, label) ->
+            val byteIdx = 2 + idx
+            if (byteIdx >= payload.size) return@mapIndexedNotNull null
+            val count = (payload[byteIdx].toInt() and 0xFF).coerceAtMost(50)
+            ShortCircuitChannel(id, label, ecuName, ecuAddress, idx + 1, count, count >= 50)
+        }
+    }
 
     fun parseSecuritySeed(payload: ByteArray): ByteArray? {
         if (payload.size < 6) return null

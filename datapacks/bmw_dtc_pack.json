@@ -1,229 +1,70 @@
 {
-  "packVersion": "1.1.0",
+  "packVersion": "1.2.0",
   "entries": [
-    {
-      "code": "247500",
-      "title": "Rail Basınç Sensörü: Kısa Devre / Sinyal Çok Yüksek",
-      "detail": "Yüksek basınç yakıt hattı sensör voltajı nominal üst sınırı aştı.",
-      "severity": "CRITICAL",
-      "guidance": "Rail basınç sensörü 3-pin soketini ve kablo demetini kontrol edin."
-    },
-    {
-      "code": "26F500",
-      "title": "SCR / AdBlue Dozaj Modülü Basınç Oluşmuyor",
-      "detail": "Üre enjeksiyon hattında nominal 5 bar basınca ulaşılamadı.",
-      "severity": "WARNING",
-      "guidance": "AdBlue tank seviyesi, pompa filtresi ve enjektör kristalleşmesini kontrol edin."
-    },
-    {
-      "code": "284E00",
-      "title": "Oksijen Sensörü (Lambda) Bank 1 Isıtıcı Devresi",
-      "detail": "Ön lambda sondası ısıtıcı elemanı iç direnci yüksek.",
-      "severity": "WARNING",
-      "guidance": "Lambda sensörü soketini ve ısıtıcı besleme sigortasını test edin."
-    },
-    {
-      "code": "4809AB",
-      "title": "DSC: Direksiyon Açı Sensörü (SZL) Başlatılmadı",
-      "detail": "Akü sökümü veya rot ayarı sonrası SZL sıfır noktası kaybı.",
-      "severity": "WARNING",
-      "guidance": "Canlı & Servis sekmesinden SZL Kalibrasyonu çalıştırın."
-    },
-    {
-      "code": "801C20",
-      "title": "ZGW / BDC: Merkezi Hata Hafızası Dolu (Bilgi)",
-      "detail": "Gateway uzun süreli teşhis belleği doluluk uyarısı.",
-      "severity": "SHADOW",
-      "guidance": "Arıza değildir; tüm hata hafızalarını temizleyerek sıfırlanabilir."
-    },
-    {
-      "code": "CF2101",
-      "title": "EGS: CAN Veriyolu DME Tork Sinyali Geçersiz",
-      "detail": "Motor kontrol ünitesi acil çalışma modundayken şanzımana geçersiz tork bilgisi iletti.",
-      "severity": "WARNING",
-      "guidance": "Önce DME/DDE arızalarını giderin, ardından EGS kodunu temizleyin."
-    },
-    {
-      "code": "240500",
-      "title": "EGR Valfi Pozisyon Sapması: Valf Açık Takılı",
-      "detail": "Egzoz gazı devridaim valfi hedeflenen kapanma açısına ulaşamıyor.",
-      "severity": "CRITICAL",
-      "guidance": "EGR valfi kurum temizliği veya değişimi yapın; adaptasyonu sıfırlayın."
-    },
-    {
-      "code": "240400",
-      "title": "EGR Soğutucu Bypass Klapesi Kontrol Hatası",
-      "detail": "EGR soğutucu pnömatik/elektrikli klape mekanizması yanıt vermiyor.",
-      "severity": "WARNING",
-      "guidance": "Vakum hortumu ve bypass aktüatörünü test edin."
-    },
-    {
-      "code": "24CF00",
-      "title": "Hava Kütle Ölçer (MAF): Ölçülen Hava Kütlesi Çok Düşük",
-      "detail": "Hesaplanan ve ölçülen emme hava debisi arasında negatif sapma.",
-      "severity": "WARNING",
-      "guidance": "MAF sensörünü temizleyin ve turbo emme hattında kaçak testi yapın."
-    },
-    {
-      "code": "255B00",
-      "title": "Swirl Flap (Emme Kelebeği) Aktüatörü Mekanik Takılma",
-      "detail": "Emme manifoldu girdap klapeleri hareket aralığı dışında.",
-      "severity": "WARNING",
-      "guidance": "Emme manifoldu kurum temizliği ve swirl flap aktüatör kontrolü yapın."
-    },
-    {
-      "code": "290900",
-      "title": "Hava Sistemi: Ölçülen Hava Kütlesi Beklenenden Yüksek (EGR Kapalı)",
-      "detail": "EGR akışı yetersiz olduğu için taze hava oranı yüksek okunuyor.",
-      "severity": "WARNING",
-      "guidance": "EGR valfi ve emme manifoldu EGR kanallarını kontrol edin."
-    },
-    {
-      "code": "2AB400",
-      "title": "Rail Basınç Kontrol Valfi (DRV): Akım Sapması",
-      "detail": "Common-rail basınç regülatör solenoidinde akım kararsızlığı.",
-      "severity": "CRITICAL",
-      "guidance": "DRV soketi, yakıt filtresi basıncı ve yüksek basınç pompasını test edin."
-    },
-    {
-      "code": "26CF00",
-      "title": "Alçak Basınç Yakıt Besleme Basıncı Çok Düşük (EKPS)",
-      "detail": "Tank içi yakıt pompası hedef 4.5–5.5 bar basıncı sağlayamıyor.",
-      "severity": "CRITICAL",
-      "guidance": "EKPS modül akımını, yakıt filtresini ve depo içi pompayı kontrol edin."
-    },
-    {
-      "code": "101F01",
-      "title": "Gaz Kelebeği Mutlak Basınç: Kısmi Hava Kaçağı Tespit Edildi",
-      "detail": "N20/B48/B58 emme hattında karter havalandırma veya charge-pipe sızıntısı.",
-      "severity": "WARNING",
-      "guidance": "Charge-pipe O-ring, valf kapağı PCV membranı ve vakum hatlarını kontrol edin."
-    },
-    {
-      "code": "118001",
-      "title": "Yakıt Karışım Kontrolü: Karışım Çok Fakir (Bank 1)",
-      "detail": "Uzun dönem yakıt düzeltmesi (%LTFT) +20% üst sınırına ulaştı.",
-      "severity": "CRITICAL",
-      "guidance": "Vakum kaçağı, düşük yakıt basıncı veya arızalı O2 sensörü için test yapın."
-    },
-    {
-      "code": "130308",
-      "title": "VANOS Egzoz Eksantrik Mili Pozisyon Ulaşım Hatası",
-      "detail": "Egzoz VANOS solenoidi yağ basıncı veya mekanik dişli yanıtı yavaş.",
-      "severity": "WARNING",
-      "guidance": "Motor yağ seviyesini, yağ filtresi kafesini ve VANOS selenoid süzgeçlerini kontrol edin."
-    },
-    {
-      "code": "420381",
-      "title": "EGS (ZF8): Vites Kavrama Basıncı Adaptasyon Sınırı",
-      "detail": "Kavrama dolum basıncı fabrika tolerans aralığının üst sınırına yaklaştı.",
-      "severity": "INFO",
-      "guidance": "Şanzıman yağı ve karter filtresi değişimi planlayın; sadece mekanik müdahale sonrası adaptasyon sıfırlayın."
-    },
-    {
-      "code": "420641",
-      "title": "EGS: P-Kilidi Pozisyon Sensörü Geçici Senkronizasyon",
-      "detail": "GWS vites seçici modülü ile şanzıman iç sensörü arasında anlık gecikme.",
-      "severity": "SHADOW",
-      "guidance": "Tekrarlamıyorsa temizlenebilir; devam ederse akü voltajını kontrol edin."
-    },
-    {
-      "code": "480A12",
-      "title": "DSC: Sağ Arka Tekerlek Hız Sensörü Sinyal Kesintisi",
-      "detail": "ABS/DSC ünitesi sağ arka porya hız halkasından sinyal alamıyor.",
-      "severity": "CRITICAL",
-      "guidance": "Sağ arka ABS sensörünü, kablo soketini ve aks/porya manyetik halkasını kontrol edin."
-    },
-    {
-      "code": "4806DA",
-      "title": "DSC: Arka Sol Tekerlek Hız Sensörü Hava Boşluğu Hatası",
-      "detail": "Aks relüktör halkasında pas/şişme nedeniyle sensör teması veya sinyal zayıflığı.",
-      "severity": "WARNING",
-      "guidance": "Sensör ucunda sürtme izi olup olmadığını kontrol edin."
-    },
-    {
-      "code": "481B01",
-      "title": "EKPS: Yakıt Pompası Kontrol Modülü Aşırı Akım Koruması",
-      "detail": "Yakıt pompası nominal 12A üzerindeki akım nedeniyle sürücü korumaya geçti.",
-      "severity": "CRITICAL",
-      "guidance": "Yakıt pompası iç direnci ve EKPS modül lehimlerini kontrol edin."
-    },
-    {
-      "code": "482394",
-      "title": "EPS (Elektrikli Direksiyon): Tork Sensörü Voltaj Düşümü",
-      "detail": "Motor çalışırken EPS güç beslemesinde < 10.5V anlık gerilim düşümü.",
-      "severity": "WARNING",
-      "guidance": "Şasi topraklama kablosunu (motor bloğu-şasi) ve akü IBS durumunu kontrol edin."
-    },
-    {
-      "code": "440102",
-      "title": "VTG (xDrive Transfer Kutusu): Şanzıman Yağı Aşınma Sayacı",
-      "detail": "Transfer kutusu yağ ömrü eşik değerine ulaştı (servis hatırlatması).",
-      "severity": "INFO",
-      "guidance": "xDrive yağı (TF 0870) değiştirdikten sonra VTG yağ sıfırlama servisini uygulayın."
-    },
-    {
-      "code": "930994",
-      "title": "ACSM: Yolcu Koltuk Doluluk Matı (OC3) Kısa/Açık Devre",
-      "detail": "Ön yolcu koltuk sensörü veriyolu iletişim hatası.",
-      "severity": "CRITICAL",
-      "guidance": "Ön yolcu koltuğu altındaki sarı ACSM soketini ve kablo bükümlerini kontrol edin."
-    },
-    {
-      "code": "800FC8",
-      "title": "FLE_L: Sol LED Far Modülü Soğutma Fanı Arızası",
-      "detail": "Sol adaptif LED far sürücü soğutma fanı devir sinyali gelmiyor.",
-      "severity": "WARNING",
-      "guidance": "Far arka kapağındaki fan soketini ve nem durumunu kontrol edin."
-    },
-    {
-      "code": "8041C3",
-      "title": "FRM / FEM: Sağ Gündüz Farı (Angel Eyes) Kısa Devre Sayacı",
-      "detail": "Kısa devre koruması nedeniyle çıkış sürücüsü kilitlendi.",
-      "severity": "WARNING",
-      "guidance": "Ampul/LED modül tesisatını onarın ve kısa devre sayacını sıfırlayın."
-    },
-    {
-      "code": "8040B9",
-      "title": "CAS4 / FEM: Akü Deşarj Uyarısı (Uyku Akımı Yüksek)",
-      "detail": "Araç uyku modundayken > 80 mA kaçak akım tespit edildi.",
-      "severity": "WARNING",
-      "guidance": "Comfort Access kapı kollarını ve sonradan takılan multimeya/kamera modüllerini kontrol edin."
-    },
-    {
-      "code": "E1147A",
-      "title": "KOMBI: K-CAN2 Veriyolu Geçici Zaman Aşımı",
-      "detail": "Gösterge paneli ZGW ağ geçidinden bir çerçeveyi zaman aşımında aldı.",
-      "severity": "SHADOW",
-      "guidance": "Gölge kayıt — arıza ışığı yakmıyorsa görmezden gelinebilir."
-    },
-    {
-      "code": "B7F8C3",
-      "title": "HU_NBT / MGU: Bluetooth/Wi-Fi Anten Açık Devre",
-      "detail": "Ana ünite anten portunda düşük empedans veya soket gevşekliği.",
-      "severity": "SHADOW",
-      "guidance": "Bagaj/tavan anten kablo bağlantısını kontrol edin."
-    },
-    {
-      "code": "801A55",
-      "title": "PDC / PMA: Ön İç Sağ Park Sensörü Yanıt Vermiyor",
-      "detail": "Tampon ultrasonik sensör hattında kopukluk veya sensör arızası.",
-      "severity": "WARNING",
-      "guidance": "Tampon soketini kontrol edin; sağlam çalışan sensörle yer değiştirerek doğrulayın."
-    },
-    {
-      "code": "800E0F",
-      "title": "KAFAS: Ön Cam Kamera Kalibrasyonu / Isıtma Bozukluğu",
-      "detail": "Şerit takip kamerası görüş alanı buğulu veya cam değişimi sonrası kalibrasyonsuz.",
-      "severity": "INFO",
-      "guidance": "Ön cam kamera bölgesini temizleyin; cam değiştiyse KAFAS sürüş kalibrasyonu yapın."
-    },
-    {
-      "code": "E71428",
-      "title": "IHKA: Klima Soğutucu Gaz Basınç Sensörü Sinyal Hatası",
-      "detail": "Klima hattı basınç değeri okuma aralığı dışında (kompresör korumada).",
-      "severity": "WARNING",
-      "guidance": "Klima gazı basıncını (min 3 bar statik) ve 3-pin basınç sensörü soketini ölçün."
-    }
+    { "code": "247500", "title": "Rail Basınç Sensörü: Kısa Devre / Sinyal Çok Yüksek", "detail": "Yüksek basınç yakıt hattı sensör voltajı nominal üst sınırı aştı.", "severity": "CRITICAL", "guidance": "Rail basınç sensörü 3-pin soketini ve kablo demetini kontrol edin." },
+    { "code": "26F500", "title": "SCR / AdBlue Dozaj Modülü Basınç Oluşmuyor", "detail": "Üre enjeksiyon hattında nominal 5 bar basınca ulaşılamadı.", "severity": "WARNING", "guidance": "AdBlue tank seviyesi, pompa filtresi ve enjektör kristalleşmesini kontrol edin." },
+    { "code": "284E00", "title": "Oksijen Sensörü (Lambda) Bank 1 Isıtıcı Devresi", "detail": "Ön lambda sondası ısıtıcı elemanı iç direnci yüksek.", "severity": "WARNING", "guidance": "Lambda sensörü soketini ve ısıtıcı besleme sigortasını test edin." },
+    { "code": "4809AB", "title": "DSC: Direksiyon Açı Sensörü (SZL) Başlatılmadı", "detail": "Akü sökümü veya rot ayarı sonrası SZL sıfır noktası kaybı.", "severity": "WARNING", "guidance": "Servis sekmesinden SZL Kalibrasyonu çalıştırın." },
+    { "code": "801C20", "title": "ZGW / BDC: Merkezi Hata Hafızası Dolu (Bilgi)", "detail": "Gateway uzun süreli teşhis belleği doluluk uyarısı.", "severity": "SHADOW", "guidance": "Arıza değildir; tüm hata hafızalarını temizleyerek sıfırlanabilir." },
+    { "code": "CF2101", "title": "EGS: CAN Veriyolu DME Tork Sinyali Geçersiz", "detail": "Motor kontrol ünitesi acil çalışma modundayken şanzımana geçersiz tork bilgisi iletti.", "severity": "WARNING", "guidance": "Önce DME/DDE arızalarını giderin, ardından EGS kodunu temizleyin." },
+    { "code": "240500", "title": "EGR Valfi Pozisyon Sapması: Valf Açık Takılı", "detail": "Egzoz gazı devridaim valfi hedeflenen kapanma açısına ulaşamıyor.", "severity": "CRITICAL", "guidance": "EGR valfi kurum temizliği veya değişimi yapın; adaptasyonu sıfırlayın." },
+    { "code": "240400", "title": "EGR Soğutucu Bypass Klapesi Kontrol Hatası", "detail": "EGR soğutucu pnömatik/elektrikli klape mekanizması yanıt vermiyor.", "severity": "WARNING", "guidance": "Vakum hortumu ve bypass aktüatörünü test edin." },
+    { "code": "24CF00", "title": "Hava Kütle Ölçer (MAF): Ölçülen Hava Kütlesi Çok Düşük", "detail": "Hesaplanan ve ölçülen emme hava debisi arasında negatif sapma.", "severity": "WARNING", "guidance": "MAF sensörünü temizleyin ve turbo emme hattında kaçak testi yapın." },
+    { "code": "255B00", "title": "Swirl Flap (Emme Kelebeği) Aktüatörü Mekanik Takılma", "detail": "Emme manifoldu girdap klapeleri hareket aralığı dışında.", "severity": "WARNING", "guidance": "Emme manifoldu kurum temizliği ve swirl flap aktüatör kontrolü yapın." },
+    { "code": "290900", "title": "Hava Sistemi: Ölçülen Hava Kütlesi Beklenenden Yüksek (EGR Kapalı)", "detail": "EGR akışı yetersiz olduğu için taze hava oranı yüksek okunuyor.", "severity": "WARNING", "guidance": "EGR valfi ve emme manifoldu EGR kanallarını kontrol edin." },
+    { "code": "2AB400", "title": "Rail Basınç Kontrol Valfi (DRV): Akım Sapması", "detail": "Common-rail basınç regülatör solenoidinde akım kararsızlığı.", "severity": "CRITICAL", "guidance": "DRV soketi, yakıt filtresi basıncı ve yüksek basınç pompasını test edin." },
+    { "code": "26CF00", "title": "Alçak Basınç Yakıt Besleme Basıncı Çok Düşük (EKPS)", "detail": "Tank içi yakıt pompası hedef 4.5–5.5 bar basıncı sağlayamıyor.", "severity": "CRITICAL", "guidance": "EKPS modül akımını, yakıt filtresini ve depo içi pompayı kontrol edin." },
+    { "code": "101F01", "title": "Gaz Kelebeği Mutlak Basınç: Kısmi Hava Kaçağı Tespit Edildi", "detail": "N20/B48/B58 emme hattında karter havalandırma veya charge-pipe sızıntısı.", "severity": "WARNING", "guidance": "Charge-pipe O-ring, valf kapağı PCV membranı ve vakum hatlarını kontrol edin." },
+    { "code": "118001", "title": "Yakıt Karışım Kontrolü: Karışım Çok Fakir (Bank 1)", "detail": "Uzun dönem yakıt düzeltmesi (%LTFT) +20% üst sınırına ulaştı.", "severity": "CRITICAL", "guidance": "Vakum kaçağı, düşük yakıt basıncı veya arızalı O2 sensörü için test yapın." },
+    { "code": "118401", "title": "Yakıt Karışım Kontrolü: Karışım Çok Zengin (Bank 1)", "detail": "Enjektör sızıntısı veya MAF/EVAP valfi kaynaklı zengin karışım.", "severity": "WARNING", "guidance": "Tank havalandırma valfi (EVAP) ve enjektör düzeltmelerini kontrol edin." },
+    { "code": "130308", "title": "VANOS Egzoz Eksantrik Mili Pozisyon Ulaşım Hatası", "detail": "Egzoz VANOS solenoidi yağ basıncı veya mekanik dişli yanıtı yavaş.", "severity": "WARNING", "guidance": "Motor yağ seviyesini, yağ filtresi kafesini ve VANOS selenoid süzgeçlerini kontrol edin." },
+    { "code": "130108", "title": "VANOS Emme Eksantrik Mili Pozisyon Sapması", "detail": "Emme eksantrik mili hedef açıyı takip edemiyor.", "severity": "WARNING", "guidance": "Emme VANOS aktüatörü, yağ basıncı ve zincir gergisini kontrol edin." },
+    { "code": "133E10", "title": "Valvetronic Sistemi: Devre Dışı / Eksantrik Mili Öğrenilemedi", "detail": "Valvetronic servo motoru veya eksantrik sensörü kalibrasyon hatası.", "severity": "CRITICAL", "guidance": "Valvetronic servo motor soketi, sigorta ve eksantrik milini kontrol edin." },
+    { "code": "140001", "title": "Silindir 1 Ateşleme Teklemesi (Misfire) — Yakıt Kesildi", "detail": "Silindir 1'de kritik yanma kesintisi algılandı.", "severity": "CRITICAL", "guidance": "1. silindir bobin/bujisini diğer silindirle yer değiştirerek arızanın taşınıp taşınmadığını test edin." },
+    { "code": "140201", "title": "Silindir 2 Ateşleme Teklemesi (Misfire)", "detail": "Silindir 2 yanma kesintisi algılandı.", "severity": "CRITICAL", "guidance": "2. silindir ateşleme bobini, buji ve enjektör değerini kontrol edin." },
+    { "code": "140301", "title": "Silindir 3 Ateşleme Teklemesi (Misfire)", "detail": "Silindir 3 yanma kesintisi algılandı.", "severity": "CRITICAL", "guidance": "3. silindir ateşleme bobini, buji ve enjektör değerini kontrol edin." },
+    { "code": "140401", "title": "Silindir 4 Ateşleme Teklemesi (Misfire)", "detail": "Silindir 4 yanma kesintisi algılandı.", "severity": "CRITICAL", "guidance": "4. silindir ateşleme bobini, buji ve enjektör değerini kontrol edin." },
+    { "code": "152B08", "title": "Süper Vuruntu (Super Knocking) Algılandı — Enjeksiyon Kesildi", "detail": "Yüksek yük altında silindir içi erken ateşleme tespit edildi.", "severity": "CRITICAL", "guidance": "Yakıt oktan kalitesini, bujileri ve karbon birikimini kontrol edin." },
+    { "code": "160001", "title": "Krank Mili Pozisyon Sensörü Sinyal Kaybı", "detail": "Krank sensörü devir sinyali kesintili veya senkronize değil.", "severity": "CRITICAL", "guidance": "Krank sensörü soketi ve eksantrik/krank zamanlama zincirini kontrol edin." },
+    { "code": "1A2808", "title": "Elektrikli Termostat Isıtıcı Devresi Açık / Kısa Devre", "detail": "Harita kontrollü termostat (Map Thermostat) ısıtma rezistansı arızalı.", "severity": "WARNING", "guidance": "Termostat gövdesi fişini ve soğutma suyu sıcaklığını canlı veriden kontrol edin." },
+    { "code": "1B5102", "title": "Terminal 15N / DME Ana Röle Besleme Voltajı Düşük", "detail": "Kontak açıkken DME besleme hattında gerilim düşümü.", "severity": "WARNING", "guidance": "Entegre besleme modülü (IVM) ve DME ana rölesini test edin." },
+    { "code": "20A701", "title": "Elektrikli Soğutma Sıvısı Pompası: Devir Sapması / Pompa Kuru Çalıştı", "detail": "N54/N55/N20 elektrikli su pompası hedef devrin altında.", "severity": "CRITICAL", "guidance": "Soğutma sıvısı seviyesini ve elektrikli su pompası BSD iletişimini acil kontrol edin." },
+    { "code": "244C00", "title": "Turbo Takviye Basıncı: Hedef Basıncın Altında", "detail": "N47/B47/N57 dizel turbo basınç sapması.", "severity": "CRITICAL", "guidance": "VNT turbo geometrisi, vakum hatları ve DPF tıkanıklığını kontrol edin." },
+    { "code": "245200", "title": "DPF Diferansiyel Basınç Sensörü: Değer Aralığı Dışı", "detail": "Egzoz fark basınç sensörü hortumu yırtık veya sensör arızalı.", "severity": "WARNING", "guidance": "DPF basınç sensörü hortumlarını ve rölanti mbar değerini kontrol edin." },
+    { "code": "24A000", "title": "Kızdırma Bujisi Kontrol Ünitesi (GSE) BSD İletişim Hatası", "detail": "DDE ile kızdırma rölesi arasında haberleşme kesildi.", "severity": "WARNING", "guidance": "GSE modülü güç beslemesini ve soket korozyonunu kontrol edin." },
+    { "code": "252400", "title": "Yüksek Basınç Pompası (CP4) Miktar Kontrol Valfi Sapması", "detail": "Rail basınç regülasyonu hedef değerden sapıyor.", "severity": "CRITICAL", "guidance": "Yakıt filtresinde metal talaşı olup olmadığını kontrol edin." },
+    { "code": "273800", "title": "Katalizör Verimliliği Eşik Değerinin Altında", "detail": "Bank 1 katalitik konvertör oksijen depolama kapasitesi düşük.", "severity": "WARNING", "guidance": "Egzoz sızdırmazlığı ve arka lambda sensörü sinyallerini kontrol edin." },
+    { "code": "29D0", "title": "MSD80/81 Silindir 4 Ateşleme Kesintisi (E-Serisi)", "detail": "E60/E90 N54/N52 4. silindir misfire kaydı.", "severity": "CRITICAL", "guidance": "Bobin, buji ve piezo enjektör indeks/düzeltme değerlerini kontrol edin." },
+    { "code": "2A82", "title": "VANOS Emme Mekanik Takılma (E-Serisi N52/N54)", "detail": "Eksantrik mili ayarlama mekanizması yavaş veya sıkışmış.", "severity": "WARNING", "guidance": "VANOS selenoidlerini temizleyin ve yağ filtresi kapağı iç O-ringlerini kontrol edin." },
+    { "code": "2DED", "title": "Güç Yönetimi: Bekleme Akımı İhlali (E-Serisi)", "detail": "Uyku modunda yüksek akım tüketimi algılandı.", "severity": "INFO", "guidance": "CAS/FRMA uyku döngüsü ve akü IBS sensörünü kontrol edin." },
+    { "code": "30C1", "title": "Motor Yağ Basıncı Kontrolü: Statik / Düşük Basınç (E-Serisi)", "detail": "Yağ basınç regülasyon valfi veya sensörü hedef basıncı tutamıyor.", "severity": "CRITICAL", "guidance": "Motor yağ basıncını mekanik manometre ile doğrulayın." },
+    { "code": "420381", "title": "EGS (ZF8): Vites Kavrama Basıncı Adaptasyon Sınırı", "detail": "Kavrama dolum basıncı fabrika tolerans aralığının üst sınırına yaklaştı.", "severity": "INFO", "guidance": "Şanzıman yağı ve karter filtresi değişimi planlayın; sadece mekanik müdahale sonrası adaptasyon sıfırlayın." },
+    { "code": "420641", "title": "EGS: P-Kilidi Pozisyon Sensörü Geçici Senkronizasyon", "detail": "GWS vites seçici modülü ile şanzıman iç sensörü arasında anlık gecikme.", "severity": "SHADOW", "guidance": "Tekrarlamıyorsa temizlenebilir; devam ederse akü voltajını kontrol edin." },
+    { "code": "421342", "title": "EGS: Şanzıman Yağ Sıcaklığı Yüksek / Soğutma Yetersiz", "detail": "ATF yağ sıcaklığı 125°C eşik değerini aştı.", "severity": "WARNING", "guidance": "Şanzıman yağ soğutucu termostatını ve yağ seviyesini kontrol edin." },
+    { "code": "440102", "title": "VTG (xDrive Transfer Kutusu): Şanzıman Yağı Aşınma Sayacı", "detail": "Transfer kutusu yağ ömrü eşik değerine ulaştı (servis hatırlatması).", "severity": "INFO", "guidance": "xDrive yağı (TF 0870) değiştirdikten sonra VTG yağ sıfırlama servisini uygulayın." },
+    { "code": "440211", "title": "VTG (xDrive): Kavrama Aktüatör Kalibrasyon Hatası", "detail": "Transfer kutusu servo motoru referans konumunu bulamadı.", "severity": "WARNING", "guidance": "VTG servo motor plastik dişlisini ve pozisyon sensörünü kontrol edin." },
+    { "code": "480A12", "title": "DSC: Sağ Arka Tekerlek Hız Sensörü Sinyal Kesintisi", "detail": "ABS/DSC ünitesi sağ arka porya hız halkasından sinyal alamıyor.", "severity": "CRITICAL", "guidance": "Sağ arka ABS sensörünü, kablo soketini ve aks/porya manyetik halkasını kontrol edin." },
+    { "code": "4806DA", "title": "DSC: Arka Sol Tekerlek Hız Sensörü Hava Boşluğu Hatası", "detail": "Aks relüktör halkasında pas/şişme nedeniyle sensör teması veya sinyal zayıflığı.", "severity": "WARNING", "guidance": "Sensör ucunda sürtme izi olup olmadığını kontrol edin." },
+    { "code": "480970", "title": "DSC: Ön Sol Tekerlek Hız Sensörü Elektrik Hatası", "detail": "Ön sol ABS sensörü kablosunda kopukluk veya kısa devre.", "severity": "CRITICAL", "guidance": "Ön sol davlumbaz içi ABS kablo soketini ölçün." },
+    { "code": "481B01", "title": "EKPS: Yakıt Pompası Kontrol Modülü Aşırı Akım Koruması", "detail": "Yakıt pompası nominal 12A üzerindeki akım nedeniyle sürücü korumaya geçti.", "severity": "CRITICAL", "guidance": "Yakıt pompası iç direnci ve EKPS modül lehimlerini kontrol edin." },
+    { "code": "482394", "title": "EPS (Elektrikli Direksiyon): Tork Sensörü Voltaj Düşümü", "detail": "Motor çalışırken EPS güç beslemesinde < 10.5V anlık gerilim düşümü.", "severity": "WARNING", "guidance": "Şasi topraklama kablosunu (motor bloğu-şasi) ve akü IBS durumunu kontrol edin." },
+    { "code": "48279B", "title": "EMF (Elektronik Park Freni): Sağ Kaliper Aktüatör Hatası", "detail": "Arka sağ el freni motoru yüksek akım veya açık devre.", "severity": "CRITICAL", "guidance": "Arka sağ kaliper EPB soketini ve kablodaki kırığı kontrol edin." },
+    { "code": "930994", "title": "ACSM: Yolcu Koltuk Doluluk Matı (OC3) Kısa/Açık Devre", "detail": "Ön yolcu koltuk sensörü veriyolu iletişim hatası.", "severity": "CRITICAL", "guidance": "Ön yolcu koltuğu altındaki sarı ACSM soketini ve kablo bükümlerini kontrol edin." },
+    { "code": "9309CA", "title": "ACSM: Akü Güvenlik Kutup Başlığı (BST) Direnci Yüksek", "detail": "Akü artı kutbundaki piroteknik güvenlik terminali devresinde yüksek direnç.", "severity": "CRITICAL", "guidance": "Akü üstü BST küçük 2-pin sarı soketini sıkıca oturtun." },
+    { "code": "800FC8", "title": "FLE_L: Sol LED Far Modülü Soğutma Fanı Arızası", "detail": "Sol adaptif LED far sürücü soğutma fanı devir sinyali gelmiyor.", "severity": "WARNING", "guidance": "Far arka kapağındaki fan soketini ve nem durumunu kontrol edin." },
+    { "code": "8041C3", "title": "FRM / FEM: Sağ Gündüz Farı (Angel Eyes) Kısa Devre Sayacı", "detail": "Kısa devre koruması nedeniyle çıkış sürücüsü kilitlendi.", "severity": "WARNING", "guidance": "Ampul/LED modül tesisatını onarın ve Kısa Devre Kilidi Sıfırlama aracını çalıştırın." },
+    { "code": "8041B6", "title": "FRM / FEM: Sol Kısa Far Çıkışı Kısa Devre Kilidi Aktif", "detail": "50 kısa devre döngüsü aşıldığı için çıkış devre dışı bırakıldı.", "severity": "CRITICAL", "guidance": "Tesisatı onardıktan sonra Servis sekmesinden Kısa Devre Kilidini sıfırlayın." },
+    { "code": "8040B9", "title": "CAS4 / FEM: Akü Deşarj Uyarısı (Uyku Akımı Yüksek)", "detail": "Araç uyku modundayken > 80 mA kaçak akım tespit edildi.", "severity": "WARNING", "guidance": "Comfort Access kapı kollarını ve sonradan takılan multimeya/kamera modüllerini kontrol edin." },
+    { "code": "804415", "title": "FEM / BDC: Yağmur / Far Sensörü (RLS) Haberleşme Hatası", "detail": "İç dikiz aynası arkası RLS sensörü LIN hattında yanıt vermiyor.", "severity": "INFO", "guidance": "Ön cam değişimi sonrası jel ped ve RLS soketini kontrol edin." },
+    { "code": "E1147A", "title": "KOMBI: K-CAN2 Veriyolu Geçici Zaman Aşımı", "detail": "Gösterge paneli ZGW ağ geçidinden bir çerçeveyi zaman aşımında aldı.", "severity": "SHADOW", "guidance": "Gölge kayıt — arıza ışığı yakmıyorsa görmezden gelinebilir." },
+    { "code": "B7F8C3", "title": "HU_NBT / MGU: Bluetooth/Wi-Fi/TCB Anten Açık Devre", "detail": "Ana ünite anten portunda düşük empedans veya soket gevşekliği.", "severity": "SHADOW", "guidance": "Bagaj/tavan anten kablo bağlantısını kontrol edin." },
+    { "code": "B7F87A", "title": "HU_NBT / MGU: Ekran (CID) APIX Veri Bağlantısı Senkronizasyon Kaybı", "detail": "Headunit ile iDrive ekranı arasındaki APIX kablosunda anlık kesinti.", "severity": "INFO", "guidance": "CID ekran LVDS/APIX kablo soketini kontrol edin." },
+    { "code": "801A55", "title": "PDC / PMA: Ön İç Sağ Park Sensörü Yanıt Vermiyor", "detail": "Tampon ultrasonik sensör hattında kopukluk veya sensör arızası.", "severity": "WARNING", "guidance": "Tampon soketini kontrol edin; sağlam çalışan sensörle yer değiştirerek doğrulayın." },
+    { "code": "800E0F", "title": "KAFAS: Ön Cam Kamera Kalibrasyonu / Isıtma Bozukluğu", "detail": "Şerit takip kamerası görüş alanı buğulu veya cam değişimi sonrası kalibrasyonsuz.", "severity": "INFO", "guidance": "Ön cam kamera bölgesini temizleyin; cam değiştiyse KAFAS sürüş kalibrasyonu yapın." },
+    { "code": "D19401", "title": "ACC / FRR Radar Sensörü: Hizalama / Açı Sapması Eşik Dışı", "detail": "Ön tampon radar sensörü montaj açısı ±15 mrad dışında.", "severity": "WARNING", "guidance": "Tampon braketini kontrol edip ACC Radar Kalibrasyonu çalıştırın." },
+    { "code": "E71428", "title": "IHKA: Klima Soğutucu Gaz Basınç Sensörü Sinyal Hatası", "detail": "Klima hattı basınç değeri okuma aralığı dışında (kompresör korumada).", "severity": "WARNING", "guidance": "Klima gazı basıncını (min 3 bar statik) ve 3-pin basınç sensörü soketini ölçün." },
+    { "code": "21F06E", "title": "SME (HV Batarya): Hücre Voltaj Dengesizliği Uyarısı (EV/PHEV)", "detail": "Yüksek voltaj batarya paketinde hücre farkı > 50 mV.", "severity": "WARNING", "guidance": "Tam şarj döngüsü sonrası hücre dengeleme ve SOH değerlerini kontrol edin." },
+    { "code": "21F139", "title": "SME (HV Batarya): Yüksek Voltaj İzolasyon Direnci Düşük", "detail": "HV hat ile şasi arası izolasyon < 500 kOhm eşiğine yaklaştı.", "severity": "CRITICAL", "guidance": "HV turuncu kablolarda ve klima kompresörü izolasyonunda yetkili servis testi yapın." },
+    { "code": "030E05", "title": "BCP / BDC3 (U-Serisi): Güç Yönetimi Uyku Engeli Algılandı", "detail": "iDrive 9 / U11 araçta bir tüketici araç uykuya geçerken hattı açık tuttu.", "severity": "INFO", "guidance": "OBD adaptörü veya harici USB cihazları çıkarıp uyku döngüsünü izleyin." }
   ]
 }

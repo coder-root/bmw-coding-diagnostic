@@ -20,8 +20,8 @@ android {
     applicationId = "com.punhanaghayev.bimmerpro"
     minSdk = 26
     targetSdk = 36
-    versionCode = 13
-    versionName = "1.6.0"
+    versionCode = 14
+    versionName = "1.6.5"
   }
 
   signingConfigs {
@@ -105,11 +105,12 @@ dependencies {
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
 
-  // Navigation & Serialization
+  // Navigation, Serialization & Android Auto
   implementation(libs.androidx.navigation3.ui)
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
   implementation(libs.kotlinx.serialization.json)
+  implementation(libs.androidx.car.app)
 }
 
 tasks.withType<JavaCompile>().configureEach {

@@ -2,6 +2,8 @@ package com.punhanaghayev.bimmerpro.core.simulator
 
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
+import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
 import com.punhanaghayev.bimmerpro.core.protocol.BmwSecurityAccess
@@ -85,7 +87,7 @@ class SimulatorTransportAdapter(
             }
 
             UdsServiceId.READ_DATA_BY_ID -> handleReadDid(targetEcu, uds)
-            UdsServiceId.READ_DTC_INFO -> handleReadDtc(targetEcu)
+            UdsServiceId.READ_DTC_INFO -> handleReadDtc(targetEcu, uds)
             UdsServiceId.CLEAR_DIAGNOSTIC_INFO -> handleClearDtc(targetEcu)
             UdsServiceId.WRITE_DATA_BY_ID -> handleWriteDid(targetEcu, uds)
             UdsServiceId.IO_CONTROL_BY_ID -> byteArrayOf((sid + 0x40).toByte(), uds.getOrElse(1) { 0 }, uds.getOrElse(2) { 0 }, 0x03)
@@ -130,19 +132,59 @@ class SimulatorTransportAdapter(
         }
     }
 
-    private fun handleReadDtc(targetEcu: Int): ByteArray {
-        val matching = dtcStore.filter { targetEcu == EcuAddress.ZGW_BDC || it.ecuAddress == targetEcu }
-        // Standard 0x59 0x02 <statusAvailabilityMask> + [DTC_High, DTC_Mid, DTC_Low, Status] per fault
+    private fun handleReadDtc(targetEcu: Int, uds: ByteArray): ByteArray {
+        val subfunction = if (uds.size > 1) uds[1].toInt() and 0xFF else 0x02
+        val statusMask = if (uds.size > 2) uds[2].toInt() and 0xFF else 0xFF
+        val ecuMatches = dtcStore.filter { targetEcu == EcuAddress.ZGW_BDC || it.ecuAddress == targetEcu }
+        val matching = when (subfunction) {
+            0x15 -> ecuMatches.filter { it.memoryType == DtcMemoryType.PERMANENT_MEMORY }
+            0x02 -> when (statusMask) {
+                0x04 -> ecuMatches.filter { it.memoryType == DtcMemoryType.INFO_MEMORY }
+                0x09 -> ecuMatches.filter { it.memoryType != DtcMemoryType.INFO_MEMORY }
+                else -> ecuMatches
+            }
+            0x04 -> {
+                val fault = ecuMatches.firstOrNull() ?: return negativeResponse(
+                    UdsServiceId.READ_DTC_INFO,
+                    UdsNegativeResponseCode.REQUEST_OUT_OF_RANGE
+                )
+                val numeric = fault.code.toIntOrNull(16) ?: 0x100001
+                val km = fault.freezeFrame.mileageKm
+                val tempByte = (fault.freezeFrame.coolantTempC + 40).coerceIn(0, 255)
+                val voltByte = (fault.freezeFrame.batteryVoltage * 10).toInt().coerceIn(0, 255)
+                return byteArrayOf(
+                    (UdsServiceId.READ_DTC_INFO + 0x40).toByte(),
+                    0x04,
+                    ((numeric shr 16) and 0xFF).toByte(),
+                    ((numeric shr 8) and 0xFF).toByte(),
+                    (numeric and 0xFF).toByte(),
+                    0x2F,
+                    0x01, // Snapshot record #1
+                    0x03, // Number of DIDs
+                    0x10, 0x0C, ((km shr 16) and 0xFF).toByte(), ((km shr 8) and 0xFF).toByte(), (km and 0xFF).toByte(),
+                    0xF4.toByte(), 0x05, tempByte.toByte(),
+                    0xF4.toByte(), 0x42, voltByte.toByte()
+                )
+            }
+            else -> ecuMatches
+        }
+
+        // Standard 0x59 <subfunction> <statusAvailabilityMask> + [DTC_High, DTC_Mid, DTC_Low, Status] per fault
         val out = ArrayList<Byte>(3 + matching.size * 4)
         out.add((UdsServiceId.READ_DTC_INFO + 0x40).toByte())
-        out.add(0x02)
+        out.add(subfunction.toByte())
         out.add(0xFF.toByte())
         matching.forEach { fault ->
             val numeric = fault.code.toIntOrNull(16) ?: 0x100001
+            val statusByte = when {
+                fault.memoryType == DtcMemoryType.INFO_MEMORY -> 0x04
+                fault.status == DtcStatus.ACTIVE -> 0x2F
+                else -> 0x08
+            }
             out.add(((numeric shr 16) and 0xFF).toByte())
             out.add(((numeric shr 8) and 0xFF).toByte())
             out.add((numeric and 0xFF).toByte())
-            out.add(0x2F)
+            out.add(statusByte.toByte())
         }
         return out.toByteArray()
     }

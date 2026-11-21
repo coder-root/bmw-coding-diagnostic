@@ -15,6 +15,7 @@ enum class AdapterTransportKind {
     WIFI_ELM_STN,
     ENET_TCP,
     BLE_OBD,
+    CLASSIC_BT_OBD,
     USB_KDCAN,
     SIMULATOR
 }
@@ -29,12 +30,12 @@ enum class AdapterType(
     UNICARSCAN_3000("UniCarScan - 3000", "BLE / BT Dual-Mode ISO-TP (E/F/G/I)", false, AdapterTransportKind.BLE_OBD),
     UNICARSCAN_2100("UniCarScan - 2100", "BLE ISO-TP over CAN (E/F/G)", false, AdapterTransportKind.BLE_OBD),
     BLE_OBD("OBDLink CX / CX+", "STN BLE GATT ISO-TP (F/G/I)", false, AdapterTransportKind.BLE_OBD),
-    OBDLINK_MX_PLUS("OBDLink MX+", "STN Bluetooth High-Speed ISO-TP", false, AdapterTransportKind.BLE_OBD),
+    OBDLINK_MX_PLUS("OBDLink MX+", "Classic BT SPP High-Speed STN ISO-TP", false, AdapterTransportKind.CLASSIC_BT_OBD),
     VLINKER_BM_WIFI("vLinker Wi-Fi", "STN2255 Wi-Fi TCP 192.168.0.10:35000", false, AdapterTransportKind.WIFI_ELM_STN),
     VLINKER_BT("vLinker Bluetooth", "STN2255 BLE / BT ISO-TP (BM+ / MC+)", false, AdapterTransportKind.BLE_OBD),
-    VGATE_ICAR_BT("Vgate iCar Bluetooth", "ELM327 BLE / BT ISO-TP", false, AdapterTransportKind.BLE_OBD),
+    VGATE_ICAR_BT("Vgate iCar Bluetooth", "Classic BT SPP / ELM327 ISO-TP", false, AdapterTransportKind.CLASSIC_BT_OBD),
     VEEPEAK_BT("Veepeak Bluetooth", "OBDCheck BLE+ ISO-TP", false, AdapterTransportKind.BLE_OBD),
-    KONNWEI("Konnwei", "KW902 / KW903 Bluetooth ELM327", false, AdapterTransportKind.BLE_OBD),
+    KONNWEI("Konnwei", "KW902 / KW903 Classic BT SPP ELM327", false, AdapterTransportKind.CLASSIC_BT_OBD),
     MODBM_ENET("modBM ENET", "Wi-Fi ENET HSFZ / DoIP TCP:6801", true, AdapterTransportKind.ENET_TCP),
     THOR("THOR", "THOR Wi-Fi ENET HSFZ / DoIP", true, AdapterTransportKind.ENET_TCP),
     KIES_WIFI("KIES Wi-Fi", "KIES Wi-Fi ENET HSFZ / DoIP", true, AdapterTransportKind.ENET_TCP),
@@ -49,6 +50,7 @@ enum class AdapterType(
     SIMULATOR_F30("BMW F30 328i", "Virtual HSFZ / ENET + N20", true, AdapterTransportKind.SIMULATOR),
     SIMULATOR_G30("BMW G30 530i", "Virtual DoIP / HSFZ + Secure Coding", true, AdapterTransportKind.SIMULATOR),
     SIMULATOR_G20("BMW G20 M340i", "Virtual DoIP / B58 + iDrive 7", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_U11("BMW U11 iX1 / X1", "Virtual DoIP / OS 9 + U-Series", true, AdapterTransportKind.SIMULATOR),
     SIMULATOR_E90("BMW E90 335i", "Virtual K+DCAN / KWP2000 + Tamper Demo", false, AdapterTransportKind.SIMULATOR);
 
     val isSimulator: Boolean

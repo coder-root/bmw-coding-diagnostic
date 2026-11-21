@@ -3,6 +3,7 @@ package com.punhanaghayev.bimmerpro.data
 import android.content.Context
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
+import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
@@ -11,8 +12,11 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.EpbServiceState
+import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
@@ -22,10 +26,13 @@ import com.punhanaghayev.bimmerpro.core.bmw.MileageModuleReading
 import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
 import com.punhanaghayev.bimmerpro.core.bmw.OfflineDiagnosticReport
 import com.punhanaghayev.bimmerpro.core.bmw.OfflineFaultAnalyzer
+import com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceExecutionResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
+import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
+import com.punhanaghayev.bimmerpro.core.bmw.SoundTuningState
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
@@ -37,11 +44,14 @@ import com.punhanaghayev.bimmerpro.core.protocol.BleAdapterDevice
 import com.punhanaghayev.bimmerpro.core.protocol.BleObdTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.BmwSecurityAccess
 import com.punhanaghayev.bimmerpro.core.protocol.CafdBitmaskEngine
+import com.punhanaghayev.bimmerpro.core.protocol.ClassicBtObdTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.ConnectionState
 import com.punhanaghayev.bimmerpro.core.protocol.DiscoveredGateway
 import com.punhanaghayev.bimmerpro.core.protocol.DoIpProtocol
 import com.punhanaghayev.bimmerpro.core.protocol.DoIpTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.EnetGatewayDiscovery
+import com.punhanaghayev.bimmerpro.core.protocol.HsfzFrame
+import com.punhanaghayev.bimmerpro.core.protocol.Kwp2000Codec
 import com.punhanaghayev.bimmerpro.core.protocol.PhysicalUdsParser
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
@@ -54,6 +64,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.UdsResponse
 import com.punhanaghayev.bimmerpro.core.protocol.UdsSessionType
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanDeviceInfo
 import com.punhanaghayev.bimmerpro.core.protocol.UsbKdcanTransportAdapter
+import com.punhanaghayev.bimmerpro.core.report.SupportBundleExporter
 import com.punhanaghayev.bimmerpro.core.simulator.BmwSimulatorCatalog
 import com.punhanaghayev.bimmerpro.core.simulator.SimulatorTransportAdapter
 import com.punhanaghayev.bimmerpro.core.update.DataPackDownloader
@@ -109,6 +120,10 @@ data class BimmerSessionState(
     val ibsHealth: IbsBatteryHealth? = null,
     val hvBatteryHealth: HvBatteryHealth? = null,
     val adasStatus: AdasCalibrationStatus? = null,
+    val shortCircuitChannels: List<ShortCircuitChannel> = emptyList(),
+    val soundTuning: SoundTuningState = SoundTuningState(),
+    val epbServiceState: EpbServiceState = EpbServiceState.NORMAL,
+    val androidAutoPidIds: List<String> = listOf("rpm", "boost", "coolant", "oil_temp"),
     val offlineReport: OfflineDiagnosticReport? = null,
     val isPhysicalSafeMode: Boolean = true,
     val isPhysicalWriteUnlocked: Boolean = false,
@@ -231,7 +246,20 @@ class BimmerRepository(
                 val targetMac = bleAddress ?: throw IllegalStateException(
                     "Scan hardware first and select a Bluetooth/BLE OBD adapter."
                 )
-                BleObdTransportAdapter(ctx, targetMac)
+                BleObdTransportAdapter(ctx, targetMac, adapterType)
+            }
+
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.CLASSIC_BT_OBD -> {
+                val ctx = appContext ?: error("Android Context required for Classic Bluetooth SPP")
+                val targetMac = bleAddress ?: throw IllegalStateException(
+                    "Önce donanım taraması yapıp eşleştirilmiş Classic BT adaptörünü seçin."
+                )
+                ClassicBtObdTransportAdapter(
+                    context = ctx,
+                    deviceAddress = targetMac,
+                    adapterType = adapterType,
+                    onAtLog = { msg -> udsClient.logInfo("BT", EcuAddress.ZGW_BDC, msg) }
+                )
             }
 
             com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.USB_KDCAN -> {
@@ -314,6 +342,10 @@ class BimmerRepository(
                         ibsHealth = bundle.ibsHealth,
                         hvBatteryHealth = bundle.hvBatteryHealth,
                         adasStatus = bundle.adasStatus,
+                        shortCircuitChannels = bundle.shortCircuitChannels,
+                        soundTuning = bundle.soundTuning,
+                        epbServiceState = EpbServiceState.NORMAL,
+                        androidAutoPidIds = loadSavedAndroidAutoPids(),
                         offlineReport = health,
                         isPhysicalSafeMode = false,
                         savedVehicles = savedList,
@@ -326,6 +358,7 @@ class BimmerRepository(
                     ?: "WBA_PHYSICAL_VIN"
                 val inferredChassis = PhysicalUdsParser.inferChassisFromVin(extractedVin)
                 val vlinkerVoltage = (activeTransport as? TcpElmStnTransportAdapter)?.lastReadVoltage
+                    ?: (activeTransport as? ClassicBtObdTransportAdapter)?.lastReadVoltage
                 val udsVoltage = (voltResp as? UdsResponse.Positive)?.payload?.let { p ->
                     if (p.size >= 4) (((p[2].toInt() and 0xFF) shl 8) or (p[3].toInt() and 0xFF)) / 1000.0 else null
                 }
@@ -340,6 +373,8 @@ class BimmerRepository(
                     when (inferredChassis) {
                         com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.G30 -> AdapterType.SIMULATOR_G30
                         com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.G20 -> AdapterType.SIMULATOR_G20
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.U06,
+                        com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.U11 -> AdapterType.SIMULATOR_U11
                         com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.F30 -> AdapterType.SIMULATOR_F30
                         com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.E90,
                         com.punhanaghayev.bimmerpro.core.bmw.BmwChassis.E60 -> AdapterType.SIMULATOR_E90
@@ -389,6 +424,10 @@ class BimmerRepository(
                         ibsHealth = null,
                         hvBatteryHealth = template.hvBatteryHealth,
                         adasStatus = template.adasStatus,
+                        shortCircuitChannels = BmwActuatorCatalog.defaultShortCircuitChannels(),
+                        soundTuning = SoundTuningState(),
+                        epbServiceState = EpbServiceState.NORMAL,
+                        androidAutoPidIds = loadSavedAndroidAutoPids(),
                         offlineReport = health,
                         isPhysicalSafeMode = true,
                         savedVehicles = savedList,
@@ -596,12 +635,39 @@ class BimmerRepository(
             val resp = runCatching {
                 udsClient.sendUds(
                     ecu.address,
-                    UdsCodec.buildReadDtcByStatusMask(0xFF),
-                    "UDS 0x19 Physical DTC (${ecu.shortName})"
+                    UdsCodec.buildReadDtcByStatusMask(0x09),
+                    "UDS 0x19 Error Memory (${ecu.shortName})"
                 )
             }.getOrNull()
             if (resp is UdsResponse.Positive) {
-                val parsed = PhysicalUdsParser.parseDtcRecords(ecu.address, ecu.shortName, resp.payload, odo, volts)
+                val errorParsed = PhysicalUdsParser.parseDtcRecords(
+                    ecu.address, ecu.shortName, resp.payload, odo, volts, DtcMemoryType.ERROR_MEMORY
+                )
+                val infoResp = runCatching {
+                    udsClient.sendUds(
+                        ecu.address,
+                        UdsCodec.buildReadInfoDtcs(),
+                        "UDS 0x19 Info Memory (${ecu.shortName})"
+                    )
+                }.getOrNull() as? UdsResponse.Positive
+                val infoParsed = infoResp?.let {
+                    PhysicalUdsParser.parseDtcRecords(
+                        ecu.address, ecu.shortName, it.payload, odo, volts, DtcMemoryType.INFO_MEMORY
+                    )
+                }.orEmpty()
+                val permResp = runCatching {
+                    udsClient.sendUds(
+                        ecu.address,
+                        UdsCodec.buildReadPermanentDtcs(),
+                        "UDS 0x19 0x15 Permanent DTC (${ecu.shortName})"
+                    )
+                }.getOrNull() as? UdsResponse.Positive
+                val permParsed = permResp?.let {
+                    PhysicalUdsParser.parseDtcRecords(
+                        ecu.address, ecu.shortName, it.payload, odo, volts, DtcMemoryType.PERMANENT_MEMORY
+                    )
+                }.orEmpty()
+                val parsed = (errorParsed + infoParsed + permParsed).distinctBy { "${it.ecuAddress}-${it.code}-${it.memoryType}" }
                 physicalDtcs.addAll(parsed)
                 val swResp = runCatching {
                     udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(0xF195), "UDS 0x22 SWE (${ecu.shortName})")
@@ -622,10 +688,65 @@ class BimmerRepository(
                         shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
                     )
                 )
-            } else if (ecu.address == EcuAddress.ZGW_BDC || ecu.address == EcuAddress.DME_DDE) {
-                updatedEcus.add(ecu)
+            } else {
+                // Automatic E-Series Pre-LCI KWP2000 (ISO 14230) fallback when UDS 0x19 is unsupported or silent
+                val isESeries = _session.value.vehicleProfile?.chassis?.family == SeriesFamily.E_SERIES
+                if (isESeries || resp == null) {
+                    if (isESeries && index == 0) {
+                        runCatching { (activeTransport as? TcpElmStnTransportAdapter)?.configureKLineKwp2000() }
+                        runCatching { (activeTransport as? ClassicBtObdTransportAdapter)?.configureKLineKwp2000() }
+                    }
+                    val kwpRaw = runCatching {
+                        val reqFrame = HsfzFrame.diagnosticRequest(ecu.address, Kwp2000Codec.buildReadDtcByStatus()).encode()
+                        HsfzFrame.decode(activeTransport.transceive(reqFrame)).payload
+                    }.getOrNull()
+                    if (kwpRaw != null && kwpRaw.isNotEmpty() && (kwpRaw[0].toInt() and 0xFF) == 0x58) {
+                        val kwpDtcs = PhysicalUdsParser.parseKwpDtcRecords(ecu.address, ecu.shortName, kwpRaw, odo, volts)
+                        physicalDtcs.addAll(kwpDtcs)
+                        udsClient.logInfo("KWP-RX", ecu.address, "KWP2000 0x18 fallback: ${kwpDtcs.size} DTC (${ecu.shortName})")
+                        updatedEcus.add(
+                            ecu.copy(
+                                softwareVersion = "KWP2000",
+                                activeDtcCount = kwpDtcs.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
+                                shadowDtcCount = kwpDtcs.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
+                            )
+                        )
+                    } else if (ecu.address == EcuAddress.ZGW_BDC || ecu.address == EcuAddress.DME_DDE) {
+                        updatedEcus.add(ecu)
+                    }
+                } else if (ecu.address == EcuAddress.ZGW_BDC || ecu.address == EcuAddress.DME_DDE) {
+                    updatedEcus.add(ecu)
+                }
             }
         }
+
+        // Physical sub-module telemetry read (IBS, DPF, ZF8, Injectors, Short-Circuit counters)
+        val liveIbs = runCatching {
+            val r = udsClient.sendUds(EcuAddress.ZGW_BDC, UdsCodec.buildReadDataById(0x4010), "UDS 0x22 IBS Health")
+            (r as? UdsResponse.Positive)?.let { PhysicalUdsParser.parseIbsHealth(it.payload) }
+        }.getOrNull() ?: _session.value.ibsHealth
+
+        val liveDpf = runCatching {
+            val r = udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0x5820), "UDS 0x22 DPF Health")
+            (r as? UdsResponse.Positive)?.let { PhysicalUdsParser.parseDpfHealth(it.payload) }
+        }.getOrNull() ?: _session.value.dpfHealth
+
+        val liveZf = runCatching {
+            val r = udsClient.sendUds(EcuAddress.EGS, UdsCodec.buildReadDataById(0x4310), "UDS 0x22 ZF8 Clutches")
+            (r as? UdsResponse.Positive)?.let { PhysicalUdsParser.parseZfGearboxHealth(it.payload) }
+        }.getOrNull() ?: _session.value.zfHealth
+
+        val liveInjectors = (1..4).mapNotNull { cyl ->
+            runCatching {
+                val r = udsClient.sendUds(EcuAddress.DME_DDE, UdsCodec.buildReadDataById(0x3C00 + cyl), "UDS 0x22 Injector $cyl IMA")
+                (r as? UdsResponse.Positive)?.let { PhysicalUdsParser.parseInjectorIma(cyl, it.payload) }
+            }.getOrNull()
+        }.ifEmpty { _session.value.injectorCodes }
+
+        val liveSc = runCatching {
+            val r = udsClient.sendUds(EcuAddress.FRM, UdsCodec.buildReadDataById(0x4501), "UDS 0x22 FRM Short-Circuit")
+            (r as? UdsResponse.Positive)?.let { PhysicalUdsParser.parseShortCircuitCounters("FRM/FEM", EcuAddress.FRM, it.payload) }
+        }.getOrNull()?.ifEmpty { null } ?: _session.value.shortCircuitChannels
         val updatedProfile = _session.value.vehicleProfile?.let { prof ->
             if (mileageReadings.size >= 2) {
                 val maxKm = mileageReadings.maxOf { it.mileageKm }
@@ -652,7 +773,7 @@ class BimmerRepository(
         val physicalHealth = OfflineFaultAnalyzer.analyze(
             physicalDtcs,
             _session.value.liveChannels,
-            _session.value.ibsHealth,
+            liveIbs,
             volts,
             _session.value.zfAdaptations
         )
@@ -664,6 +785,11 @@ class BimmerRepository(
                 vehicleProfile = updatedProfile ?: it.vehicleProfile,
                 ecus = updatedEcus.ifEmpty { ecus },
                 dtcs = physicalDtcs,
+                ibsHealth = liveIbs,
+                dpfHealth = liveDpf,
+                zfHealth = liveZf,
+                injectorCodes = liveInjectors,
+                shortCircuitChannels = liveSc,
                 offlineReport = physicalHealth,
                 lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu.",
                 activeOperation = ActiveOperationState(
@@ -1471,6 +1597,138 @@ class BimmerRepository(
         _session.update { it.copy(lastServiceResult = result, lastOperationMessage = result.message) }
     }
 
+    suspend fun resetShortCircuitChannel(channel: ShortCircuitChannel) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
+        val resp = udsClient.sendUds(
+            channel.ecuAddress,
+            UdsCodec.buildRoutineControl(0x01, 0xF090, byteArrayOf(channel.channelIndex.toByte())),
+            "UDS 0x31 Short-Circuit Reset (${channel.channelName})"
+        )
+        val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        val success = resp is UdsResponse.Positive
+        val msg = if (success) {
+            "${channel.channelName} kısa devre sayacı sıfırlandı ve çıkış kilidi açıldı."
+        } else {
+            "Kısa devre sıfırlama başarısız: ${(resp as UdsResponse.Negative).nrc.description}"
+        }
+        _session.update { state ->
+            state.copy(
+                shortCircuitChannels = if (success) {
+                    state.shortCircuitChannels.map {
+                        if (it.id == channel.id) it.copy(faultCounter = 0, isLocked = false) else it
+                    }
+                } else state.shortCircuitChannels,
+                lastServiceResult = ServiceExecutionResult(success, channel.channelName, msg, stamp),
+                lastOperationMessage = msg
+            )
+        }
+    }
+
+    suspend fun setExhaustFlapMode(mode: ExhaustFlapMode) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
+        val resp = udsClient.sendUds(
+            EcuAddress.DME_DDE,
+            UdsCodec.buildRoutineControl(0x01, 0xF055, byteArrayOf(mode.optionByte)),
+            "UDS 0x31 Exhaust Flap -> ${mode.name}"
+        )
+        val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        val success = resp is UdsResponse.Positive
+        val msg = if (success) {
+            "Egzoz valfi modu güncellendi: ${mode.name}"
+        } else {
+            "Egzoz valfi komutu reddedildi: ${(resp as UdsResponse.Negative).nrc.description}"
+        }
+        _session.update { state ->
+            state.copy(
+                soundTuning = if (success) state.soundTuning.copy(exhaustFlapMode = mode) else state.soundTuning,
+                lastServiceResult = ServiceExecutionResult(success, "Exhaust Flap", msg, stamp),
+                lastOperationMessage = msg
+            )
+        }
+    }
+
+    suspend fun setAsdState(enabled: Boolean, volumePercent: Int) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
+        val clampedVol = volumePercent.coerceIn(0, 100)
+        val resp = udsClient.sendUds(
+            EcuAddress.ASD,
+            UdsCodec.buildWriteDataById(0x3A10, byteArrayOf(if (enabled) 0x01 else 0x00, clampedVol.toByte())),
+            "UDS 0x2E ASD Control (enabled=$enabled, vol=$clampedVol%)"
+        )
+        val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        val success = resp is UdsResponse.Positive
+        val msg = if (success) {
+            "Active Sound Design (ASD): ${if (enabled) "Açık (%$clampedVol)" else "Kapalı"}"
+        } else {
+            "ASD yazma reddedildi: ${(resp as UdsResponse.Negative).nrc.description}"
+        }
+        _session.update { state ->
+            state.copy(
+                soundTuning = if (success) state.soundTuning.copy(asdEnabled = enabled, asdVolumePercent = clampedVol) else state.soundTuning,
+                lastServiceResult = ServiceExecutionResult(success, "Active Sound Design (ASD)", msg, stamp),
+                lastOperationMessage = msg
+            )
+        }
+    }
+
+    suspend fun setEpbServiceMode(enterServiceMode: Boolean) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
+        val optionByte: Byte = if (enterServiceMode) 0x01 else 0x02
+        val resp = udsClient.sendUds(
+            EcuAddress.DSC,
+            UdsCodec.buildRoutineControl(0x01, 0xF031, byteArrayOf(optionByte)),
+            "UDS 0x31 EPB Service Mode (${if (enterServiceMode) "OPEN" else "CLOSE"})"
+        )
+        val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        val success = resp is UdsResponse.Positive
+        val msg = if (success) {
+            if (enterServiceMode) "EPB servis modu açıldı — kaliper pistonları geri çekildi."
+            else "EPB servis modu kapatıldı ve kalibrasyon tamamlandı."
+        } else {
+            "EPB komutu reddedildi: ${(resp as UdsResponse.Negative).nrc.description}"
+        }
+        _session.update { state ->
+            state.copy(
+                epbServiceState = if (success) {
+                    if (enterServiceMode) EpbServiceState.SERVICE_MODE_OPEN else EpbServiceState.NORMAL
+                } else state.epbServiceState,
+                lastServiceResult = ServiceExecutionResult(success, "EPB Service Mode", msg, stamp),
+                lastOperationMessage = msg
+            )
+        }
+    }
+
+    suspend fun fetchDtcFreezeFrame(dtc: DtcFault) {
+        val codeInt = dtc.code.toIntOrNull(16) ?: return
+        val resp = runCatching {
+            udsClient.sendUds(
+                dtc.ecuAddress,
+                UdsCodec.buildReadDtcSnapshot(codeInt),
+                "UDS 0x19 0x04 Freeze-Frame (${dtc.code})"
+            )
+        }.getOrNull() as? UdsResponse.Positive ?: return
+        val updatedFf = PhysicalUdsParser.parseDtcSnapshotFreezeFrame(resp.payload, dtc.freezeFrame)
+        _session.update { state ->
+            state.copy(
+                dtcs = state.dtcs.map {
+                    if (it.id == dtc.id) it.copy(freezeFrame = updatedFf) else it
+                }
+            )
+        }
+    }
+
     fun removeSavedVehicle(vin: String) {
         val updated = garageHistoryStorage?.removeVehicle(vin)
             ?: _session.value.savedVehicles.filterNot { it.vin == vin }
@@ -1535,14 +1793,16 @@ class BimmerRepository(
         val gateways = EnetGatewayDiscovery.discover()
         val ctx = appContext
         val ble = if (ctx != null) BleObdTransportAdapter.scanNearbyObdAdapters(ctx) else emptyList()
+        val classicBt = if (ctx != null) ClassicBtObdTransportAdapter.scanBondedClassicDevices(ctx) else emptyList()
+        val combinedBt = (ble + classicBt).distinctBy { it.address }
         val usb = if (ctx != null) UsbKdcanTransportAdapter.scanUsbDevices(ctx) else emptyList()
         _session.update {
             it.copy(
                 discoveredGateways = gateways,
-                discoveredBleDevices = ble,
+                discoveredBleDevices = combinedBt,
                 discoveredUsbDevices = usb,
-                selectedBleAddress = it.selectedBleAddress ?: ble.firstOrNull()?.address,
-                lastOperationMessage = "Donanım taraması: ${gateways.size} ENET, ${ble.size} BLE, ${usb.size} USB cihaz bulundu."
+                selectedBleAddress = it.selectedBleAddress ?: combinedBt.firstOrNull()?.address,
+                lastOperationMessage = "Donanım taraması: ${gateways.size} ENET, ${combinedBt.size} BT/BLE, ${usb.size} USB cihaz bulundu."
             )
         }
     }
@@ -1641,6 +1901,27 @@ class BimmerRepository(
         persistLivePidOrder(current)
         _session.update { it.copy(liveChannels = current) }
     }
+
+    private fun loadSavedAndroidAutoPids(): List<String> {
+        val savedCsv = appContext?.getSharedPreferences("bmw_expert_pro_prefs", Context.MODE_PRIVATE)
+            ?.getString("android_auto_pids", null)
+        if (savedCsv.isNullOrBlank()) return listOf("rpm", "boost", "coolant", "oil_temp")
+        return savedCsv.split(",").map { it.trim() }.filter { it.isNotBlank() }.take(4)
+            .ifEmpty { listOf("rpm", "boost", "coolant", "oil_temp") }
+    }
+
+    fun setAndroidAutoPids(orderedIds: List<String>) {
+        val clean = orderedIds.distinct().take(4)
+        if (clean.isEmpty()) return
+        appContext?.getSharedPreferences("bmw_expert_pro_prefs", Context.MODE_PRIVATE)
+            ?.edit()
+            ?.putString("android_auto_pids", clean.joinToString(","))
+            ?.apply()
+        _session.update { it.copy(androidAutoPidIds = clean) }
+    }
+
+    fun exportSupportBundle(cacheDir: File): File =
+        SupportBundleExporter.exportBundle(cacheDir, _session.value, protocolLogs.value)
 
     suspend fun downloadDataPack(): Result<Int> {
         val ctx = appContext ?: return Result.failure(IllegalStateException("Context yok"))

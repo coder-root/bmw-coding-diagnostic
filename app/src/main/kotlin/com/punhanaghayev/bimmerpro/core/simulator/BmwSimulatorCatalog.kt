@@ -12,10 +12,12 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DtcStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.FreezeFrameData
 import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
@@ -27,6 +29,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.MileageVerificationResult
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
+import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
+import com.punhanaghayev.bimmerpro.core.bmw.SoundTuningState
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
@@ -51,7 +55,9 @@ data class SimulatedVehicleBundle(
     val actuatorTests: List<ActuatorTestItem> = BmwActuatorCatalog.defaultTests(),
     val ibsHealth: IbsBatteryHealth = BmwActuatorCatalog.defaultIbsHealth(),
     val hvBatteryHealth: HvBatteryHealth? = BmwSimulatorCatalog.defaultHvBatteryHealth(),
-    val adasStatus: AdasCalibrationStatus = BmwSimulatorCatalog.defaultAdasStatus()
+    val adasStatus: AdasCalibrationStatus = BmwSimulatorCatalog.defaultAdasStatus(),
+    val shortCircuitChannels: List<ShortCircuitChannel> = BmwActuatorCatalog.defaultShortCircuitChannels(),
+    val soundTuning: SoundTuningState = SoundTuningState()
 )
 
 object BmwSimulatorCatalog {
@@ -61,6 +67,7 @@ object BmwSimulatorCatalog {
         AdapterType.SIMULATOR_F30 -> buildF30Bundle()
         AdapterType.SIMULATOR_G30 -> buildG30Bundle()
         AdapterType.SIMULATOR_G20 -> buildG20Bundle()
+        AdapterType.SIMULATOR_U11 -> buildU11Bundle()
         AdapterType.SIMULATOR_E90 -> buildE90Bundle()
         else -> buildF10Bundle()
     }
@@ -123,7 +130,8 @@ object BmwSimulatorCatalog {
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(148_390, 14.1, 88, 2150, 3),
-                istaGuidance = "1) Canlı veriden DPF Egzoz Karşı Basıncı ve Kül Miktarını kontrol edin.\n2) Akü/yakıt yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu başlatın."
+                istaGuidance = "1) Canlı veriden DPF Egzoz Karşı Basıncı ve Kül Miktarını kontrol edin.\n2) Akü/yakıt yeterliyse Servis sekmesinden zorunlu DPF Rejenerasyonu başlatın.",
+                memoryType = DtcMemoryType.PERMANENT_MEMORY
             ),
             DtcFault(
                 id = "f10-8040b9",
@@ -135,7 +143,8 @@ object BmwSimulatorCatalog {
                 severity = DtcSeverity.INFO,
                 status = DtcStatus.INTERMITTENT,
                 freezeFrame = FreezeFrameData(148_210, 11.9, 24, 0, 2),
-                istaGuidance = "1) Kapı kolu Comfort Access sensörlerinde nem/kısa devre kontrolü yapın.\n2) Akü yaşı > 4 yıl ise IBS akü sağlık ölçümünü doğrulayın."
+                istaGuidance = "1) Kapı kolu Comfort Access sensörlerinde nem/kısa devre kontrolü yapın.\n2) Akü yaşı > 4 yıl ise IBS akü sağlık ölçümünü doğrulayın.",
+                memoryType = DtcMemoryType.ERROR_MEMORY
             ),
             DtcFault(
                 id = "f10-cd9304",
@@ -143,11 +152,12 @@ object BmwSimulatorCatalog {
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DDE7",
                 title = "LIN Bus: Aktif Radyatör Panjuru Haberleşme Gecikmesi",
-                technicalDetail = "Gölge hafıza (Shadow Memory) — geçici LIN veri yolu cevapsızlığı.",
+                technicalDetail = "Bilgi / Gölge hafıza (Info Memory) — geçici LIN veri yolu cevapsızlığı.",
                 severity = DtcSeverity.SHADOW,
-                status = DtcStatus.STORED,
+                status = DtcStatus.SHADOW,
                 freezeFrame = FreezeFrameData(147_980, 13.8, 72, 1400, 1),
-                istaGuidance = "Mekanik takılma yoksa ve hata aktifleşmiyorsa yalnızca bilgi amaçlı gölge kaydıdır; temizlenebilir."
+                istaGuidance = "Mekanik takılma yoksa ve hata aktifleşmiyorsa yalnızca bilgi amaçlı kayıttır; temizlenebilir.",
+                memoryType = DtcMemoryType.INFO_MEMORY
             ),
             DtcFault(
                 id = "f10-e1c447",
@@ -157,9 +167,10 @@ object BmwSimulatorCatalog {
                 title = "MOST Ring Geçici Senkronizasyon Kaybı",
                 technicalDetail = "Soğuk çalıştırmada MOST fiber optik halka geçici olarak yeniden başlatıldı.",
                 severity = DtcSeverity.SHADOW,
-                status = DtcStatus.STORED,
+                status = DtcStatus.SHADOW,
                 freezeFrame = FreezeFrameData(146_500, 12.1, 18, 820, 1),
-                istaGuidance = "Ses/iDrive kesintisi yaşanmıyorsa temizlenip izlenebilir."
+                istaGuidance = "Ses/iDrive kesintisi yaşanmıyorsa temizlenip izlenebilir.",
+                memoryType = DtcMemoryType.INFO_MEMORY
             )
         )
 
@@ -411,11 +422,12 @@ object BmwSimulatorCatalog {
                 ecuAddress = EcuAddress.DME_DDE,
                 ecuName = "DME8",
                 title = "Valvetronic Limit Pozisyonu Soğuk Öğrenme",
-                technicalDetail = "Gölge hafıza — soğuk başlangıçta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
+                technicalDetail = "Bilgi hafızası — soğuk başlangıçta Valvetronic eksantrik mili kalibrasyonu yenilendi.",
                 severity = DtcSeverity.SHADOW,
-                status = DtcStatus.STORED,
+                status = DtcStatus.SHADOW,
                 freezeFrame = FreezeFrameData(61_910, 12.4, 14, 1100, 1),
-                istaGuidance = "Normal adaptasyon kaydıdır; rölanti dalgalanması yoksa işlem gerekmez."
+                istaGuidance = "Normal adaptasyon kaydıdır; rölanti dalgalanması yoksa işlem gerekmez.",
+                memoryType = DtcMemoryType.INFO_MEMORY
             )
         )
 
@@ -426,7 +438,91 @@ object BmwSimulatorCatalog {
             presets = defaultPresets(isGSeries = true),
             cafdParameters = defaultCafdParameters(isGSeries = true),
             liveChannels = defaultLiveChannels(isDiesel = false),
-            serviceRoutines = defaultServiceRoutines(isDiesel = false)
+            serviceRoutines = defaultServiceRoutines(isDiesel = false),
+            shortCircuitChannels = BmwActuatorCatalog.defaultShortCircuitChannels("BDC_BODY", EcuAddress.ZGW_BDC)
+        )
+    }
+
+    private fun buildU11Bundle(): SimulatedVehicleBundle {
+        val readings = listOf(
+            MileageModuleReading("BCP (Basic Central Platform)", 18_420),
+            MileageModuleReading("DKOMBI / Curved Display", 18_420),
+            MileageModuleReading("SME (HV Battery Unit)", 18_418),
+            MileageModuleReading("EME (Electric Drive)", 18_419, engineHours = 412)
+        )
+        val profile = VehicleProfile(
+            vin = "WBA71EF0905X18420",
+            chassis = BmwChassis.U11,
+            modelDisplayName = "BMW iX1 xDrive30 (U11 • iDrive 9)",
+            engineCode = "Dual Motor eDrive5.0 (313 PS / 494 Nm)",
+            productionYear = 2024,
+            iLevel = "U006-24-11-520",
+            factoryILevel = "U006-24-03-510",
+            typeCode = "71EF",
+            productionDate = "12.04.2024",
+            paintCode = "C4W Skyscraper Grey Metallic",
+            upholsteryCode = "KGNL Alcantara / Sensatec Black",
+            batteryVoltage = 12.8,
+            odometerKm = 18_420,
+            faOptions = listOf(
+                VehicleOrderOption("S337", "M Sport Paket"),
+                VehicleOrderOption("S4U9", "Akustik Yaya Koruma (IconicSounds / ASD)"),
+                VehicleOrderOption("S5AT", "Driving Assistant Plus"),
+                VehicleOrderOption("S6U3", "BMW Live Cockpit Plus (OS 9 Curved Display)")
+            ),
+            mileageVerification = MileageVerificationResult(
+                readings = readings,
+                maxDifferenceKm = 2,
+                status = TamperStatus.VERIFIED,
+                summary = "Tüm U11 / OS 9 kontrol üniteleri doğrulandı (±2 km)."
+            )
+        )
+        val ecus = listOf(
+            EcuModule(EcuAddress.ZGW_BDC, "BCP_SP21", "Basic Central Platform (DoIP)", "HW 00006A10", "SWFL_00009B12", "CAFD_00008410_012_004", CodingCapability.SECURE_CODING_LOCKED, 0, 1, 18_420),
+            EcuModule(EcuAddress.DME_DDE, "CCU_P1", "Combined Charging & Drive Unit", "HW 00005E22", "SWFL_00009A01", null, CodingCapability.SECURE_CODING_LOCKED, 0, 0, 18_419),
+            EcuModule(EcuAddress.SME_HV_BATTERY, "SME_U11", "HV Battery Storage Management", "HW 00007C01", "SWFL_000091F0", null, CodingCapability.FDL_ONLY, 0, 0, 18_418),
+            EcuModule(EcuAddress.HU_MEDIA, "HU_OS9", "Android Automotive / iDrive 9 Head Unit", "HW 00008D40", "SWFL_00009E50", null, CodingCapability.SECURE_CODING_LOCKED, 1, 0, null),
+            EcuModule(EcuAddress.KAFAS_CAMERA, "KAFAS4", "ADAS Camera Processing", "HW 00004B18", "SWFL_000088A0", null, CodingCapability.FDL_ONLY, 0, 0, null),
+            EcuModule(EcuAddress.ASD, "ASD_EV", "IconicSounds / Active Sound Design", "HW 00003A12", "SWFL_000077C0", null, CodingCapability.FDL_ONLY, 0, 0, null)
+        )
+        val dtcs = listOf(
+            DtcFault(
+                id = "u11-b7f8c3",
+                code = "B7F8C3",
+                ecuAddress = EcuAddress.HU_MEDIA,
+                ecuName = "HU_OS9",
+                title = "TCB / eSIM Acil Çağrı Anteni Yüksek Empedans",
+                technicalDetail = "Telematik bağlantı anten devresinde geçici yüksek empedans kaydedildi.",
+                severity = DtcSeverity.WARNING,
+                status = DtcStatus.ACTIVE,
+                freezeFrame = FreezeFrameData(18_410, 13.4, 24, 0, 2),
+                istaGuidance = "Tavan anten bağlantısı ve TCB yedek batarya voltajını kontrol edin.",
+                memoryType = DtcMemoryType.ERROR_MEMORY
+            ),
+            DtcFault(
+                id = "u11-8041a8",
+                code = "8041A8",
+                ecuAddress = EcuAddress.ZGW_BDC,
+                ecuName = "BCP_SP21",
+                title = "Karşılama Halı Aydınlatması Kısa Devre Bilgisi",
+                technicalDetail = "Bilgi hafızası: Sağ kapı altı projeksiyon LED devresinde anlık akım piki.",
+                severity = DtcSeverity.SHADOW,
+                status = DtcStatus.SHADOW,
+                freezeFrame = FreezeFrameData(18_120, 12.7, 21, 0, 1),
+                istaGuidance = "Soket nemi kontrol edilebilir; kalıcı kilit oluşmamışsa temizlenebilir.",
+                memoryType = DtcMemoryType.INFO_MEMORY
+            )
+        )
+        return SimulatedVehicleBundle(
+            profile = profile,
+            ecus = ecus,
+            dtcs = dtcs,
+            presets = defaultPresets(isGSeries = true),
+            cafdParameters = defaultCafdParameters(isGSeries = true),
+            liveChannels = defaultLiveChannels(isDiesel = false),
+            serviceRoutines = defaultServiceRoutines(isDiesel = false),
+            shortCircuitChannels = BmwActuatorCatalog.defaultShortCircuitChannels("BCP_SP21", EcuAddress.ZGW_BDC),
+            soundTuning = SoundTuningState(ExhaustFlapMode.OEM_AUTO, asdEnabled = true, asdSupported = true, asdVolumePercent = 85)
         )
     }
 
@@ -478,7 +574,8 @@ object BmwSimulatorCatalog {
                 severity = DtcSeverity.CRITICAL,
                 status = DtcStatus.ACTIVE,
                 freezeFrame = FreezeFrameData(264_840, 13.7, 94, 4820, 6),
-                istaGuidance = "1) Vakum hatları ve basınç dönüştürücü selenoidleri (boost solenoids) test edin.\n2) Charge-pipe çatlağı ve wastegate rattle boşluğunu kontrol edin."
+                istaGuidance = "1) Vakum hatları ve basınç dönüştürücü selenoidleri (boost solenoids) test edin.\n2) Charge-pipe çatlağı ve wastegate rattle boşluğunu kontrol edin.",
+                memoryType = DtcMemoryType.ERROR_MEMORY
             ),
             DtcFault(
                 id = "e90-29f4",
@@ -490,7 +587,8 @@ object BmwSimulatorCatalog {
                 severity = DtcSeverity.WARNING,
                 status = DtcStatus.STORED,
                 freezeFrame = FreezeFrameData(264_700, 13.9, 92, 2400, 3),
-                istaGuidance = "Downpipe/katalizör durumu ve arka O2 sensör tepkisini canlı veride inceleyin."
+                istaGuidance = "Downpipe/katalizör durumu ve arka O2 sensör tepkisini canlı veride inceleyin.",
+                memoryType = DtcMemoryType.PERMANENT_MEMORY
             )
         )
 
@@ -538,14 +636,11 @@ object BmwSimulatorCatalog {
                     currentValue = v,
                     minExpected = pid.minExpected,
                     maxExpected = pid.maxExpected,
-                    history = listOf(
-                        (v * 0.96).toFloat(),
-                        (v * 0.98).toFloat(),
-                        (v * 1.01).toFloat(),
-                        v.toFloat(),
-                        (v * 0.99).toFloat(),
-                        v.toFloat()
-                    )
+                    history = List(20) { idx ->
+                        val factor = 0.95 + 0.05 * kotlin.math.sin(idx * 0.45)
+                        val sample = (v * factor).coerceIn(pid.minExpected, pid.maxExpected)
+                        sample.toFloat()
+                    }
                 )
             }
     }
@@ -650,6 +745,17 @@ object BmwSimulatorCatalog {
                 routineId = 0x0270,
                 description = "Hibrit/Elektrikli araçlarda ana HV kontaktörlerini ve izolasyon direncini (>500 kOhm) test eder.",
                 warningNote = "Şarj kablosu takılı olmamalı, araç Park (P) modunda olmalıdır."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.SHORT_CIRCUIT_RESET,
+                title = "FRM / FEM / BDC Kısa Devre Kilidi Sıfırlama",
+                targetEcu = "FRM/FEM",
+                targetAddress = EcuAddress.FRM,
+                routineId = 0xF090,
+                description = "Kısa devre sayacı 50'ye ulaştığı için kapanan far/stop/DRL çıkış kilidini sıfırlar.",
+                warningNote = "Sıfırlama öncesi ampul veya tesisattaki kısa devrenin fiziksel olarak giderildiğinden emin olun."
             )
         )
     }

@@ -156,6 +156,60 @@ object BmwDtcDictionary {
             detail = "Dış hava kirlilik sensörü yanıt vermiyor.",
             severity = DtcSeverity.SHADOW,
             guidance = "Klima performansını etkilemez; sensör soketi kontrol edilebilir."
+        ),
+        "8041C3" to DtcCatalogEntry(
+            title = "FRM / FEM: Sağ Gündüz Farı (Angel Eyes) Kısa Devre Sayacı",
+            detail = "Kısa devre koruması nedeniyle çıkış sürücüsü kilitlendi.",
+            severity = DtcSeverity.WARNING,
+            guidance = "Ampul/LED modül tesisatını onarın ve Kısa Devre Kilidi Sıfırlama aracını çalıştırın."
+        ),
+        "8041B6" to DtcCatalogEntry(
+            title = "FRM / FEM: Sol Kısa Far Çıkışı Kısa Devre Kilidi Aktif",
+            detail = "50 kısa devre döngüsü aşıldığı için çıkış devre dışı bırakıldı.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Tesisatı onardıktan sonra Servis sekmesinden Kısa Devre Kilidini sıfırlayın."
+        ),
+        "118001" to DtcCatalogEntry(
+            title = "Yakıt Karışım Kontrolü: Karışım Çok Fakir (Bank 1)",
+            detail = "Uzun dönem yakıt düzeltmesi (%LTFT) +20% üst sınırına ulaştı.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Vakum kaçağı, düşük yakıt basıncı veya arızalı O2 sensörü için test yapın."
+        ),
+        "130308" to DtcCatalogEntry(
+            title = "VANOS Egzoz Eksantrik Mili Pozisyon Ulaşım Hatası",
+            detail = "Egzoz VANOS solenoidi yağ basıncı veya mekanik dişli yanıtı yavaş.",
+            severity = DtcSeverity.WARNING,
+            guidance = "Motor yağ seviyesini, yağ filtresi kafesini ve VANOS selenoid süzgeçlerini kontrol edin."
+        ),
+        "240500" to DtcCatalogEntry(
+            title = "EGR Valfi Pozisyon Sapması: Valf Açık Takılı",
+            detail = "Egzoz gazı devridaim valfi hedeflenen kapanma açısına ulaşamıyor.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "EGR valfi kurum temizliği veya değişimi yapın; adaptasyonu sıfırlayın."
+        ),
+        "480A12" to DtcCatalogEntry(
+            title = "DSC: Sağ Arka Tekerlek Hız Sensörü Sinyal Kesintisi",
+            detail = "ABS/DSC ünitesi sağ arka porya hız halkasından sinyal alamıyor.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Sağ arka ABS sensörünü, kablo soketini ve aks/porya manyetik halkasını kontrol edin."
+        ),
+        "48279B" to DtcCatalogEntry(
+            title = "EMF (Elektronik Park Freni): Sağ Kaliper Aktüatör Hatası",
+            detail = "Arka sağ el freni motoru yüksek akım veya açık devre.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "Arka sağ kaliper EPB soketini ve kablodaki kırığı kontrol edin."
+        ),
+        "21F06E" to DtcCatalogEntry(
+            title = "SME (HV Batarya): Hücre Voltaj Dengesizliği Uyarısı",
+            detail = "Yüksek voltaj batarya paketinde hücre farkı > 50 mV.",
+            severity = DtcSeverity.WARNING,
+            guidance = "Tam şarj döngüsü sonrası hücre dengeleme ve SOH değerlerini kontrol edin."
+        ),
+        "21F139" to DtcCatalogEntry(
+            title = "SME (HV Batarya): Yüksek Voltaj İzolasyon Direnci Düşük",
+            detail = "HV hat ile şasi arası izolasyon < 500 kOhm eşiğine yaklaştı.",
+            severity = DtcSeverity.CRITICAL,
+            guidance = "HV turuncu kablolarda ve klima kompresörü izolasyonunda yetkili servis testi yapın."
         )
     )
 

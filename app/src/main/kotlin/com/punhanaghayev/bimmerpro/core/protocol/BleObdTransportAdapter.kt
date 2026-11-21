@@ -112,13 +112,21 @@ class BleObdTransportAdapter(
         gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
         withTimeout(8000) { readyDeferred.await() }
 
-        // Initialize STN/ELM327 for BMW 500kbps CAN + ISO 15765-4
+        // Initialize STN/ELM327 for BMW 500kbps CAN + ISO 15765-4 with ISO-TP framing
         sendAtCommand("ATZ")
+        val chipId = sendAtCommand("STI")
+        val isStn = chipId.contains("STN", ignoreCase = true) || chipId.contains("UniCar", ignoreCase = true)
         sendAtCommand("ATE0")
         sendAtCommand("ATL0")
+        sendAtCommand("ATS0")
         sendAtCommand("ATH1")
         sendAtCommand("ATSP6")
-        sendAtCommand("ATCAF0")
+        sendAtCommand("ATCAF1")
+        sendAtCommand("ATAL")
+        sendAtCommand("ATAT2")
+        if (isStn) {
+            sendAtCommand("STCSEGR 1")
+        }
 
         _connectionState.value = ConnectionState.Connected(adapterType, deviceAddress)
     }
@@ -134,14 +142,40 @@ class BleObdTransportAdapter(
 
     override suspend fun transceive(frame: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hsfz = HsfzFrame.decode(frame)
-        val hexPayload = hsfz.payload.joinToString("") { "%02X".format(it) }
+        val targetEcu = hsfz.targetAddress and 0xFF
         sendAtCommand("ATSH6F1")
-        sendAtCommand("ATCRA6%02X".format(hsfz.targetAddress))
-        val rawAtResponse = sendAtCommand(hexPayload)
-        val parsedUds = parseElmHexPayload(rawAtResponse)
+        sendAtCommand("ATCEA%02X".format(targetEcu))
+        sendAtCommand("ATCRA6%02X".format(targetEcu))
+
+        val rawCombined = if (hsfz.payload.size <= 7) {
+            val hexPayload = hsfz.payload.joinToString("") { "%02X".format(it) }
+            val firstResp = sendAtCommand(hexPayload)
+            if (ElmIsoTpHelper.isFirstFrameResponse(firstResp)) {
+                val fcHex = IsoTpCodec.flowControlFrame().take(3).joinToString("") { "%02X".format(it) }
+                val cfResp = sendAtCommand(fcHex)
+                "$firstResp\n$cfResp"
+            } else {
+                firstResp
+            }
+        } else {
+            // Long UDS write / coding payload segmented via IsoTpCodec (FF + CF)
+            sendAtCommand("ATCAF0")
+            var lastResp = ""
+            try {
+                IsoTpCodec.segment(hsfz.payload).forEach { seg ->
+                    val segHex = seg.joinToString("") { "%02X".format(it) }
+                    lastResp = sendAtCommand(segHex)
+                }
+            } finally {
+                sendAtCommand("ATCAF1")
+            }
+            lastResp
+        }
+
+        val parsedUds = ElmIsoTpHelper.parseUdsResponse(rawCombined)
         HsfzFrame(
             controlWord = HsfzFrame.CONTROL_DIAGNOSTIC_DATA,
-            sourceAddress = hsfz.targetAddress,
+            sourceAddress = targetEcu,
             targetAddress = HsfzFrame.TESTER_ADDRESS,
             payload = parsedUds
         ).encode()
@@ -189,14 +223,8 @@ class BleObdTransportAdapter(
             )
         )
 
-        internal fun parseElmHexPayload(raw: String): ByteArray {
-            val cleanTokens = raw
-                .replace(">", "")
-                .trim()
-                .split(Regex("\\s+"))
-                .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
-            return cleanTokens.map { it.toInt(16).toByte() }.toByteArray()
-        }
+        internal fun parseElmHexPayload(raw: String): ByteArray =
+            ElmIsoTpHelper.parseUdsResponse(raw)
 
         @SuppressLint("MissingPermission")
         suspend fun scanNearbyObdAdapters(context: Context, durationMs: Long = 2500): List<BleAdapterDevice> =

@@ -143,4 +143,12 @@ object BmwActuatorCatalog {
         isAgm = true,
         last5DaysSoc = listOf(86, 84, 79, 81, 82)
     )
+
+    fun defaultShortCircuitChannels(ecuName: String = "FRM/FEM", ecuAddress: Int = EcuAddress.FRM): List<ShortCircuitChannel> = listOf(
+        ShortCircuitChannel("sc_low_beam_l", "Sol Kısa Far (Low Beam L)", ecuName, ecuAddress, 0x01, 0, false),
+        ShortCircuitChannel("sc_low_beam_r", "Sağ Kısa Far (Low Beam R)", ecuName, ecuAddress, 0x02, 2, false),
+        ShortCircuitChannel("sc_angel_l", "Sol Angel Eyes / DRL Çıkışı", ecuName, ecuAddress, 0x03, 50, true),
+        ShortCircuitChannel("sc_plate", "Arka Plaka Aydınlatması", ecuName, ecuAddress, 0x04, 12, false),
+        ShortCircuitChannel("sc_fog_r", "Sağ Ön Sis Farı Çıkışı", ecuName, ecuAddress, 0x05, 0, false)
+    )
 }

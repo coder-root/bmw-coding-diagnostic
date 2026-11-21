@@ -8,3 +8,5 @@
 -keepclasseswithmembers class com.punhanaghayev.bimmerpro.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+-keep class com.punhanaghayev.bimmerpro.car.** { *; }
+-keep class androidx.car.app.** { *; }

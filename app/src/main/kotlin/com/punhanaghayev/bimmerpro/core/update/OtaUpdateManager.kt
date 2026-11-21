@@ -84,6 +84,37 @@ object OtaUpdateManager {
 
     val builtinChangelog: List<AppReleaseInfo> = listOf(
         AppReleaseInfo(
+            tagName = "v1.6.5",
+            versionName = "1.6.5",
+            title = "BMW Expert PRO v1.6.5 — 3 Katmanlı DTC Hafızası, Kısa Devre Kilidi, Egzoz & ASD, Canlı Grafik/Dashboard, Android Auto, Classic BT SPP & KWP2000",
+            changelog = """
+                • 3 Katmanlı Arıza Hafızası (Error / Info / Permanent Memory) ve kart açılışında canlı UDS 0x19 0x04 Freeze-Frame çekme
+                • FRM / FEM / BDC Kısa Devre Kilidi Sıfırlama (Short-Circuit Counter Reset, 0x31 0xF090)
+                • Gelişmiş Egzoz Valfi (OEM Oto / Her Zaman Açık / Kapalı) & Active Sound Design (ASD) Kontrol Paneli
+                • Canlı Telemetri Ekranı: Çok kanallı Canvas Grafik (Chart) ve 240° Dairesel Dashboard Kadran görünümleri
+                • Android Auto (androidx.car.app) Entegrasyonu ve kullanıcı tarafından seçilebilen Android Auto sensör listesi
+                • Classic Bluetooth SPP (RFCOMM) adaptör desteği, paylaşımlı BLE/STN ISO-TP çoklu frame birleşimi ve E-Serisi KWP2000 otomatik fallback
+                • Canlı DPF Önkoşul Kontrol Listesi, EPB Çift Adımlı Servis Modu (Aç/Kapat), IBS 5 Günlük SoC Grafiği ve U11 (iDrive 9) simülasyonu
+                • Zenginleştirilmiş BMW/MINI DTC veri paketi (v1.2.0) ve Tek Tıkla Destek/Teşhis Paketi (Support Bundle) dışa aktarımı
+            """.trimIndent(),
+            publishedDate = "22.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.6.5/BMW_Expert_PRO_1.6.5.apk",
+            apkSizeBytes = 1850000L
+        ),
+        AppReleaseInfo(
+            tagName = "v1.6.0",
+            versionName = "1.6.0",
+            title = "BMW Expert PRO v1.6.0 — GlobalTextLocalizer, Çökme Düzeltmeleri ve 17 Fiziksel Adaptör",
+            changelog = """
+                • Ekspertiz PDF, Live Customize Modules ve Servis ekranı kritik çökme düzeltmeleri
+                • EN/TR/AZ/RU tam dinamik çeviri (GlobalTextLocalizer)
+                • 17 fiziksel OBD/ENET/BLE/USB adaptör profili desteği
+            """.trimIndent(),
+            publishedDate = "21.11.2026",
+            apkDownloadUrl = "https://github.com/coder-root/bmw-coding-diagnostic/releases/download/v1.6.0/BMW_Expert_PRO_1.6.0.apk",
+            apkSizeBytes = 1701305L
+        ),
+        AppReleaseInfo(
             tagName = "v1.5.0",
             versionName = "1.5.0",
             title = "BMW Expert PRO v1.5.0 — Saha Adaptör Dayanıklılığı, KAFAS & ADAS Kalibrasyonu, HV Batarya & 96-Hücre Analizi ve Ekspertiz PDF Raporu V2",

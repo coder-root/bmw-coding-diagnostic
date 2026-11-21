@@ -1,11 +1,14 @@
 package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,9 +25,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DashboardCustomize
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -34,6 +40,13 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
@@ -74,6 +87,7 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
 import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LiveScreen(
     session: BimmerSessionState,
@@ -83,6 +97,7 @@ fun LiveScreen(
     onTogglePerformanceRun: () -> Unit,
     onExportCsv: () -> Unit,
     onSetSelectedPids: (List<String>) -> Unit,
+    onSetAndroidAutoPids: (List<String>) -> Unit,
     onMoveLiveChannel: (Int, Int) -> Unit,
     onGoToGarage: () -> Unit
 ) {
@@ -99,8 +114,83 @@ fun LiveScreen(
     }
 
     var showCustomizeSensorsDialog by remember { mutableStateOf(false) }
+    var showAndroidAutoDialog by remember { mutableStateOf(false) }
     var draftSelectedPids by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var draftAutoPids by remember { mutableStateOf<List<String>>(emptyList()) }
     var isReorderMode by remember { mutableStateOf(false) }
+    var viewMode by remember { mutableStateOf(LiveViewMode.LIST) }
+    var chartSelectedIds by remember(session.liveChannels.map { it.id }) {
+        mutableStateOf(session.liveChannels.take(3).map { it.id }.toSet())
+    }
+
+    if (showAndroidAutoDialog) {
+        if (draftAutoPids.isEmpty()) {
+            draftAutoPids = session.androidAutoPidIds
+        }
+        AlertDialog(
+            onDismissRequest = { showAndroidAutoDialog = false },
+            title = {
+                Text(strings.androidAutoSensorsTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = theme.textPrimary)
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    BmwEcuAndPidCatalog.livePidDefinitions.forEach { def ->
+                        val selected = def.id in draftAutoPids
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    draftAutoPids = when {
+                                        selected && draftAutoPids.size > 1 -> draftAutoPids - def.id
+                                        !selected && draftAutoPids.size < 4 -> draftAutoPids + def.id
+                                        !selected -> draftAutoPids.drop(1) + def.id
+                                        else -> draftAutoPids
+                                    }
+                                }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selected,
+                                onCheckedChange = { checked ->
+                                    draftAutoPids = when {
+                                        !checked && draftAutoPids.size > 1 -> draftAutoPids - def.id
+                                        checked && draftAutoPids.size < 4 -> draftAutoPids + def.id
+                                        checked -> draftAutoPids.drop(1) + def.id
+                                        else -> draftAutoPids
+                                    }
+                                }
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(def.name, fontSize = 12.sp, color = theme.textPrimary, fontWeight = FontWeight.Medium)
+                                Text(def.unit, fontSize = 10.sp, color = theme.textSecondary)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (draftAutoPids.isNotEmpty()) onSetAndroidAutoPids(draftAutoPids)
+                        showAndroidAutoDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                ) {
+                    Text(strings.applyBtn, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showAndroidAutoDialog = false }) { Text(strings.cancelBtn) }
+            }
+        )
+    }
 
     if (showCustomizeSensorsDialog) {
         if (draftSelectedPids.isEmpty()) {
@@ -395,23 +485,35 @@ fun LiveScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            draftAutoPids = session.androidAutoPidIds
+                            showAndroidAutoDialog = true
+                        },
+                        modifier = Modifier.height(34.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.DirectionsCar, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(3.dp))
+                        Text(strings.androidAutoSensorsBtn, fontSize = 10.sp, maxLines = 1, softWrap = false)
+                    }
                     OutlinedButton(
                         onClick = {
                             draftSelectedPids = session.liveChannels.map { it.id }.toSet()
                             showCustomizeSensorsDialog = true
                         },
                         modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Icon(Icons.Default.DashboardCustomize, contentDescription = null, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(strings.customizeSensorsBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                        Text(strings.customizeSensorsBtn, fontSize = 10.sp, maxLines = 1, softWrap = false)
                     }
                     OutlinedButton(
                         onClick = { isReorderMode = !isReorderMode },
                         modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                         border = BorderStroke(1.dp, if (isReorderMode) theme.primaryBright else theme.outline)
                     ) {
                         Icon(
@@ -443,63 +545,328 @@ fun LiveScreen(
             }
         }
 
-        // Sensor Cards List
-        itemsIndexed(session.liveChannels, key = { _, ch -> ch.id }) { index, channel ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(12.dp)
+        // View Mode Switcher: List / Chart / Dashboard
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FilterChip(
+                    selected = viewMode == LiveViewMode.LIST,
+                    onClick = { viewMode = LiveViewMode.LIST },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = null, modifier = Modifier.size(15.dp)) },
+                    label = { Text(strings.liveModeListLabel, fontSize = 11.sp, maxLines = 1) },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = viewMode == LiveViewMode.CHART,
+                    onClick = { viewMode = LiveViewMode.CHART },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, modifier = Modifier.size(15.dp)) },
+                    label = { Text(strings.liveModeChartLabel, fontSize = 11.sp, maxLines = 1) },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = viewMode == LiveViewMode.DASHBOARD,
+                    onClick = { viewMode = LiveViewMode.DASHBOARD },
+                    leadingIcon = { Icon(Icons.Default.Speed, contentDescription = null, modifier = Modifier.size(15.dp)) },
+                    label = { Text(strings.liveModeDashboardLabel, fontSize = 11.sp, maxLines = 1) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        when (viewMode) {
+            LiveViewMode.CHART -> {
+                item {
+                    LiveTelemetryChartCard(
+                        channels = session.liveChannels,
+                        selectedIds = chartSelectedIds,
+                        onToggleChannel = { id ->
+                            chartSelectedIds = if (id in chartSelectedIds && chartSelectedIds.size > 1) {
+                                chartSelectedIds - id
+                            } else if (chartSelectedIds.size < 4) {
+                                chartSelectedIds + id
+                            } else {
+                                chartSelectedIds.drop(1).toSet() + id
+                            }
+                        }
+                    )
+                }
+            }
+
+            LiveViewMode.DASHBOARD -> {
+                val rows = session.liveChannels.chunked(2)
+                itemsIndexed(rows, key = { rowIdx, pair -> "dash-$rowIdx-${pair.first().id}" }) { _, pair ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        pair.forEach { ch ->
+                            DashboardArcGaugeCard(
+                                channel = ch,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (pair.size == 1) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            LiveViewMode.LIST -> {
+                // Sensor Cards List
+                itemsIndexed(session.liveChannels, key = { _, ch -> ch.id }) { index, channel ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = theme.card),
+                        border = BorderStroke(1.dp, theme.outline),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(channel.localizedName(strings), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text("${channel.id.uppercase()} • ${channel.unit}", color = theme.textSecondary, fontSize = 10.sp)
+                                }
+                                if (isReorderMode) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(
+                                            onClick = { if (index > 0) onMoveLiveChannel(index, index - 1) },
+                                            enabled = index > 0,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", modifier = Modifier.size(18.dp))
+                                        }
+                                        IconButton(
+                                            onClick = { if (index < session.liveChannels.size - 1) onMoveLiveChannel(index, index + 1) },
+                                            enabled = index < session.liveChannels.size - 1,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down", modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        text = "%.1f %s".format(channel.currentValue, channel.unit),
+                                        color = theme.primaryBright,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            }
+                            val fraction = if (channel.maxExpected > channel.minExpected) {
+                                ((channel.currentValue - channel.minExpected) / (channel.maxExpected - channel.minExpected)).toFloat().coerceIn(0f, 1f)
+                            } else 0f
+                            LinearProgressIndicator(
+                                progress = { fraction },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(5.dp),
+                                color = theme.primaryBright,
+                                trackColor = theme.outline.copy(alpha = 0.35f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private enum class LiveViewMode {
+    LIST,
+    CHART,
+    DASHBOARD
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LiveTelemetryChartCard(
+    channels: List<LiveSensorChannel>,
+    selectedIds: Set<String>,
+    onToggleChannel: (String) -> Unit
+) {
+    val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
+    val palette = listOf(theme.primaryBright, StatusGreen, StatusAmber, StatusRed)
+    val plotted = channels.filter { it.id in selectedIds }.take(4)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = strings.liveChartSelectHint,
+                color = theme.textSecondary,
+                fontSize = 11.sp
+            )
+
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(190.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(theme.cardElevated)
+                    .padding(12.dp)
+            ) {
+                val w = size.width
+                val h = size.height
+                val gridColor = theme.outline.copy(alpha = 0.35f)
+                for (i in 0..4) {
+                    val y = h * (i / 4f)
+                    drawLine(gridColor, start = Offset(0f, y), end = Offset(w, y), strokeWidth = 1f)
+                }
+
+                plotted.forEachIndexed { idx, channel ->
+                    val pts = channel.history
+                    if (pts.size < 2) return@forEachIndexed
+                    val span = (channel.maxExpected - channel.minExpected).takeIf { it > 0.0 } ?: 1.0
+                    val lineColor = palette[idx % palette.size]
+                    val path = Path()
+                    pts.forEachIndexed { pIdx, rawVal ->
+                        val x = w * (pIdx.toFloat() / (pts.size - 1).coerceAtLeast(1))
+                        val norm = ((rawVal - channel.minExpected) / span).toFloat().coerceIn(0.02f, 0.98f)
+                        val y = h * (1f - norm)
+                        if (pIdx == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    drawPath(path, color = lineColor, style = Stroke(width = 3.5f, cap = StrokeCap.Round))
+                }
+            }
+
+            // Legend for active plotted channels
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                plotted.forEachIndexed { idx, ch ->
+                    val color = palette[idx % palette.size]
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(channel.localizedName(strings), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text("${channel.id.uppercase()} • ${channel.unit}", color = theme.textSecondary, fontSize = 10.sp)
-                        }
-                        if (isReorderMode) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(
-                                    onClick = { if (index > 0) onMoveLiveChannel(index, index - 1) },
-                                    enabled = index > 0,
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", modifier = Modifier.size(18.dp))
-                                }
-                                IconButton(
-                                    onClick = { if (index < session.liveChannels.size - 1) onMoveLiveChannel(index, index + 1) },
-                                    enabled = index < session.liveChannels.size - 1,
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down", modifier = Modifier.size(18.dp))
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = "%.1f %s".format(channel.currentValue, channel.unit),
-                                color = theme.primaryBright,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 16.sp
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(color)
                             )
+                            Text(ch.localizedName(strings), color = theme.textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                         }
+                        Text(
+                            text = "%.1f %s".format(ch.currentValue, ch.unit),
+                            color = color,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
                     }
-                    val fraction = if (channel.maxExpected > channel.minExpected) {
-                        ((channel.currentValue - channel.minExpected) / (channel.maxExpected - channel.minExpected)).toFloat().coerceIn(0f, 1f)
-                    } else 0f
-                    LinearProgressIndicator(
-                        progress = { fraction },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(5.dp),
-                        color = theme.primaryBright,
-                        trackColor = theme.outline.copy(alpha = 0.35f)
+                }
+            }
+
+            // Channel Selector Chips
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                channels.forEach { ch ->
+                    val active = ch.id in selectedIds
+                    FilterChip(
+                        selected = active,
+                        onClick = { onToggleChannel(ch.id) },
+                        label = { Text(ch.localizedName(strings), fontSize = 10.sp, maxLines = 1) }
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DashboardArcGaugeCard(
+    channel: LiveSensorChannel,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
+    val span = (channel.maxExpected - channel.minExpected).takeIf { it > 0.0 } ?: 1.0
+    val fraction = ((channel.currentValue - channel.minExpected) / span).toFloat().coerceIn(0f, 1f)
+    val gaugeColor = when {
+        fraction >= 0.9f -> StatusRed
+        fraction >= 0.75f -> StatusAmber
+        else -> theme.primaryBright
+    }
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier.size(108.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize().padding(6.dp)) {
+                    val strokePx = 10.dp.toPx()
+                    val arcSize = Size(size.width, size.height)
+                    drawArc(
+                        color = theme.outline.copy(alpha = 0.35f),
+                        startAngle = 150f,
+                        sweepAngle = 240f,
+                        useCenter = false,
+                        style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                        size = arcSize
+                    )
+                    drawArc(
+                        color = gaugeColor,
+                        startAngle = 150f,
+                        sweepAngle = 240f * fraction,
+                        useCenter = false,
+                        style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                        size = arcSize
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "%.1f".format(channel.currentValue),
+                        color = theme.textPrimary,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = channel.unit,
+                        color = theme.textSecondary,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+            Text(
+                text = channel.localizedName(strings),
+                color = theme.textPrimary,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 11.sp,
+                maxLines = 1
+            )
+            Text(
+                text = "%.0f – %.0f %s".format(channel.minExpected, channel.maxExpected, channel.unit),
+                color = theme.textSecondary,
+                fontSize = 9.sp
+            )
         }
     }
 }

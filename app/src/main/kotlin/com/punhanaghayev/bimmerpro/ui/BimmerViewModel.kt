@@ -6,7 +6,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
+import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
+import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
+import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.AppLocalization
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
@@ -22,6 +25,7 @@ import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
 import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
 import com.punhanaghayev.bimmerpro.core.update.SemVerComparator
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
+import com.punhanaghayev.bimmerpro.data.BimmerRepositoryProvider
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.data.ConnectionPurpose
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
@@ -43,7 +47,7 @@ class BimmerViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository: BimmerRepository = BimmerRepository(application.applicationContext)
+    private val repository: BimmerRepository = BimmerRepositoryProvider.get(application.applicationContext)
 
     val session: StateFlow<BimmerSessionState> = repository.session
     val protocolLogs: StateFlow<List<ProtocolLogEntry>> = repository.protocolLogs
@@ -253,6 +257,40 @@ class BimmerViewModel(
     fun runActuatorTest(test: ActuatorTestItem) {
         viewModelScope.launch {
             repository.runActuatorTest(test)
+        }
+    }
+
+    fun resetShortCircuitChannel(channel: ShortCircuitChannel) {
+        viewModelScope.launch {
+            repository.resetShortCircuitChannel(channel)
+            _uiEvents.emit(UiEvent.Snackbar(repository.session.value.lastOperationMessage ?: channel.channelName))
+        }
+    }
+
+    fun setExhaustFlapMode(mode: ExhaustFlapMode) {
+        viewModelScope.launch {
+            repository.setExhaustFlapMode(mode)
+            _uiEvents.emit(UiEvent.Snackbar(repository.session.value.lastOperationMessage ?: mode.name))
+        }
+    }
+
+    fun setAsdState(enabled: Boolean, volumePercent: Int) {
+        viewModelScope.launch {
+            repository.setAsdState(enabled, volumePercent)
+            _uiEvents.emit(UiEvent.Snackbar(repository.session.value.lastOperationMessage ?: "ASD"))
+        }
+    }
+
+    fun setEpbServiceMode(enterServiceMode: Boolean) {
+        viewModelScope.launch {
+            repository.setEpbServiceMode(enterServiceMode)
+            _uiEvents.emit(UiEvent.Snackbar(repository.session.value.lastOperationMessage ?: "EPB"))
+        }
+    }
+
+    fun fetchDtcFreezeFrame(dtc: DtcFault) {
+        viewModelScope.launch {
+            repository.fetchDtcFreezeFrame(dtc)
         }
     }
 
@@ -475,6 +513,22 @@ class BimmerViewModel(
 
     fun moveLiveChannel(fromIndex: Int, toIndex: Int) {
         repository.moveLiveChannel(fromIndex, toIndex)
+    }
+
+    fun setAndroidAutoPids(orderedIds: List<String>) {
+        repository.setAndroidAutoPids(orderedIds)
+        viewModelScope.launch {
+            _uiEvents.emit(UiEvent.Snackbar("Android Auto sensörleri güncellendi."))
+        }
+    }
+
+    fun exportSupportBundle(context: Context) {
+        viewModelScope.launch {
+            val file = withContext(Dispatchers.IO) {
+                repository.exportSupportBundle(context.cacheDir)
+            }
+            _uiEvents.emit(UiEvent.ShareFile(file, "text/plain", "Destek & Teşhis Paketini Paylaş"))
+        }
     }
 
     fun downloadDataPack() {

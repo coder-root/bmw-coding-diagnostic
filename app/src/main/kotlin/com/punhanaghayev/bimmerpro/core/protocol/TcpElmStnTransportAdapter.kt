@@ -195,70 +195,10 @@ class TcpElmStnTransportAdapter(
         const val DEFAULT_VLINKER_HOST = "192.168.0.10"
         const val DEFAULT_VLINKER_PORT = 35000
 
-        internal fun parseVoltage(raw: String): Double? {
-            val match = Regex("(\\d{1,2}\\.\\d{1,2})").find(raw) ?: return null
-            return match.groupValues[1].toDoubleOrNull()
-        }
+        internal fun parseVoltage(raw: String): Double? =
+            ElmIsoTpHelper.parseVoltage(raw)
 
-        internal fun parseStnUdsResponse(raw: String): ByteArray {
-            val lines = raw.replace(">", "").split(Regex("[\r\n]+"))
-                .map { it.trim() }
-                .filter { it.isNotBlank() }
-            if (lines.any { it.contains("NO DATA", ignoreCase = true) || it.contains("ERROR", ignoreCase = true) }) {
-                return byteArrayOf(0x7F, 0x22, 0x31)
-            }
-
-            // Reassemble multi-line ISO-TP CAN frames when ATH1 is active (e.g., "6F1 F4 10 14 62 F1 90 ...")
-            val allFrames = lines.mapNotNull { line ->
-                val rawTokens = line.split(Regex("\\s+")).filter { it.isNotBlank() }
-                // Drop 3-char 11-bit CAN arbitration header (e.g., "6F1", "612", "7E8") when present
-                val hasCanIdHeader = rawTokens.firstOrNull()?.let {
-                    it.length == 3 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' }
-                } == true
-                val byteTokens = (if (hasCanIdHeader) rawTokens.drop(1) else rawTokens)
-                    .filter { it.length == 2 && it.all { c -> c.isDigit() || c.uppercaseChar() in 'A'..'F' } }
-                if (byteTokens.isEmpty()) return@mapNotNull null
-                val bytes = byteTokens.map { it.toInt(16).toByte() }.toByteArray()
-                // Strip BMW extended addressing byte(s):
-                // e.g. with 3-char CAN ID stripped: [F4, 10, 14, ...] or [F1, 10, 14, ...]
-                // or 2-byte header [06, F1, ...] / [6x, F4, ...]
-                when {
-                    hasCanIdHeader && bytes.size > 2 && ((bytes[0].toInt() and 0xFF) == 0xF4 || (bytes[0].toInt() and 0xFF) == 0xF1) ->
-                        bytes.copyOfRange(1, bytes.size)
-                    bytes.size > 3 && (bytes[0].toInt() and 0xFF) == 0x06 && (bytes[1].toInt() and 0xFF) == 0xF1 ->
-                        bytes.copyOfRange(2, bytes.size)
-                    bytes.size > 2 && ((bytes[0].toInt() and 0xF0) ushr 4) == 6 &&
-                        ((bytes[1].toInt() and 0xFF) == 0xF4 || (bytes[1].toInt() and 0xFF) == 0xF1) ->
-                        bytes.copyOfRange(2, bytes.size)
-                    else -> bytes
-                }
-            }
-            if (allFrames.isEmpty()) return byteArrayOf(0x7F, 0x22, 0x31)
-
-            // Filter out intermediate NRC 0x78 (Response Pending) frames if a subsequent frame arrived
-            val finalFrames = if (allFrames.size > 1) {
-                val filtered = allFrames.filterNot { f ->
-                    (f.size >= 4 && (f[0].toInt() and 0xFF) <= 0x07 && (f[1].toInt() and 0xFF) == 0x7F && (f[3].toInt() and 0xFF) == 0x78) ||
-                        (f.size >= 3 && (f[0].toInt() and 0xFF) == 0x7F && (f[2].toInt() and 0xFF) == 0x78)
-                }
-                filtered.ifEmpty { allFrames }
-            } else {
-                allFrames
-            }
-
-            return if (finalFrames.size > 1) {
-                IsoTpCodec.reassemble(finalFrames)
-            } else {
-                val single = finalFrames.first()
-                // If single frame starts with ISO-TP SF PCI (0x01..0x07), unwrap it; otherwise return directly
-                val pci = (single[0].toInt() and 0xF0) ushr 4
-                val sfLen = single[0].toInt() and 0x0F
-                if (pci == 0 && sfLen in 1 until single.size) {
-                    single.copyOfRange(1, 1 + sfLen)
-                } else {
-                    single
-                }
-            }
-        }
+        internal fun parseStnUdsResponse(raw: String): ByteArray =
+            ElmIsoTpHelper.parseUdsResponse(raw)
     }
 }
