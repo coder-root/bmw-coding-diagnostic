@@ -73,6 +73,21 @@ object BmwEcuAndPidCatalog {
         BmwLivePidDefinition("inj_3", "Enjektör 3 Sapması", "mg/h", 0x12, 0x5833, -2.5, 2.5, 0.19),
         BmwLivePidDefinition("inj_4", "Enjektör 4 Sapması", "mg/h", 0x12, 0x5834, -2.5, 2.5, -0.14),
         BmwLivePidDefinition("turbo_target", "Hedef Boost Basıncı", "bar", 0x12, 0x5840, 0.0, 2.2, 0.30),
-        BmwLivePidDefinition("alt_load", "Alternatör Yükü", "%", 0x12, 0x5850, 0.0, 100.0, 38.0)
+        BmwLivePidDefinition("alt_load", "Alternatör Yükü", "%", 0x12, 0x5850, 0.0, 100.0, 38.0),
+        // Pro-Tuner Telemetry Channels (Cyl 1-6 Timing, Trims, Lambda, VANOS Target/Actual, HPFP, Misfire)
+        BmwLivePidDefinition("timing_corr", "Ateşleme Avans Düzeltme (Cyl 1)", "°", 0x12, 0x5860, -12.0, 6.0, -0.5),
+        BmwLivePidDefinition("timing_corr_2", "Ateşleme Avans Düzeltme (Cyl 2)", "°", 0x12, 0x5868, -12.0, 6.0, -0.3),
+        BmwLivePidDefinition("timing_corr_3", "Ateşleme Avans Düzeltme (Cyl 3)", "°", 0x12, 0x5869, -12.0, 6.0, 0.0),
+        BmwLivePidDefinition("timing_corr_4", "Ateşleme Avans Düzeltme (Cyl 4)", "°", 0x12, 0x586A, -12.0, 6.0, -0.8),
+        BmwLivePidDefinition("timing_corr_5", "Ateşleme Avans Düzeltme (Cyl 5)", "°", 0x12, 0x586B, -12.0, 6.0, -0.2),
+        BmwLivePidDefinition("timing_corr_6", "Ateşleme Avans Düzeltme (Cyl 6)", "°", 0x12, 0x586C, -12.0, 6.0, 0.0),
+        BmwLivePidDefinition("ltft", "Uzun Yakıt Trimi (LTFT)", "%", 0x12, 0x5861, -25.0, 25.0, 1.2),
+        BmwLivePidDefinition("stft", "Kısa Yakıt Trimi (STFT)", "%", 0x12, 0x5862, -25.0, 25.0, -0.4),
+        BmwLivePidDefinition("lambda_afr", "Lambda / AFR Karışım", "λ", 0x12, 0x5863, 0.70, 1.30, 1.00),
+        BmwLivePidDefinition("vanos_in_target", "VANOS Emme Hedef Açısı", "°CA", 0x12, 0x586D, -10.0, 55.0, 14.8),
+        BmwLivePidDefinition("vanos_in", "VANOS Emme Gerçek Açısı", "°CA", 0x12, 0x5864, -10.0, 55.0, 14.5),
+        BmwLivePidDefinition("hpfp_target", "HPFP Hedef Yakıt Basıncı", "bar", 0x12, 0x5865, 20.0, 350.0, 185.0),
+        BmwLivePidDefinition("hpfp_actual", "HPFP Gerçek Yakıt Basıncı", "bar", 0x12, 0x5866, 20.0, 350.0, 184.2),
+        BmwLivePidDefinition("misfire_total", "Toplam Misfire Sayacı", "adet", 0x12, 0x5867, 0.0, 50.0, 0.0)
     )
 }

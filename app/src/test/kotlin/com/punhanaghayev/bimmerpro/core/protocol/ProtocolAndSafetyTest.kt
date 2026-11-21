@@ -55,12 +55,12 @@ class ProtocolAndSafetyTest {
     }
 
     @Test
-    fun `bmw ecu and pid catalog exposes 28 ecus and 20 unique live pids`() {
+    fun `bmw ecu and pid catalog exposes 28 ecus and 34 unique live pids`() {
         assertEquals(28, BmwEcuAndPidCatalog.allBmwEcus.size)
         assertEquals(28, BmwEcuAndPidCatalog.allBmwEcus.map { it.address }.distinct().size)
 
-        assertEquals(20, BmwEcuAndPidCatalog.livePidDefinitions.size)
-        assertEquals(20, BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.distinct().size)
+        assertEquals(34, BmwEcuAndPidCatalog.livePidDefinitions.size)
+        assertEquals(34, BmwEcuAndPidCatalog.livePidDefinitions.map { it.id }.distinct().size)
     }
 
     @Test

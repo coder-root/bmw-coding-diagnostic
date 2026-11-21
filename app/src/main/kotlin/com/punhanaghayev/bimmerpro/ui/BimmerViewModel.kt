@@ -10,6 +10,8 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ShortCircuitChannel
+import com.punhanaghayev.bimmerpro.core.bmw.VoCodingPlan
+import com.punhanaghayev.bimmerpro.data.DragMode
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.AppLocalization
 import com.punhanaghayev.bimmerpro.core.protocol.AdapterType
@@ -565,6 +567,55 @@ class BimmerViewModel(
                 )
             }
             _uiEvents.emit(UiEvent.ShareFile(file, "text/plain", "Protokol Trace Dosyasını Paylaş"))
+        }
+    }
+
+    fun previewVoCodingPlan(code: String, description: String) {
+        val plan = repository.previewVoCodingPlan(code, description)
+        if (plan == null) {
+            viewModelScope.launch { _uiEvents.emit(UiEvent.Snackbar("Geçerli bir VO kodu girin (örn: 6WB veya 2TB).")) }
+        }
+    }
+
+    fun dismissVoCodingPlan() {
+        repository.dismissVoCodingPlan()
+    }
+
+    fun applyVoCodingPlan(plan: VoCodingPlan) {
+        viewModelScope.launch {
+            repository.applyVoCodingPlan(plan)
+            session.value.lastOperationMessage?.let { _uiEvents.emit(UiEvent.Snackbar(it)) }
+        }
+    }
+
+    fun readFscCertificates() {
+        viewModelScope.launch {
+            repository.readFscCertificates()
+            session.value.lastOperationMessage?.let { _uiEvents.emit(UiEvent.Snackbar(it)) }
+        }
+    }
+
+    fun setDragMode(mode: DragMode) {
+        perfJob?.cancel()
+        repository.setDragMode(mode)
+    }
+
+    fun runVirtualDynoPull() {
+        val result = repository.runVirtualDynoPull()
+        viewModelScope.launch {
+            _uiEvents.emit(UiEvent.Snackbar("Virtual Dyno: ${result.summary}"))
+        }
+    }
+
+    fun connectWithTraceReplay(traceText: String) {
+        viewModelScope.launch {
+            repository.connectWithTraceReplay(traceText)
+                .onSuccess { count ->
+                    _uiEvents.emit(UiEvent.Snackbar("Trace Playback: $count UDS frame yüklendi."))
+                }
+                .onFailure { err ->
+                    _uiEvents.emit(UiEvent.Snackbar(err.message ?: "Trace dosyası okunamadı."))
+                }
         }
     }
 

@@ -125,6 +125,31 @@ class SimulatorTransportAdapter(
                     (ecuKm and 0xFF).toByte()
                 )
             }
+            DID_SVK -> {
+                val mod = bundle.ecus.firstOrNull { it.address == targetEcu }
+                val hw = (mod?.hardwareVersion ?: "HWEL_00001A2B").replace(".", "").take(12)
+                val sw = (mod?.softwareVersion ?: "SWFL_00003C4D").replace(".", "").take(12)
+                val cafd = mod?.cafdId?.replace(".", "_") ?: "CAFD_000001A7"
+                val svkAscii = "HWEL_%04X_${hw}|BTLD_00001001|SWFL_${sw}|$cafd".format(targetEcu and 0xFF)
+                prefix + svkAscii.toByteArray(StandardCharsets.US_ASCII)
+            }
+            DID_FSC_STATUS -> {
+                val isHuOrKafas = targetEcu == EcuAddress.HU_MEDIA || targetEcu == EcuAddress.KAFAS_CAMERA
+                if (!isHuOrKafas) {
+                    prefix + byteArrayOf(0x00, 0x00, 0x00, 0x02)
+                } else if (targetEcu == EcuAddress.KAFAS_CAMERA) {
+                    val sliStatus = if (bundle.profile.chassis.code.startsWith("E")) 0x02 else 0x00
+                    prefix + byteArrayOf(0x00, 0x7E, 0x01, sliStatus.toByte())
+                } else {
+                    val carplayStatus = if (bundle.profile.chassis.code.startsWith("G") || bundle.profile.chassis.code.startsWith("U") || bundle.profile.chassis.code.startsWith("I")) 0x00 else 0x02
+                    prefix + byteArrayOf(
+                        0x00, 0xDE.toByte(), 0x01, 0x00,
+                        0x01, 0x43, 0x01, carplayStatus.toByte(),
+                        0x00, 0x17, 0x01, 0x00,
+                        0x00, 0x9C.toByte(), 0x01, 0x00
+                    )
+                }
+            }
             else -> {
                 val stored = writtenDids[(targetEcu shl 16) or did]
                 prefix + (stored ?: byteArrayOf(0x00, 0x01))
@@ -268,6 +293,8 @@ class SimulatorTransportAdapter(
     companion object {
         const val DID_VIN = 0xF190
         const val DID_I_LEVEL = 0xF150
+        const val DID_SVK = 0xF101
+        const val DID_FSC_STATUS = 0x3008
         const val DID_BATTERY_MV = 0x100A
         const val DID_ODOMETER = 0x100C
     }

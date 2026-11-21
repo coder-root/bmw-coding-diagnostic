@@ -120,6 +120,15 @@ fun SavedVehiclesScreen(
                             Text(saved.modelName, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text("VIN: ${saved.vin}", color = theme.primaryBright, fontSize = 11.sp, fontFamily = FontFamily.Monospace, maxLines = 1, softWrap = false)
                             Text("${saved.chassisCode} • ${saved.lastConnected} • %,d km".format(saved.odometerKm), color = theme.textSecondary, fontSize = 11.sp)
+                            val latestSnap = saved.scanSnapshots.firstOrNull()
+                            if (latestSnap != null) {
+                                Text(
+                                    text = "${saved.scanSnapshots.size} tarama geçmişi • Son Skor: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)",
+                                    color = theme.primaryBright,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                         IconButton(onClick = { onRemoveSavedVehicle(saved.vin) }) {
                             Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = theme.textSecondary, modifier = Modifier.size(20.dp))

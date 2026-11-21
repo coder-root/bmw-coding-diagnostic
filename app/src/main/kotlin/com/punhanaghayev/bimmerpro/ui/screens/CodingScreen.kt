@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -68,6 +71,8 @@ import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCategory
 import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
+import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateStatus
+import com.punhanaghayev.bimmerpro.core.bmw.VoCodingPlan
 import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
@@ -89,6 +94,10 @@ fun CodingScreen(
     onExportBackupsJson: () -> Unit,
     onImportBackupsJson: () -> Unit,
     onAddVoOption: (String, String) -> Unit,
+    onPreviewVoCoding: (String, String) -> Unit = { _, _ -> },
+    onDismissVoPlan: () -> Unit = {},
+    onApplyVoPlan: (VoCodingPlan) -> Unit = {},
+    onReadFsc: () -> Unit = {},
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
@@ -118,6 +127,53 @@ fun CodingScreen(
     var stagedPresets by remember { mutableStateOf(mapOf<String, Int>()) }
     var stagedCafds by remember { mutableStateOf(mapOf<String, String>()) }
     var showSafetyDialog by remember { mutableStateOf(false) }
+
+    session.pendingVoCodingPlan?.let { voPlan ->
+        AlertDialog(
+            onDismissRequest = onDismissVoPlan,
+            title = { Text(strings.voDiffDialogTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp) },
+            text = {
+                Column(
+                    modifier = Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("+S${voPlan.voCode} • ${voPlan.description}", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    voPlan.diffs.forEach { d ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(theme.cardElevated)
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text("${d.ecuName} (0x%02X) • ${d.cafdId}".format(d.ecuAddress), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
+                            Text(
+                                text = "Offset 0x%02X & 0x%02X: ${d.beforeByteHex} → ${d.afterByteHex} (${d.targetOptionLabel})".format(d.byteOffset, d.bitMask),
+                                color = StatusGreen,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onApplyVoPlan(voPlan) },
+                    enabled = profile.batteryVoltage >= BimmerRepository.MIN_SAFE_CODING_VOLTAGE,
+                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                ) {
+                    Text(strings.voApplyAllBtn, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissVoPlan) {
+                    Text(strings.cancelBtn)
+                }
+            }
+        )
+    }
 
     pendingPresetDiff?.let { (preset, targetIdx) ->
         val beforeLabel = preset.options.getOrNull(preset.currentOptionIndex) ?: "-"
@@ -650,19 +706,73 @@ fun CodingScreen(
                                     val affectedNames = VoDependencyMapper.affectedEcusFor(newVoCode).joinToString(", ") { it.second }
                                     Text("Etkilenecek ECU'lar: $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
                                 }
-                                Button(
-                                    onClick = {
-                                        onAddVoOption(newVoCode, newVoDesc)
-                                        newVoCode = ""
-                                        newVoDesc = ""
-                                    },
-                                    enabled = voltageSafe && newVoCode.isNotBlank(),
-                                    modifier = Modifier.fillMaxWidth().height(44.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(
+                                        onClick = { onPreviewVoCoding(newVoCode, newVoDesc) },
+                                        enabled = newVoCode.length >= 3,
+                                        modifier = Modifier.weight(1f).height(44.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp)
+                                    ) {
+                                        Text(strings.voPreviewCalcBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            onAddVoOption(newVoCode, newVoDesc)
+                                            newVoCode = ""
+                                            newVoDesc = ""
+                                        },
+                                        enabled = voltageSafe && newVoCode.isNotBlank(),
+                                        modifier = Modifier.weight(1f).height(44.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = theme.primary),
+                                        contentPadding = PaddingValues(horizontal = 8.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(strings.addVoBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = theme.card),
+                            border = BorderStroke(1.dp, theme.outline),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(strings.addVoBtn, maxLines = 1, softWrap = false)
+                                    Text(strings.fscTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                                    TextButton(onClick = onReadFsc) {
+                                        Text(strings.fscRefreshBtn, color = theme.primaryBright, fontSize = 11.sp)
+                                    }
+                                }
+                                session.fscCertificates.forEach { cert ->
+                                    val stColor = when (cert.status) {
+                                        FscCertificateStatus.ACCEPTED -> StatusGreen
+                                        FscCertificateStatus.REJECTED, FscCertificateStatus.EXPIRED -> StatusRed
+                                        FscCertificateStatus.NOT_LOADED -> StatusAmber
+                                    }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(theme.cardElevated)
+                                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(cert.title, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                            Text("${cert.ecuName} • App ${cert.appIdHex} (${cert.upgradeIndex})", color = theme.textSecondary, fontSize = 10.sp)
+                                        }
+                                        Text(cert.status.label, color = stColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }

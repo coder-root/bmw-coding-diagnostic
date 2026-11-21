@@ -76,8 +76,8 @@ class TraceReplayTransportAdapter(
     }
 
     companion object {
-        private val inlineRxRegex = Regex("""(?:\[RX]|RX)\s+(?:ECU=)?0x([0-9A-Fa-f]{2})\s*\|\s*[^|]*\|\s*([0-9A-Fa-f\s]+)""")
-        private val headerRxRegex = Regex("""\[RX]\s+ECU=0x([0-9A-Fa-f]{2})\b""")
+        private val inlineRxRegex = Regex("""(?:\[RX]|RX)\s+(?:ECU=)?0x([0-9A-Fa-f]{2})\s*\|\s*[^|]*\|\s*(?:HEX:\s*)?([0-9A-Fa-f\s]+)""", RegexOption.IGNORE_CASE)
+        private val headerRxRegex = Regex("""\[RX]\s+(?:ECU=)?0x([0-9A-Fa-f]{2})\b""", RegexOption.IGNORE_CASE)
 
         fun parseTraceText(traceText: String): List<RecordedUdsFrame> {
             val out = mutableListOf<RecordedUdsFrame>()

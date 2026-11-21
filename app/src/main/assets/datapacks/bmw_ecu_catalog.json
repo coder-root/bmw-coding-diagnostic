@@ -1,0 +1,4314 @@
+[
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ZGM_E65",
+    "identifier": "00 ---- 0100",
+    "group": "D_ZGM",
+    "name": "Zentrales Gatewaymodul"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "JBBF87",
+    "identifier": "00 ---- 08C0",
+    "group": "D_ZGM",
+    "name": "Junction Box Beifahrer"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "JBBF70",
+    "identifier": "00 ---- 0DD0",
+    "group": "D_ZGM",
+    "name": "Junction Box Beifahrer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "KGM_60",
+    "identifier": "00 ---- 0BD0",
+    "group": "D_ZGM",
+    "name": "Karosserie Gatewaymodul"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "SPEG56",
+    "identifier": "00 ---- 0EB0",
+    "group": "D_ZGM",
+    "name": "Smart Power Electronics Gateway"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SIM",
+    "identifier": "01 ---- 0110",
+    "group": "D_SIM",
+    "name": "Sicherheits- Informationsmodul"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MRS5",
+    "identifier": "01 ---- 08E0",
+    "group": "D_SIM",
+    "name": "Airbag Steuergerät"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MRS5",
+    "identifier": "01 ---- 08E4",
+    "group": "D_SIM",
+    "name": "Airbag Steuergerät"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SGM_60_2",
+    "identifier": "01 ---- 0A70",
+    "group": "D_SIM",
+    "name": "Sicherheits-und Gatewaymodul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ACSM60",
+    "identifier": "01 ---- 0B20",
+    "group": "D_SIM",
+    "name": "Airbag-Elektronik"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "ACSM60",
+    "identifier": "01 ---- 0E90",
+    "group": "D_SIM",
+    "name": "Airbag Steuergerät"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "ACSM2",
+    "identifier": "01 ---- 0CA0",
+    "group": "D_SIM",
+    "name": "Airbag-Elektronik"
+  },
+  {
+    "series": "E88",
+    "ecuDescriptionFile": "ACSM2",
+    "identifier": "01 ---- 0CA1",
+    "group": "D_SIM",
+    "name": "Airbag-Elektronik"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "MRS7",
+    "identifier": "01 ---- 1080",
+    "group": "D_SIM",
+    "name": "Airbag Steuergerät"
+  },
+  {
+    "series": "E82",
+    "ecuDescriptionFile": "ACSM2",
+    "identifier": "01 ---- 1085",
+    "group": "D_SIM",
+    "name": "Airbag Steuergerät"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SZL",
+    "identifier": "02 ---- 0120",
+    "group": "D_SZL",
+    "name": "Satellit Lenksäule"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SZL",
+    "identifier": "02 ---- 01C0",
+    "group": "D_SZL",
+    "name": "Satellit Lenksäule"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SZL_60",
+    "identifier": "02 ---- 01C8",
+    "group": "D_SZL",
+    "name": "Schaltzentrum Lenksäule"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "SZL_56",
+    "identifier": "02 ---- 0EF0",
+    "group": "D_SZL",
+    "name": "Schaltzentrum Lenksäule"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SASL",
+    "identifier": "03 ---- 0130",
+    "group": "D_SASL",
+    "name": "Satellit A-Säule links"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SASR",
+    "identifier": "04 ---- 0140",
+    "group": "D_SASR",
+    "name": "Satellit A-Säule rechts"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "STVL",
+    "identifier": "05 ---- 0150",
+    "group": "D_STVL",
+    "name": "Satellit Tür vorne links"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TEFA60",
+    "identifier": "05 ---- 01F0",
+    "group": "D_STVL",
+    "name": "Satellit & Türelektronik Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "STVR",
+    "identifier": "06 ---- 0160",
+    "group": "D_STVR",
+    "name": "Satellit Tür vorne rechts"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TEBF60",
+    "identifier": "06 ---- 01F0",
+    "group": "D_STVR",
+    "name": "Satellit & Türelektronik Beifahrer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TEBF60",
+    "identifier": "06 ---- 0210",
+    "group": "D_STVR",
+    "name": "Satellit & Türelektronik Beifahrer"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "TRSVC70",
+    "identifier": "06 ---- 1280",
+    "group": "D_TRSVC",
+    "name": "Top-"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SSFA",
+    "identifier": "07 ---- 0170",
+    "group": "D_SSFA",
+    "name": "Satellit Sitz Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SSBF",
+    "identifier": "08 ---- 0180",
+    "group": "D_SSBF",
+    "name": "Satellit Sitz Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SBSL",
+    "identifier": "09 ---- 0190",
+    "group": "D_SBSL",
+    "name": "Satellit B-Säule links"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "HIM_72",
+    "identifier": "09 ---- 1110",
+    "group": "D_HIM",
+    "name": "Hybrid Interface Modul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SBSR",
+    "identifier": "0A ---- 01A0",
+    "group": "D_SBSR",
+    "name": "Satellit B-Säule rechts"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "SBA_72",
+    "identifier": "0A ---- 10A0",
+    "group": "D_SBA",
+    "name": "Sensotronic Brake Actuation"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SSH",
+    "identifier": "0D ---- 01D0",
+    "group": "D_SSH",
+    "name": "Satellit Sitz hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SFZ",
+    "identifier": "0E ---- 01E0",
+    "group": "D_SFZ",
+    "name": "Satellit Fahrzeugzentrum"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SFZ60",
+    "identifier": "0E ---- 0480",
+    "group": "D_SFZ",
+    "name": "Satellit Fahrzeugzentrum"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "SVT_70",
+    "identifier": "0E ---- 12E0",
+    "group": "D_SVT",
+    "name": "Servotronic Steuergerät"
+  },
+  {
+    "series": "E71",
+    "ecuDescriptionFile": "QSG_71",
+    "identifier": "0F ---- 0FF0",
+    "group": "D_QSG",
+    "name": "QuerMomentenVerteilung-Hinterachse-Steuergerät"
+  },
+  {
+    "series": "E68",
+    "ecuDescriptionFile": "N73H_R0",
+    "identifier": "12 ---- 0BA0",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .0Q. 000C",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .0Q. 000D",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .0Q. 000E",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .0Q. 000F",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9N62",
+    "identifier": "12 .0Q. 0014",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .0Q. 0103",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_R0",
+    "identifier": "12 .0R. 000E",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_R0",
+    "identifier": "12 .0R. 000F",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_R0",
+    "identifier": "12 .0R. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_R0",
+    "identifier": "12 .0R. 0011",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .1C. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .1C. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .1C. 000A",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .1C. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .1C. 0011",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MEV17N46",
+    "identifier": "12 .1D. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17.2.1 4 Zylinder N46"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MEV17N46",
+    "identifier": "12 .1D. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17.2.1 4 Zylinder N46"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "ME17N45",
+    "identifier": "12 .1E. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 17.2.1 4 Zylinder N45"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "MEVD174K",
+    "identifier": "12 .23. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.4 4 Zylinder N20"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "MEVD174K",
+    "identifier": "12 .ZJ. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.9 4 Zylinder N20"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MEV9N46L",
+    "identifier": "12 .2L. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N46"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "MEV9N46L",
+    "identifier": "12 .2L. 0011",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N46"
+  },
+  {
+    "series": "Morgan",
+    "ecuDescriptionFile": "ME9N62_2",
+    "identifier": "12 .2M. 0020",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ME9E65_6",
+    "identifier": "12 .2Q. 000E",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ME9N62",
+    "identifier": "12 .2Q. 0014",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ME9N62",
+    "identifier": "12 .2Q. 0020",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "ME9N45",
+    "identifier": "12 .2W. 000F",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N45"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "MSDA70",
+    "identifier": "12 .32. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 70 6 Zylinder N54"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "MSD80",
+    "identifier": "12 .33. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 80 6 Zylinder N53/N54"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "MSV70",
+    "identifier": "12 .34. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 70 6 Zylinder N52"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "MSV70",
+    "identifier": "12 .34. 0100",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 70 6 Zylinder N52"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "MEV9N46L",
+    "identifier": "12 .3L. 0011",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N45"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73TU_R0",
+    "identifier": "12 .44. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Master TUE"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ME9N62_2",
+    "identifier": "12 .4Q. 0020",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62 OBD05"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D50M57A0",
+    "identifier": "12 0059 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D50M57A0",
+    "identifier": "12 .59. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51MM670",
+    "identifier": "12 005A 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51MM670",
+    "identifier": "12 .5A. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51MM670",
+    "identifier": "12 .5A. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N62_TUE",
+    "identifier": "12 .5Q. 0020",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62 TUE"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MSD80N43",
+    "identifier": "12 .66. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 80 4 Zylinder N43"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MSD80N43",
+    "identifier": "12 .66. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 80 4 Zylinder N43"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "MSV80",
+    "identifier": "12 .67. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 80 6 Zylinder N51"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "MSD85Y",
+    "identifier": "12 .72. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 85 8 Zylinder N63 Hybrid"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N62_TUE2",
+    "identifier": "12 .7Q. 0020",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME 9  8 Zylinder N62 TUE2"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MSD85",
+    "identifier": "12 .98. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 85 8 Zylinder S63"
+  },
+  {
+    "series": "E71",
+    "ecuDescriptionFile": "MSD85",
+    "identifier": "12 .99. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 85 8 Zylinder N63"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MSD80",
+    "identifier": "12 .A1. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 81 6 Zylinder N53/N54"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .CE. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .CE. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .CE. 000A",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .CE. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MS450DS0",
+    "identifier": "12 .CE. 0011",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 45 6 Zylinder M54"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MVD1722",
+    "identifier": "12 .DM. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.2 4 Zylinder N18"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MVD1722",
+    "identifier": "12 .YS. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.7 4 Zylinder N18"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "D60PSA0",
+    "identifier": "12 .DV. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik R56 PSA EU4"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "D60PSA0",
+    "identifier": "12 .DV. 0021",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik R56 PSA EU4"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "D60PSA0",
+    "identifier": "12 .DV. 0022",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik R56 PSA EU4"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57C0",
+    "identifier": "12 .JE. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57C0",
+    "identifier": "12 .JE. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JE. 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JE. 0013",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JE. 0014",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57D0",
+    "identifier": "12 .JE. 0070",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JE. 0071",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57D0",
+    "identifier": "12 .JF. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JF. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JF. 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JF. 0013",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D50M57E0",
+    "identifier": "12 .JF. 0014",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS_S65",
+    "identifier": "12 .JY. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS S65 10 Zylinder S85 MJ2005"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS_S65_2",
+    "identifier": "12 .JY. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS S65 10 Zylinder S85 MJ2006"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MS_S65_3",
+    "identifier": "12 .JY. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS S65 10 Zylinder S85 CO2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "MSS60",
+    "identifier": "12 .JZ. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MSS60 8 Zylinder S65"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0021",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder E83 M47 TÜ2"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LP. 0031",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder E83 M47 TÜ2"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0021",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M47A0",
+    "identifier": "12 .LQ. 0022",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder M47 TÜ2 uL"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D60M57D0",
+    "identifier": "12 .LR. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TOP"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D60M57D0",
+    "identifier": "12 .LR. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TOP"
+  },
+  {
+    "series": "E53",
+    "ecuDescriptionFile": "D60M57D0",
+    "identifier": "12 .LR. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 CSF"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D60M57A0",
+    "identifier": "12 .LR. 0060",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2 uL"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D62M57B0",
+    "identifier": "12 .LS. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D62M57B0",
+    "identifier": "12 .LS. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D62M57B0",
+    "identifier": "12 .LS. 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "D62M57B0",
+    "identifier": "12 .LS. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D62M57B0",
+    "identifier": "12 .LS. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D62M57A0",
+    "identifier": "12 .LS. 0050",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 6 Zylinder M57 TÜ2 TOP"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D63MM670",
+    "identifier": "12 .LT. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 8 Zylinder M67 TÜ Master"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D63MM670",
+    "identifier": "12 .LT. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 8 Zylinder M67 TÜ Master"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MV1722",
+    "identifier": "12 .M1. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V 17.2.2 4 Zylinder N16"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MEVD17KW",
+    "identifier": "12 .MV. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2   6 Zylinder N55"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "MEVD176K",
+    "identifier": "12 .MV. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.6 6 Zylinder N55"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "MEVD176K",
+    "identifier": "12 .YQ. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME VD17.2.6 6 Zylinder N55 Bosch Hochdruckpumpe"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "MSV80",
+    "identifier": "12 .MW. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 80 6 Zylinder N51/N52K"
+  },
+  {
+    "series": "R50",
+    "ecuDescriptionFile": "D60TMCA",
+    "identifier": "12 .NE. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik R50 TMC EU4"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "D60PSA0",
+    "identifier": "12 .NE. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik R56 PSA EU4"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MEV17_2",
+    "identifier": "12 .PL. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 VVT"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MEV17_2N",
+    "identifier": "12 .PL. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 VVT"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MEV17_2",
+    "identifier": "12 .PL. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 VVT"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MED17_2",
+    "identifier": "12 .PK. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 GDI"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MED17_2N",
+    "identifier": "12 .PK. 0002",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 GDI"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "MED17_2",
+    "identifier": "12 .PK. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME V17 GDI"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MSD80N43",
+    "identifier": "12 .TP. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 81 4 Zylinder N43"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MSD80N43",
+    "identifier": "12 .TP. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 81 4 Zylinder N43"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "MSD85Y",
+    "identifier": "12 .VZ. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MS 85 8 Zylinder N63 Hybrid"
+  },
+  {
+    "series": "E82",
+    "ecuDescriptionFile": "EDME82",
+    "identifier": "12 .V0. 0001",
+    "group": "D_MOTOR",
+    "name": "Elektrische Digitale Motorelektronik eDME"
+  },
+  {
+    "series": "M12",
+    "ecuDescriptionFile": "EDMEM12",
+    "identifier": "12 .ZM. 0000",
+    "group": "D_MOTOR",
+    "name": "Elektrische Digitale Motorelektronik eDME"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D70N47A0",
+    "identifier": "12 .WA. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.0 4 Zylinder N47 uL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D70N47A0",
+    "identifier": "12 .WA. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.0 4 Zylinder N47 uL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D70N47B0",
+    "identifier": "12 .WA. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.0 4 Zylinder N47 uL EU5"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D71N47A0",
+    "identifier": "12 .WB. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 oL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D71N47A0",
+    "identifier": "12 .WB. 0011",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 oL"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D71N47B0",
+    "identifier": "12 .WB. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 6 4 Zylinder N47 oL (11 hex)"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D71N47A0",
+    "identifier": "12 .WB. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 TL"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D71N47C0",
+    "identifier": "12 .WB. 0040",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 oL EU5"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D71N47D0",
+    "identifier": "12 .WB. 0050",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 oL EU5"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "D71N47C0",
+    "identifier": "12 .WB. 0060",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.1 4 Zylinder N47 TL EU5"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D73N57B0",
+    "identifier": "12 .WD. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.3  6 Zylinder N57"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D73N57C0",
+    "identifier": "12 .WD. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.3  6 Zylinder M57TUE2US"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D72N47B0",
+    "identifier": "12 .WE. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.21 4 Zylinder N47TÜ oL"
+  },
+  {
+    "series": "E71",
+    "ecuDescriptionFile": "D73N57D0",
+    "identifier": "12 .XY. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.31 6 Zylinder N57"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "D73N47A0",
+    "identifier": "12 .XY. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.31 4 Zylinder N47 D20T1"
+  },
+  {
+    "series": "-",
+    "ecuDescriptionFile": "D73N57D0",
+    "identifier": "12 .XY. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.31 Workhorse PV"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "D72N47B0",
+    "identifier": "12 .ZZ. 0010",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.01 4 Zylinder N47C"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "D72N47B0",
+    "identifier": "12 .ZZ. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.01 4 Zylinder N47TÜ oL"
+  },
+  {
+    "series": "-",
+    "ecuDescriptionFile": "D72N47B0",
+    "identifier": "12 .ZZ. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 7.01 Workhorse MV"
+  },
+  {
+    "series": "E68",
+    "ecuDescriptionFile": "N73H_L0",
+    "identifier": "13 ---- 0BA0",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_L0",
+    "identifier": "13 .0R. 000E",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_L0",
+    "identifier": "13 .0R. 000F",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_L0",
+    "identifier": "13 .0R. 0010",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73_L0",
+    "identifier": "13 .0R. 0011",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "N73TU_L0",
+    "identifier": "13 .44. 0001",
+    "group": "D_MOTOR2",
+    "name": "Motorelektronik ME 9 12 Zylinder N73 Slave TUE"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51SM670",
+    "identifier": "13 005A 0010",
+    "group": "D_MOTOR2",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51SM670",
+    "identifier": "13 .5A. 0010",
+    "group": "D_MOTOR2",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D51SM670",
+    "identifier": "13 .5A. 0011",
+    "group": "D_MOTOR2",
+    "name": "Dieselelektronik DDE 5 8 Zylinder M67 Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D63SM670",
+    "identifier": "13 .LT. 0010",
+    "group": "D_MOTOR2",
+    "name": "Dieselelektronik DDE 6 8 Zylinder M67 TÜ Slave"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "D63SM670",
+    "identifier": "13 .LT. 0011",
+    "group": "D_MOTOR2",
+    "name": "Dieselelektronik DDE 6 8 Zylinder M67 TÜ Slave"
+  },
+  {
+    "series": "E68",
+    "ecuDescriptionFile": "CEM_68",
+    "identifier": "14 ---- 0B50",
+    "group": "D_CEM",
+    "name": "Clean Energy Modul"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "LDM_70",
+    "identifier": "15 ---- 12B0",
+    "group": "D_LDM2",
+    "name": "Längs Dynamik Management"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "AFS_60",
+    "identifier": "16 ---- 0500",
+    "group": "D_AFS",
+    "name": "Aktiv Front Steering"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "AFS_90",
+    "identifier": "16 ---- 0970",
+    "group": "D_AFS",
+    "name": "Aktiv Front Steering"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "AFS_70",
+    "identifier": "16 ---- 0C60",
+    "group": "D_AFS",
+    "name": "Aktiv Front Steering"
+  },
+  {
+    "series": "E71",
+    "ecuDescriptionFile": "ASA_71",
+    "identifier": "16 ---- 0FE0",
+    "group": "D_AFS",
+    "name": "Aktuator Steuergerät Aktivlenkung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "EKP_60",
+    "identifier": "17 ---- 0610",
+    "group": "D_EKP",
+    "name": "Elektrische Kraftstoffpumpe"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "EKPM60_2",
+    "identifier": "17 ---- 0611",
+    "group": "D_EKP",
+    "name": "Elektrische Kraftstoffpumpe 2. Generation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "EKPM60_3",
+    "identifier": "17 ---- 0612",
+    "group": "D_EKP",
+    "name": "Elektrische Kraftstoffpumpe 2. Generation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "EKP360",
+    "identifier": "17 ---- 1010",
+    "group": "D_EKP",
+    "name": "Elektrische Kraftstoffpumpe 3. Generation"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "GS19",
+    "identifier": "18 ---- 0200",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "GS19A",
+    "identifier": "18 ---- 0201",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "GS19B",
+    "identifier": "18 ---- 0202",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19 B"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "GS19C",
+    "identifier": "18 ---- 0203",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19 C"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "GS19D",
+    "identifier": "18 ---- 0204",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19 D"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "GS1912",
+    "identifier": "18 ---- 0C80",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät GS19.12"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SSG_60",
+    "identifier": "18 ---- 0490",
+    "group": "D_EGS",
+    "name": "Sequentielles Schaltgetriebe"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SMG_60",
+    "identifier": "18 ---- 0960",
+    "group": "D_EGS",
+    "name": "Sequentielles M-Getriebe"
+  },
+  {
+    "series": "R53",
+    "ecuDescriptionFile": "GSF21",
+    "identifier": "18 ---- 0D00",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät AISIN"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "GSF21A",
+    "identifier": "18 ---- 0E20",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät AISIN"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "DKG_90",
+    "identifier": "18 ---- 0F20",
+    "group": "D_EGS",
+    "name": "Doppelkupplungsgetriebe"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "GSB233",
+    "identifier": "18 ---- 1220",
+    "group": "D_EGS",
+    "name": "Getriebesteuergerät TCU 2.3.3"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "VGSG90",
+    "identifier": "19 ---- 0950",
+    "group": "D_VGSG",
+    "name": "Verteilergetriebe Steuergerät"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "VGSG70",
+    "identifier": "19 ---- 0D60",
+    "group": "D_VGSG",
+    "name": "Verteilergetriebe Steuergerät"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "LMV_84",
+    "identifier": "19 ---- 1230",
+    "group": "D_VGSG",
+    "name": "Längsmomentverteilung"
+  },
+  {
+    "series": "R60",
+    "ecuDescriptionFile": "LMVR60",
+    "identifier": "19 ---- 1260",
+    "group": "D_VGSG",
+    "name": "Längsmomentverteilung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VVT_B1_0",
+    "identifier": "1B .91. 000A",
+    "group": "D_VVT",
+    "name": "Variabler Ventiltrieb Bank 1 4 Zylinder N42"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VVT_B1_0",
+    "identifier": "1B .92. 000A",
+    "group": "D_VVT",
+    "name": "Variabler Ventiltrieb Bank 1 8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VVT_B1_0",
+    "identifier": "1B .92. 0014",
+    "group": "D_VVT",
+    "name": "Variabler Ventiltrieb Bank 1 8 Z. N62"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "LDM_90",
+    "identifier": "1C ---- 0A90",
+    "group": "D_LDM",
+    "name": "Längs Dynamik Management"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "LDM_60",
+    "identifier": "1C ---- 0D50",
+    "group": "D_LDM",
+    "name": "Längs Dynamik Management"
+  },
+  {
+    "series": "E71",
+    "ecuDescriptionFile": "ICM_71",
+    "identifier": "1C ---- 0FD0",
+    "group": "D_LDM",
+    "name": "Integriertes Chassis Management"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "TFE1",
+    "identifier": "1D ---- 1180",
+    "group": "D_TFE",
+    "name": "Tank Funktions Elektronik"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VVT_B2_0",
+    "identifier": "1E .92. 000A",
+    "group": "D_VVT2",
+    "name": "Variabler Ventiltrieb Bank 2 8 Zylinder N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VVT_B2_0",
+    "identifier": "1E .92. 0014",
+    "group": "D_VVT2",
+    "name": "Variabler Ventiltrieb Bank 2 8 Z. N62"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "RDC_E65",
+    "identifier": "20 ---- 0230",
+    "group": "D_RDC",
+    "name": "Reifen Druck Control"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "RDC_60",
+    "identifier": "20 ---- 0560",
+    "group": "D_RDC",
+    "name": "Reifen Druck Control"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "RDC_CAN",
+    "identifier": "20 ---- 1000",
+    "group": "D_RDC",
+    "name": "Reifen Druck Control"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "RDC_CAN",
+    "identifier": "20 ---- 1001",
+    "group": "D_RDC",
+    "name": "Reifen Druck Control 315MHz"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "RDCKWP",
+    "identifier": "20 ---- 12C0",
+    "group": "D_RDC",
+    "name": "Reifen Druck Control Low Cost BN2000"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ACC_E65",
+    "identifier": "21 ---- 0240",
+    "group": "D_ACC",
+    "name": "Adaptive Cruise Control"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ACC2",
+    "identifier": "21 ---- 0B60",
+    "group": "D_ACC",
+    "name": "Adaptive Cruise Control 2.Generation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "LRR_60",
+    "identifier": "21 ---- 0D30",
+    "group": "D_ACC",
+    "name": "ACC Long Range Sensor"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FRR_70",
+    "identifier": "21 ---- 12A0",
+    "group": "D_ACC",
+    "name": "ACC Full Range Radar"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ALC_60",
+    "identifier": "22 ---- 05F0",
+    "group": "D_ALC",
+    "name": "Adaptive Lichtsteuerung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ARS_E65",
+    "identifier": "23 ---- 0250",
+    "group": "D_ARS",
+    "name": "Aktive Rollstabilisierung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ARS_60",
+    "identifier": "23 ---- 0251",
+    "group": "D_ARS",
+    "name": "Aktive Rollstabilisierung"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "ARS_70",
+    "identifier": "23 ---- 0252",
+    "group": "D_ARS",
+    "name": "Aktive Rollstabilisierung"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "SVT_RRS2",
+    "identifier": "23 ---- 1838",
+    "group": "D_ARS",
+    "name": "Servotronic Steuergerät RR Serie II"
+  },
+  {
+    "series": "E64",
+    "ecuDescriptionFile": "CVM_64",
+    "identifier": "24 ---- 0600",
+    "group": "D_CVM",
+    "name": "Cabrio Verdeck Modul"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93",
+    "identifier": "24 ---- 0CD0",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul nur JEX"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93_2",
+    "identifier": "24 ---- 0CD1",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul nur PPP1"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93_3",
+    "identifier": "24 ---- 0CD2",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul nur PPP2"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93_4",
+    "identifier": "24 ---- 0CD3",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93_5",
+    "identifier": "24 ---- 0CD4",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul"
+  },
+  {
+    "series": "E93",
+    "ecuDescriptionFile": "CTM_93_6",
+    "identifier": "24 ---- 0CD5",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul"
+  },
+  {
+    "series": "E88",
+    "ecuDescriptionFile": "CVM_88",
+    "identifier": "24 ---- 0F30",
+    "group": "D_CVM",
+    "name": "Cabrio Verdeck Modul"
+  },
+  {
+    "series": "E88",
+    "ecuDescriptionFile": "CVM_88_2",
+    "identifier": "24 ---- 0F31",
+    "group": "D_CVM",
+    "name": "Cabrio Verdeck Modul"
+  },
+  {
+    "series": "R57",
+    "ecuDescriptionFile": "CVM_57",
+    "identifier": "24 ---- 1120",
+    "group": "D_CVM",
+    "name": "Cabrio Verdeck Modul"
+  },
+  {
+    "series": "R59",
+    "ecuDescriptionFile": "CVM_59",
+    "identifier": "24 ---- 112A",
+    "group": "D_CVM",
+    "name": "Cabrio Verdeck Modul"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "CTM_89",
+    "identifier": "24 ---- 1060",
+    "group": "D_CVM",
+    "name": "Cabrio Top Modul"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "RSE_70",
+    "identifier": "26 ---- 0C70",
+    "group": "D_RSE",
+    "name": "Rear Seat Entertainment"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "RSE_MID",
+    "identifier": "26 ---- 0C71",
+    "group": "D_RSE",
+    "name": "Rear Seat Entertainment"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "MMB2RR",
+    "identifier": "26 ---- 11C0",
+    "group": "D_RSE",
+    "name": "Multimediabox 2"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "PGS_E65",
+    "identifier": "27 ---- 0260",
+    "group": "D_PGS",
+    "name": "Passive Go System"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "PGS_65_2",
+    "identifier": "27 ---- 0261",
+    "group": "D_PGS",
+    "name": "Passive Go System"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "PGS_56",
+    "identifier": "27 ---- 0ED0",
+    "group": "D_PGS",
+    "name": "Passive Go System 2"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "DSC_E65",
+    "identifier": "29 ---- 0270",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B0",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B1",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60E5 DSC+"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B2",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60E5 M5"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B3",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60E5 M3"
+  },
+  {
+    "series": "E82e",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B4",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60E5 E82e"
+  },
+  {
+    "series": "E82",
+    "ecuDescriptionFile": "DSC_87",
+    "identifier": "29 ---- 05B5",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle MK60E5 E82 M-Version"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DSC_60",
+    "identifier": "29 ---- 0620",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DSC_60",
+    "identifier": "29 ---- 0621",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle mit AFS"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE0",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle TRWEBC450"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE1",
+    "group": "D_DSC",
+    "name": "ASC TRWEBC450"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE2",
+    "group": "D_DSC",
+    "name": "ABS TRWEBC450"
+  },
+  {
+    "series": "R56e",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE3",
+    "group": "D_DSC",
+    "name": "DSC TRWEBC450 R56e"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE4",
+    "group": "D_DSC",
+    "name": "DSC TRWEBC450V"
+  },
+  {
+    "series": "R60",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE5",
+    "group": "D_DSC",
+    "name": "DSC TRWEBC450V Allrad"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE6",
+    "group": "D_DSC",
+    "name": "DSC TRWEBC450V ohne Drucksensor"
+  },
+  {
+    "series": "R60",
+    "ecuDescriptionFile": "DSC_56",
+    "identifier": "29 ---- 0EE7",
+    "group": "D_DSC",
+    "name": "DSC TRWEBC450V Allrad ohne Drucksensor"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BC1",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Allrad"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DXC8_P",
+    "identifier": "29 ---- 0BC2",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Plus mit Allrad"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DXC8_P",
+    "identifier": "29 ---- 0BC3",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Plus"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DXC8_P",
+    "identifier": "29 ---- 0BC4",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Plus mit AFS"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "DXC_70",
+    "identifier": "29 ---- 0BC5",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle EHB_3 Allrad"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BC6",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BC7",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle DSC8_P"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "DXC_70",
+    "identifier": "29 ---- 0BC8",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle EHB_3 Allrad"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BC9",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle DXC8"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BCA",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle DXC8 Allrad"
+  },
+  {
+    "series": "M12",
+    "ecuDescriptionFile": "DXC_90",
+    "identifier": "29 ---- 0BCB",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle M12"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DSC_60PP",
+    "identifier": "29 ---- 0D10",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Plus Plus EHB"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DSC_60PP",
+    "identifier": "29 ---- 0D11",
+    "group": "D_DSC",
+    "name": "Dynamische Stabilitätskontrolle Plus Plus EHB Allrad"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "EMF_E65",
+    "identifier": "2A ---- 0280",
+    "group": "D_EMF",
+    "name": "Elektromechanische Feststellbremse"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EMF_70",
+    "identifier": "2A ---- 0D10",
+    "group": "D_EMF",
+    "name": "Elektromechanische Feststellbremse"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "EMF_89",
+    "identifier": "2A ---- 1020",
+    "group": "D_EMF",
+    "name": "Elektromechanische Feststellbremse"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "EPS_90",
+    "identifier": "30 ---- 0940",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "EPS_56",
+    "identifier": "30 ---- 0D20",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "R60",
+    "ecuDescriptionFile": "EPS_56",
+    "identifier": "30 ---- 0D21",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "EPS_72",
+    "identifier": "30 ---- 10D0",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MMC_E65",
+    "identifier": "31 ---- 04F0",
+    "group": "D_MMC",
+    "name": "Multimedia Changer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MMC_65_2",
+    "identifier": "31 ---- 04F1",
+    "group": "D_MMC",
+    "name": "Multimedia Changer"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MMCH70",
+    "identifier": "31 ---- 0F70",
+    "group": "D_MMC",
+    "name": "Multimedia Changer Host"
+  },
+  {
+    "series": "E66",
+    "ecuDescriptionFile": "MMIFC",
+    "identifier": "32 ---- 0660",
+    "group": "D_MMIFC",
+    "name": "MOST/CAN-Gateway (im Fond MMI)"
+  },
+  {
+    "series": "E66",
+    "ecuDescriptionFile": "MMI_GTF",
+    "identifier": "34 ---- 0670",
+    "group": "D_MMIF",
+    "name": "Mensch Maschine Interface Grafikteil Fond"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "MMI_GTF",
+    "identifier": "34 ---- 0810",
+    "group": "D_MMIF",
+    "name": "Mensch Maschine Interface hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SVS_E65",
+    "identifier": "35 ---- 0530",
+    "group": "D_SVS",
+    "name": "Sprachverarbeitungssystem"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SVS_60",
+    "identifier": "35 ---- 08F0",
+    "group": "D_SVS",
+    "name": "Sprachverarbeitungssystem (im CCC)"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TEL_ECE",
+    "identifier": "36 ---- 0290",
+    "group": "D_TEL",
+    "name": "Telefon ECE Variante"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TEL_USA",
+    "identifier": "36 ---- 0298",
+    "group": "D_TEL",
+    "name": "Telefon US Variante"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TELE60",
+    "identifier": "36 ---- 0630",
+    "group": "D_TEL",
+    "name": "Telefon ECE Variante"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TELE60_2",
+    "identifier": "36 ---- 0631",
+    "group": "D_TEL",
+    "name": "Telematic Control Unit"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TELE60_3",
+    "identifier": "36 ---- 0632",
+    "group": "D_TEL",
+    "name": "Telematic Control Unit"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TELE60",
+    "identifier": "36 ---- 0640",
+    "group": "D_TEL",
+    "name": "Telefon US Variante"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TELE60",
+    "identifier": "36 ---- 0650",
+    "group": "D_TEL",
+    "name": "Telefon Japan Variante"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ULF_60",
+    "identifier": "36 ---- 0A80",
+    "group": "D_TEL",
+    "name": "Universelle Lade- Freisprecheinrichtung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ULF_60PB",
+    "identifier": "36 ---- 0A88",
+    "group": "D_TEL",
+    "name": "Universelle Lade- Freisprecheinrichtung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ULF2_60",
+    "identifier": "36 ---- 0F00",
+    "group": "D_TEL",
+    "name": "Universelle Lade- Freisprecheinrichtung"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CMEDIAR",
+    "identifier": "36 ---- 1200",
+    "group": "D_TEL",
+    "name": "COMBOX Telefon Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "AMP_E65",
+    "identifier": "37 ---- 02A0",
+    "group": "D_AMP",
+    "name": "Top HIFI Verstärker"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "AMP_60",
+    "identifier": "37 ---- 0670",
+    "group": "D_AMP",
+    "name": "Top HIFI Verstärker"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "AMPT70",
+    "identifier": "37 ---- 0E40",
+    "group": "D_AMP",
+    "name": "Top HIFI Verstärker"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "AMPH70",
+    "identifier": "37 ---- 0E50",
+    "group": "D_AMP",
+    "name": "HIFI Verstärker"
+  },
+  {
+    "series": "F01",
+    "ecuDescriptionFile": "AMPH70",
+    "identifier": "37 ---- 0E58",
+    "group": "D_AMP",
+    "name": "HIFI Verstärker"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "AMPH56",
+    "identifier": "37 ---- 0D00",
+    "group": "D_AMP",
+    "name": "HIFI Verstärker"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "AMPHH2",
+    "identifier": "37 ---- 12F0",
+    "group": "D_AMP",
+    "name": "HIFI Verstärker"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "AMPTLR89",
+    "identifier": "37 ---- 1370",
+    "group": "D_AMP",
+    "name": "ASD-TopHiFi-Verstärker"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "EHC_E65",
+    "identifier": "38 ---- 02B0",
+    "group": "D_EHC",
+    "name": "Luftfeder"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EHC_70",
+    "identifier": "38 ---- 02B1",
+    "group": "D_EHC",
+    "name": "Luftfeder"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "EHC2RR",
+    "identifier": "38 ---- 0840",
+    "group": "D_EHC",
+    "name": "2-Achs Luftfeder"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "EDC_K",
+    "identifier": "39 ---- 02C0",
+    "group": "D_EDC",
+    "name": "Elektronische Dämpferkontrolle"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "EDCK65",
+    "identifier": "39 ---- 02C1",
+    "group": "D_EDC",
+    "name": "Elektronische Dämpferkontrolle"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "VDM_70",
+    "identifier": "39 ---- 02C2",
+    "group": "D_EDC",
+    "name": "Vertikaldynamik Management"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "KHI_E65",
+    "identifier": "3A ---- 02D0",
+    "group": "D_KHI",
+    "name": "Kopfhöhrer Interface"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "NAV_E65",
+    "identifier": "3B ---- 02E0",
+    "group": "D_NAV",
+    "name": "Navigation ECE/US"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "JNAV60",
+    "identifier": "3B ---- 0870",
+    "group": "D_NAV",
+    "name": "Japan Navigation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "JNAV60_2",
+    "identifier": "3B ---- 0871",
+    "group": "D_NAV",
+    "name": "Japan Navigation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "JNAV60_3",
+    "identifier": "3B ---- 0872",
+    "group": "D_NAV",
+    "name": "Japan Navigation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "KNAV60",
+    "identifier": "3B ---- 0875",
+    "group": "D_NAV",
+    "name": "Korea Navigation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CNAV60",
+    "identifier": "3B ---- 087A",
+    "group": "D_NAV",
+    "name": "China Navigation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "NAVL60",
+    "identifier": "3B ---- 0B00",
+    "group": "D_NAV",
+    "name": "Navigation ECE/US Low (im MASK)"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "NAV_E65",
+    "identifier": "3B ---- 0B30",
+    "group": "D_NAV",
+    "name": "Navigation ECE/US"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "NAVMASK2",
+    "identifier": "3B ---- 0DC0",
+    "group": "D_NAV",
+    "name": "Navigation (im MASK2)"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CDC_E65",
+    "identifier": "3C ---- 02F0",
+    "group": "D_CDC",
+    "name": "Audio CD-Changer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "M_IPOD",
+    "identifier": "3C ---- 0F40",
+    "group": "D_CDC",
+    "name": "Most CDC IPOD Interface Nachrüstlösung"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CDCH70",
+    "identifier": "3C ---- 0F50",
+    "group": "D_CDC",
+    "name": "Audio CD-Changer Host"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "HUD_60",
+    "identifier": "3D ---- 0680",
+    "group": "D_HUD",
+    "name": "Head-Up-Display"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "HUD_70",
+    "identifier": "3D ---- 0D50",
+    "group": "D_HUD",
+    "name": "Head-Up-Display"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "ADP_RR",
+    "identifier": "3E ---- 07D0",
+    "group": "D_ADP",
+    "name": "Audio Display Panel"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ASK_E65",
+    "identifier": "3F ---- 0300",
+    "group": "D_ASK",
+    "name": "Audio System Kontroller"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ASK_60",
+    "identifier": "3F ---- 0A00",
+    "group": "D_ASK",
+    "name": "Audio System Kontroller (im CCC)"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "ASD_89",
+    "identifier": "3F ---- 1380",
+    "group": "D_ASK",
+    "name": "Active Sound Design"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CAS",
+    "identifier": "40 ---- 0310",
+    "group": "D_CAS",
+    "name": "Car Access System"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CAS",
+    "identifier": "40 ---- 0690",
+    "group": "D_CAS",
+    "name": "Car Access System 2"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "CAS",
+    "identifier": "40 ---- 06A0",
+    "group": "D_CAS",
+    "name": "Car Access System 2 / 3"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CAS",
+    "identifier": "40 ---- 09C0",
+    "group": "D_CAS",
+    "name": "Car Access System 2"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CAS_RR",
+    "identifier": "40 ---- 0BE0",
+    "group": "D_CAS",
+    "name": "Car Access System"
+  },
+  {
+    "series": "J11",
+    "ecuDescriptionFile": "CFG_J11",
+    "identifier": "40 ---- 13A0",
+    "group": "D_CAS",
+    "name": "Konfiguration für J11 DME"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "DWA_E65",
+    "identifier": "41 ---- 0320",
+    "group": "D_DWA",
+    "name": "Diebstahlwarnanlage"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DWA_E65",
+    "identifier": "41 ---- 06B0",
+    "group": "D_DWA",
+    "name": "Diebstahlwarnanlage"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "DWA_63",
+    "identifier": "41 ---- 0750",
+    "group": "D_DWA",
+    "name": "DWA Sirene und Neigungsgeber"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "DWA_E65",
+    "identifier": "41 ---- 0780",
+    "group": "D_DWA",
+    "name": "Diebstahlwarnanlage"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CIM",
+    "identifier": "42 ---- 0330",
+    "group": "D_CIM",
+    "name": "Chassis Integration Modul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CIM_2",
+    "identifier": "42 ---- 0331",
+    "group": "D_CIM",
+    "name": "Chassis Integration Modul Redesign"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "POW_E65",
+    "identifier": "43 ---- 0340",
+    "group": "D_POW",
+    "name": "Powermodul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "POW_E65",
+    "identifier": "43 ---- 0341",
+    "group": "D_POW",
+    "name": "Powermodul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "POW_65_2",
+    "identifier": "43 ---- 0342",
+    "group": "D_POW",
+    "name": "Powermodul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "POW_65_3",
+    "identifier": "43 ---- 0343",
+    "group": "D_POW",
+    "name": "Powermodul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "POW_65_3",
+    "identifier": "43 ---- 0344",
+    "group": "D_POW",
+    "name": "Powermodul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MPM_60",
+    "identifier": "43 ---- 0B10",
+    "group": "D_POW",
+    "name": "MicroPowerModul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SHD_E65",
+    "identifier": "44 ---- 0350",
+    "group": "D_SHD",
+    "name": "Schiebehebedach"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SD_KWP",
+    "identifier": "44 ---- 0351",
+    "group": "D_SHD",
+    "name": "Multi Drive Schiebehebedach"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "SD_KWP",
+    "identifier": "44 ---- 0352",
+    "group": "D_SHD",
+    "name": "Schiebehebedach"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "RLS_E65",
+    "identifier": "45 ---- 0360",
+    "group": "D_RLS",
+    "name": "Regen- Lichtsensor"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "RLSS70",
+    "identifier": "45 ---- 0E70",
+    "group": "D_RLS",
+    "name": "Regen- Licht-"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "WIM_E65",
+    "identifier": "46 ---- 0370",
+    "group": "D_WIM",
+    "name": "Wischermodul"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ANT_E65",
+    "identifier": "47 ---- 0380",
+    "group": "D_ANTTU",
+    "name": "Antennentuner"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ANT_60",
+    "identifier": "47 ---- 06D0",
+    "group": "D_ANTTU",
+    "name": "Antennentuner im CCC"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "VSW_70",
+    "identifier": "48 ---- 0F10",
+    "group": "D_VSW",
+    "name": "Video Switch für Japan Kamera"
+  },
+  {
+    "series": "E67",
+    "ecuDescriptionFile": "SECUR1",
+    "identifier": "49 ---- 0890",
+    "group": "D_SECUR1",
+    "name": "Sicherheitsfahrzeugmodul 1"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "SECUR1_2",
+    "identifier": "49 ---- 0891",
+    "group": "D_SECUR1",
+    "name": "Sicherheitsfahrzeugmodul 1 (für E60 / E90)"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "ZBM_RR",
+    "identifier": "49 ---- 1070",
+    "group": "D_SECUR1",
+    "name": "Zwei-Batterien-Management"
+  },
+  {
+    "series": "E67",
+    "ecuDescriptionFile": "SECUR2",
+    "identifier": "4A ---- 08A0",
+    "group": "D_SECUR2",
+    "name": "Sicherheitsfahrzeugmodul 2"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VID_E65",
+    "identifier": "4B ---- 0390",
+    "group": "D_VIDEO",
+    "name": "Videomodul ECE"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VID_E65",
+    "identifier": "4B ---- 0391",
+    "group": "D_VIDEO",
+    "name": "Videomodul RGB ohne Navigation"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VID_E65",
+    "identifier": "4B ---- 0392",
+    "group": "D_VIDEO",
+    "name": "Videomodul vorne und hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VMSW65",
+    "identifier": "4B ---- 0393",
+    "group": "D_VIDEO",
+    "name": "Videomodul Videoswitch"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VID_65_2",
+    "identifier": "4B ---- 0398",
+    "group": "D_VIDEO",
+    "name": "Videomodul Hybrid FBAS"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "VID_65_2",
+    "identifier": "4B ---- 0399",
+    "group": "D_VIDEO",
+    "name": "Videomodul Hybrid vorne und hinten"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "TVM_89",
+    "identifier": "4B ---- 1130",
+    "group": "D_VIDEO",
+    "name": "TV-Modul DVB-T"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "TVM_89",
+    "identifier": "4B ---- 1140",
+    "group": "D_VIDEO",
+    "name": "TV-Modul DVB-T Rear Seat Entertainment"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "TVM_89",
+    "identifier": "4B ---- 1150",
+    "group": "D_VIDEO",
+    "name": "TV-Modul ISDB-T (Japan)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "TVM_89",
+    "identifier": "4B ---- 1310",
+    "group": "D_VIDEO",
+    "name": "TV-Modul DTMB (China)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "TVM2R",
+    "identifier": "4B ---- 1330",
+    "group": "D_VIDEO",
+    "name": "TV-Modul2 Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMF_E65",
+    "identifier": "4C ---- 03A0",
+    "group": "D_TMFT",
+    "name": "Türmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMF_E65",
+    "identifier": "4C ---- 03A1",
+    "group": "D_TMFT",
+    "name": "Türmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMB_E65",
+    "identifier": "4D ---- 03B0",
+    "group": "D_TMBT",
+    "name": "Türmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMB_E65",
+    "identifier": "4D ---- 03B1",
+    "group": "D_TMBT",
+    "name": "Türmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMFHE65",
+    "identifier": "4E ---- 03C0",
+    "group": "D_TMFTH",
+    "name": "Türmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMFHE65",
+    "identifier": "4E ---- 03C1",
+    "group": "D_TMFTH",
+    "name": "Türmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMBHE65",
+    "identifier": "4F ---- 03D0",
+    "group": "D_TMBTH",
+    "name": "Türmodul Beifahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "TMBHE65",
+    "identifier": "4F ---- 03D1",
+    "group": "D_TMBTH",
+    "name": "Türmodul Beifahrer hinten"
+  },
+  {
+    "series": "E72",
+    "ecuDescriptionFile": "EKK_72",
+    "identifier": "4F ---- 1050",
+    "group": "D_EKK",
+    "name": "Elektrischer Klimakompressor"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SINE_65",
+    "identifier": "50 ---- 03E0",
+    "group": "D_SINE",
+    "name": "DWA Sirene und Neigungsgeber"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "IBOC60",
+    "identifier": "53 ---- 0460",
+    "group": "D_IBOC",
+    "name": "Digital Tuner US"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SAT_60",
+    "identifier": "54 ---- 0860",
+    "group": "D_RADIO",
+    "name": "Satellitenradio US"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "SAT_RAD2",
+    "identifier": "54 ---- 1320",
+    "group": "D_RADIO",
+    "name": "Satellitentuner Firmware"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "ISPB70",
+    "identifier": "55 ---- 0E10",
+    "group": "D_ISPB",
+    "name": "Sprachverarbeitungssystem"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ULF2_HI",
+    "identifier": "55 ---- 1030",
+    "group": "D_ISPB",
+    "name": "Plattform MULF2-High"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "FZD_87",
+    "identifier": "56 ---- 05A0",
+    "group": "D_FZD",
+    "name": "Funktionszentrum Dach"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FZD_70",
+    "identifier": "56 ---- 0D70",
+    "group": "D_FZD",
+    "name": "Funktionszentrum Dach"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RLS_87",
+    "identifier": "56 80 ---- 0B70",
+    "group": "D_RLS",
+    "name": "Regen- Lichtsensor"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "RLSS90",
+    "identifier": "56 80 ---- 0E70",
+    "group": "D_RLS",
+    "name": "Regen- Lichtsensor mit Beschlagsensor"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "NVE_65",
+    "identifier": "57 ---- 01B0",
+    "group": "D_NVE",
+    "name": "Night Vision Steuergerät"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "ADPFRR",
+    "identifier": "58 ---- 0B40",
+    "group": "D_ADPF",
+    "name": "Audio Display Panel hinten"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ALBV60F",
+    "identifier": "59 ---- 0B80",
+    "group": "D_ALBVF",
+    "name": "Aktive Lehnenbreitenverstellung Fahrer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ALBV60B",
+    "identifier": "5A ---- 0B80",
+    "group": "D_ALBVB",
+    "name": "Aktive Lehnenbreitenverstellung Beifahrer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "DAB_60",
+    "identifier": "5B ---- 0850",
+    "group": "D_DAB",
+    "name": "Digital Tuner ECE"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "BEHO60",
+    "identifier": "5C ---- 0C20",
+    "group": "D_BEHO",
+    "name": "Behördenmodul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "TLC_60",
+    "identifier": "5D ---- 0FB0",
+    "group": "D_TLC",
+    "name": "Fahrspurerkennung Time to Crossing"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "KAFAS70",
+    "identifier": "5D ---- 12D0",
+    "group": "D_TLC",
+    "name": "Kamerabasiertes Fahrerassistenzsystem"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "GWS_70",
+    "identifier": "5E ---- 0E30",
+    "group": "D_GWS",
+    "name": "Gangwahlschalter"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "GWS_60",
+    "identifier": "5E ---- 0FC0",
+    "group": "D_GWS",
+    "name": "Gangwahlschalter"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "GWS_60_2",
+    "identifier": "5E ---- 0FC8",
+    "group": "D_GWS",
+    "name": "Gangwahlschalter"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "GWS_90",
+    "identifier": "5E ---- 1040",
+    "group": "D_GWS",
+    "name": "Gangwahlschalter M3"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FLA_65",
+    "identifier": "5F ---- 0C10",
+    "group": "D_FLA",
+    "name": "Fernlicht Assistent"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FLA_R",
+    "identifier": "5F ---- 1290",
+    "group": "D_FLA",
+    "name": "Fernlicht Assistent Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "KOMBI65",
+    "identifier": "60 ---- 03F0",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "KOMBI65",
+    "identifier": "60 ---- 03F1",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "KOMB65_2",
+    "identifier": "60 ---- 03F2",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "KOMB65_2",
+    "identifier": "60 ---- 03F3",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "KOMB60",
+    "identifier": "60 ---- 06E0",
+    "group": "D_KOMBI",
+    "name": "Intrumentenkombi"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "KOMBRR",
+    "identifier": "60 ---- 07C0",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "KOMBRR_2",
+    "identifier": "60 ---- 07C1",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "KOMBRR_2",
+    "identifier": "60 ---- 07C2",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "KOMB87",
+    "identifier": "60 ---- 08D0",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "KOMB56",
+    "identifier": "60 ---- 0CC0",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "KOMB70",
+    "identifier": "60 ---- 0CF0",
+    "group": "D_KOMBI",
+    "name": "Instrumentenkombi"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FBI_E65",
+    "identifier": "61 ---- 0520",
+    "group": "D_FBI",
+    "name": "Flexible Bus Interface"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CECALLR",
+    "identifier": "61 ---- 1210",
+    "group": "D_ECALL",
+    "name": "COMBOX Notruf Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MC_GW",
+    "identifier": "62 ---- 0400",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im MMI)"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MCGW60",
+    "identifier": "62 ---- 0590",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im MASK)"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "MC_GW",
+    "identifier": "62 ---- 0830",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im MMI)"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CCCG60",
+    "identifier": "62 ---- 09D0",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im CCC)"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RAD2_GW",
+    "identifier": "62 ---- 0AC0",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im Radio Stufe 2)"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RAD2_GW",
+    "identifier": "62 ---- 0F90",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im Radio Stufe 2)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MASK2GW",
+    "identifier": "62 ---- 0D80",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im MASK2)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CHAMPGW",
+    "identifier": "62 ---- 0D90",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im Champ)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICR_GW",
+    "identifier": "62 ---- 10E0",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im CIC Rüko)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CHAMP2RG",
+    "identifier": "62 ---- 1190",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im Champ2 Rüko)"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICMR_GW",
+    "identifier": "62 ---- 11E0",
+    "group": "D_MOSTGW",
+    "name": "MOST/CAN-Gateway (im CIC MID Rüko)"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "MMI_GT",
+    "identifier": "63 ---- 0410",
+    "group": "D_MMI",
+    "name": "Mensch Maschine Interface Grafikteil"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CCC_60",
+    "identifier": "63 ---- 06F0",
+    "group": "D_MMI",
+    "name": "Car Comunication Computer"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "MASK60",
+    "identifier": "63 ---- 0700",
+    "group": "D_MMI",
+    "name": "MMI Audio System Kontroller"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "MMI_GT",
+    "identifier": "63 ---- 0800",
+    "group": "D_MMI",
+    "name": "Mensch Maschine Interface"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RAD1",
+    "identifier": "63 ---- 0900",
+    "group": "D_MMI",
+    "name": "Radio Stufe 1"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "RAD12R",
+    "identifier": "63 ---- 0908",
+    "group": "D_MMI",
+    "name": "Radio 1.2 Rüko"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RAD2",
+    "identifier": "63 ---- 0910",
+    "group": "D_MMI",
+    "name": "Radio Stufe 2"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "RAD2",
+    "identifier": "63 ---- 0FA0",
+    "group": "D_MMI",
+    "name": "Radio Stufe 2"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "RAD2",
+    "identifier": "63 ---- 0FA8",
+    "group": "D_MMI",
+    "name": "Radio Stufe 2 Plus"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MASK2",
+    "identifier": "63 ---- 0DA0",
+    "group": "D_MMI",
+    "name": "Audio System Kontroller MASK2"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CHAMP",
+    "identifier": "63 ---- 0DB0",
+    "group": "D_MMI",
+    "name": "Audio System Kontroller CHAMP"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICR",
+    "identifier": "63 ---- 10F0",
+    "group": "D_MMI",
+    "name": "Car Infotainment Computer CIC Rüko"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICMR",
+    "identifier": "63 ---- 11D0",
+    "group": "D_MMI",
+    "name": "Car Infotainment Computer CIC MID Rüko"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CHAMP2R",
+    "identifier": "63 ---- 11A0",
+    "group": "D_MMI",
+    "name": "Audio System Kontroller CHAMP2 Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "PDC_E65",
+    "identifier": "64 ---- 0420",
+    "group": "D_PDC",
+    "name": "Park Distance Control"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "PDC_65_2",
+    "identifier": "64 ---- 0421",
+    "group": "D_PDC",
+    "name": "Park Distance Control"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "PDC_87",
+    "identifier": "64 ---- 09E0",
+    "group": "D_PDC",
+    "name": "Park Distance Control"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "PDCR3",
+    "identifier": "64 ---- 1270",
+    "group": "D_PDC",
+    "name": "Park Distance Control Rüko"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BZM_E65",
+    "identifier": "65 ---- 0430",
+    "group": "D_BZM",
+    "name": "Bedienzentrum Mittelkonsole"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SZM_60",
+    "identifier": "65 ---- 0710",
+    "group": "D_BZM",
+    "name": "Schaltzentrum Mittelkonsole"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SZM_60",
+    "identifier": "65 ---- 0718",
+    "group": "D_BZM",
+    "name": "Schaltzentrum Mittelkonsole"
+  },
+  {
+    "series": "E63",
+    "ecuDescriptionFile": "SZM_60",
+    "identifier": "65 ---- 0990",
+    "group": "D_BZM",
+    "name": "Schaltzentrum Mittelkonsole"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BZMF_E65",
+    "identifier": "66 ---- 0440",
+    "group": "D_BZMF",
+    "name": "Bedienzentrum Mittelarmlehne"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "EC_E65",
+    "identifier": "67 ---- 0540",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ZBE_65",
+    "identifier": "67 ---- 0541",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ECL60",
+    "identifier": "67 ---- 0720",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit Low"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ECH60",
+    "identifier": "67 ---- 07F0",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit High"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ZBEH60",
+    "identifier": "67 ---- 07F1",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit High"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ZBEH60",
+    "identifier": "67 ---- 07F2",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit High"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "ZBEH87",
+    "identifier": "67 ---- 0AE0",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit High"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "ZBEL87",
+    "identifier": "67 ---- 0AF0",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit Low"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "ZBEL87_2",
+    "identifier": "67 ---- 0AF8",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit Low"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "ZBE_56",
+    "identifier": "67 ---- 0D20",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "ZBE_60_2",
+    "identifier": "67 ---- 1090",
+    "group": "D_EC",
+    "name": "Zentrale Bedieneinheit"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ECF_E65",
+    "identifier": "68 ---- 0540",
+    "group": "D_ECF",
+    "name": "Zentrale Bedieneinheit Fond"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "ZBEF65",
+    "identifier": "68 ---- 0541",
+    "group": "D_ECF",
+    "name": "Zentrale Bedieneinheit Fond"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAH_E65",
+    "identifier": "69 ---- 0450",
+    "group": "D_FAH",
+    "name": "Sitzmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAH_65_2",
+    "identifier": "69 ---- 0451",
+    "group": "D_FAH",
+    "name": "Sitzmodul Fahrer hinten"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "FAH_PLX",
+    "identifier": "69 ---- 0C30",
+    "group": "D_FAH",
+    "name": "Sitzmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAH_PLX",
+    "identifier": "69 ---- 0C40",
+    "group": "D_FAH",
+    "name": "Sitzmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAH_PLX",
+    "identifier": "69 ---- 0C50",
+    "group": "D_FAH",
+    "name": "Sitzmodul Fahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFH_E65",
+    "identifier": "6A ---- 0450",
+    "group": "D_BFH",
+    "name": "Sitzmodul Beifahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFH_65_2",
+    "identifier": "6A ---- 0451",
+    "group": "D_BFH",
+    "name": "Sitzmodul Beifahrer hinten"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "BFH_PLX",
+    "identifier": "6A ---- 0C30",
+    "group": "D_BFH",
+    "name": "Sitzmodul Beifahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFH_PLX",
+    "identifier": "6A ---- 0C40",
+    "group": "D_BFH",
+    "name": "Sitzmodul Beifahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFH_PLX",
+    "identifier": "6A ---- 0C50",
+    "group": "D_BFH",
+    "name": "Sitzmodul Beifahrer hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "HKL_E65",
+    "identifier": "6B ---- 0470",
+    "group": "D_HKL",
+    "name": "Heckklappenlift"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "HKL_65_2",
+    "identifier": "6B ---- 0471",
+    "group": "D_HKL",
+    "name": "Heckklappenlift"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "HKL_70",
+    "identifier": "6B ---- 0D70",
+    "group": "D_HKL",
+    "name": "Heckklappenlift"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "KFS_RR",
+    "identifier": "6C ---- 07A0",
+    "group": "D_KFS",
+    "name": "Kühlerfigursteuerung"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "KFS_RR",
+    "identifier": "6C ---- 07A1",
+    "group": "D_KFS",
+    "name": "Kühlerfigursteuerung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAS_E65",
+    "identifier": "6D ---- 0450",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAS_65_2",
+    "identifier": "6D ---- 0451",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "FAS_87",
+    "identifier": "6D ---- 0920",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "FAS_PLX",
+    "identifier": "6D ---- 0C30",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAS_PLX",
+    "identifier": "6D ---- 0C40",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "FAS_PLX",
+    "identifier": "6D ---- 0C50",
+    "group": "D_FAS",
+    "name": "Sitzmodul Fahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFS_E65",
+    "identifier": "6E ---- 0450",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFS_65_2",
+    "identifier": "6E ---- 0451",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "BFS_87",
+    "identifier": "6E ---- 0920",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "BFS_PLX",
+    "identifier": "6E ---- 0C30",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFS_PLX",
+    "identifier": "6E ---- 0C40",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "BFS_PLX",
+    "identifier": "6E ---- 0C50",
+    "group": "D_BFS",
+    "name": "Sitzmodul Beifahrer"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "LM_E65_2",
+    "identifier": "70 ---- 04A1",
+    "group": "D_LM",
+    "name": "Lichtmodul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "LM_60",
+    "identifier": "70 ---- 07B0",
+    "group": "D_LM",
+    "name": "Lichtmodul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "LM_AHL",
+    "identifier": "70 ---- 07B8",
+    "group": "D_LM",
+    "name": "Lichtmodul mit Adaptiver Lichtsteuerung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "LM_AHL_2",
+    "identifier": "70 ---- 0D60",
+    "group": "D_LM",
+    "name": "Lichtmodul mit Adaptiver Lichtsteuerung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "AHM_E65",
+    "identifier": "71 ---- 04B0",
+    "group": "D_AHM",
+    "name": "Anhängermodul"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "AHM_70",
+    "identifier": "71 ---- 1170",
+    "group": "D_AHM",
+    "name": "Anhängermodul"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "FRM_87",
+    "identifier": "72 ---- 05C0",
+    "group": "D_KBM",
+    "name": "Fussraum Modul Fahrerseite"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "FRM_87",
+    "identifier": "72 ---- 05C1",
+    "group": "D_KBM",
+    "name": "Fussraum Modul Fahrerseite"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FRM_70",
+    "identifier": "72 ---- 0E60",
+    "group": "D_KBM",
+    "name": "Fussraum Modul Fahrerseite"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "KBM_60",
+    "identifier": "72 ---- 0730",
+    "group": "D_KBM",
+    "name": "Karosserie Basis Modul"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CID_60",
+    "identifier": "73 ---- 0740",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CID_60",
+    "identifier": "73 ---- 07E0",
+    "group": "D_CID",
+    "name": "Central Information Display"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "CID_90",
+    "identifier": "73 ---- 0A30",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "CID_87",
+    "identifier": "73 ---- 0A40",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CID_70",
+    "identifier": "73 ---- 0CE0",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CIDR_70",
+    "identifier": "73 ---- 11B0",
+    "group": "D_CID",
+    "name": "Zentrales Info Display Rüko"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CIDR_70",
+    "identifier": "73 ---- 11B1",
+    "group": "D_CID",
+    "name": "Zentrales Info Display Rüko"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "CID_89",
+    "identifier": "73 ---- 1160",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CIDF65",
+    "identifier": "74 ---- 0770",
+    "group": "D_CIDF",
+    "name": "Zentrales Info Display hinten"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "CIDF65",
+    "identifier": "74 ---- 0980",
+    "group": "D_CIDF",
+    "name": "Zentrales Info Display hinten"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CIDF65",
+    "identifier": "74 ---- 09A0",
+    "group": "D_CIDF",
+    "name": "Zentrales Info Display hinten links"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CIDF65_2",
+    "identifier": "74 ---- 09A1",
+    "group": "D_CIDF",
+    "name": "Zentrales Info Display hinten links"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "RSEH65",
+    "identifier": "74 ---- 0CB0",
+    "group": "D_CIDF",
+    "name": "Rear Seat Entertainment"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FOMO70",
+    "identifier": "74 ---- 0EC0",
+    "group": "D_CIDF",
+    "name": "Fondmonitor links"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FOMO2_70",
+    "identifier": "75 ---- 0EC0",
+    "group": "D_CIDF2",
+    "name": "Fondmonitor rechts"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CIDF2RR",
+    "identifier": "75 ---- 09B0",
+    "group": "D_CIDF2",
+    "name": "Zentrales Info Display hinten rechts"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "CIDF2RR2",
+    "identifier": "75 ---- 09B1",
+    "group": "D_CIDF2",
+    "name": "Zentrales Info Display hinten rechts"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "RFK_70",
+    "identifier": "77 ---- 0E80",
+    "group": "D_RFK",
+    "name": "Rückfahrkamera-System"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "IHKA65",
+    "identifier": "78 ---- 04C0",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "IHKA87",
+    "identifier": "78 ---- 05D0",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "E84",
+    "ecuDescriptionFile": "IHKA87_2",
+    "identifier": "78 ---- 05D8",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "E82e",
+    "ecuDescriptionFile": "IHKA82E",
+    "identifier": "78 ---- 05DA",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "M12",
+    "ecuDescriptionFile": "IHKA_M12",
+    "identifier": "78 ---- 05DC",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "RR1",
+    "ecuDescriptionFile": "IHKARR",
+    "identifier": "78 ---- 0660",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "RR2",
+    "ecuDescriptionFile": "IHKARR2",
+    "identifier": "78 ---- 0D40",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "IHKA60",
+    "identifier": "78 ---- 0790",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "IHKA60",
+    "identifier": "78 ---- 0791",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "IHKA60_2",
+    "identifier": "78 ---- 0792",
+    "group": "D_KLIMA",
+    "name": "Klimabedienteil"
+  },
+  {
+    "series": "E90",
+    "ecuDescriptionFile": "IHKR90",
+    "identifier": "78 ---- 0880",
+    "group": "D_KLIMA",
+    "name": "Klimaregelung"
+  },
+  {
+    "series": "E87",
+    "ecuDescriptionFile": "IHR_87",
+    "identifier": "78 ---- 08B0",
+    "group": "D_KLIMA",
+    "name": "Heizungsregelung"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "IHKA70",
+    "identifier": "78 ---- 0D30",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "IHS_56",
+    "identifier": "78 ---- 0DE0",
+    "group": "D_KLIMA",
+    "name": "Heizungssteuerung"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "IHKS56",
+    "identifier": "78 ---- 0DF0",
+    "group": "D_KLIMA",
+    "name": "Klimasteuerung"
+  },
+  {
+    "series": "R56",
+    "ecuDescriptionFile": "IHKA56",
+    "identifier": "78 ---- 0E00",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "IHKA89",
+    "identifier": "78 ---- 10B0",
+    "group": "D_KLIMA",
+    "name": "Klimaautomatik"
+  },
+  {
+    "series": "E89",
+    "ecuDescriptionFile": "IHKR89",
+    "identifier": "78 ---- 10C0",
+    "group": "D_KLIMA",
+    "name": "Klimaregelung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "HKA_E65",
+    "identifier": "79 ---- 0510",
+    "group": "D_KLIMA2",
+    "name": "Heck Klimaautomatik"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "FKA_70",
+    "identifier": "79 ---- 0D40",
+    "group": "D_KLIMA2",
+    "name": "Fond Klimaautomatik"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "SHZH_E65",
+    "identifier": "7A ---- 04D0",
+    "group": "D_SHZH",
+    "name": "Standheizung"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SHZH_E65",
+    "identifier": "7A ---- 0760",
+    "group": "D_SHZH",
+    "name": "Standheizung"
+  },
+  {
+    "series": "E65",
+    "ecuDescriptionFile": "NVC_65",
+    "identifier": "8B ---- 0C90",
+    "group": "D_NVC",
+    "name": "Night Vision Kamera"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CCCA60",
+    "identifier": "A0 ---- 0930",
+    "group": "D_CCC",
+    "name": "CCC Applikation"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "CCCA60J",
+    "identifier": "A0 ---- 0938",
+    "group": "D_CCC",
+    "name": "CCC Applikation Japan"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICR_HD",
+    "identifier": "A0 ---- 1100",
+    "group": "D_CCC",
+    "name": "Festplatte im CIC Rüko"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CICMR_SD",
+    "identifier": "A0 ---- 11F0",
+    "group": "D_CCC",
+    "name": "SD-Karte im CIC MID Rüko"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CHAMP2RS",
+    "identifier": "A0 ---- 1250",
+    "group": "D_CCC",
+    "name": "SD-Karte im Champ2 Rüko"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SBSL85",
+    "identifier": "A1 ---- 0220",
+    "group": "D_SBSL2",
+    "name": "Satellit B-Säule links"
+  },
+  {
+    "series": "E64",
+    "ecuDescriptionFile": "SBSL85",
+    "identifier": "A1 ---- 0A50",
+    "group": "D_SBSL2",
+    "name": "Satellit B-Säule links"
+  },
+  {
+    "series": "E60",
+    "ecuDescriptionFile": "SBSR85",
+    "identifier": "A2 ---- 0460",
+    "group": "D_SBSR2",
+    "name": "Satellit B-Säule rechts"
+  },
+  {
+    "series": "E64",
+    "ecuDescriptionFile": "SBSR85",
+    "identifier": "A2 ---- 0A60",
+    "group": "D_SBSR2",
+    "name": "Satellit B-Säule rechts"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EDCSVL",
+    "identifier": "A5 ---- 0C00",
+    "group": "D_EDCSVL",
+    "name": "Elektronischer Dämpfersatellit vorne links"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EDCSVR",
+    "identifier": "A6 ---- 0C00",
+    "group": "D_EDCSVR",
+    "name": "Elektronischer Dämpfersatellit vorne rechts"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EDCSHL",
+    "identifier": "A7 ---- 0C00",
+    "group": "D_EDCSHL",
+    "name": "Elektronischer Dämpfersatellit hinten links"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "EDCSHR",
+    "identifier": "A8 ---- 0C00",
+    "group": "D_EDCSHR",
+    "name": "Elektronischer Dämpfersatellit hinten rechts"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "CDCD70",
+    "identifier": "A9 ---- 0F60",
+    "group": "D_CDCDSP",
+    "name": "Audio CD-Changer DSP"
+  },
+  {
+    "series": "E70",
+    "ecuDescriptionFile": "MMCD70",
+    "identifier": "AB ---- 0F80",
+    "group": "D_MMCDSP",
+    "name": "Multimedia Changer DSP"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "ME9K_NG4",
+    "identifier": "12 .0W. 000F",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N45"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "ME9K_NG4",
+    "identifier": "12 .0L. 000F",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N45"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "ME9N45",
+    "identifier": "12 .0W. 0010",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N45"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "MEV9N46",
+    "identifier": "12 .1L. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik ME9.2 4 Zylinder N46"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "DDE50K47",
+    "identifier": "12 0058 000A",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D50M47B1",
+    "identifier": "12 0058 0012",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "DDE50K47",
+    "identifier": "12 0058 0014",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47A",
+    "identifier": "12 0058 001E",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47A",
+    "identifier": "12 0058 001F",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M57A1",
+    "identifier": "12 0059 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M57A1",
+    "identifier": "12 .59. 0020",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ"
+  },
+  {
+    "series": "E53",
+    "ecuDescriptionFile": "D50M57B1",
+    "identifier": "12 .59. 0040",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D50M57E1",
+    "identifier": "12 .59. 0041",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ EU3-MT"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47B1",
+    "identifier": "12 .JB. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ EU4"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47B1",
+    "identifier": "12 .JB. 0040",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ EU4 Cabrio"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47A",
+    "identifier": "12 .JC. 001E",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ uL"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M47B1",
+    "identifier": "12 .JC. 0030",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 4 Zylinder M47 TÜ EU4"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D50M57B1",
+    "identifier": "12 .JD. 0040",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ EU3-AT EU4"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "D50M57E1",
+    "identifier": "12 .JD. 0041",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ EU3-AT EU4"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M57E1",
+    "identifier": "12 .JD. 0042",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ EU4"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "D50M57E1",
+    "identifier": "12 .JD. 0050",
+    "group": "D_MOTOR",
+    "name": "Dieselelektronik DDE 5 6 Zylinder M57 TÜ EU4 Cabrio"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "MSS70",
+    "identifier": "12 .K1. 0000",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MSS70  6 Zylinder S54"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "MSS70",
+    "identifier": "12 .K1. 0001",
+    "group": "D_MOTOR",
+    "name": "Motorelektronik MSS70  6 Zylinder S54"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0001",
+    "group": "D_ABSKWP",
+    "name": "DSC MK60 mit analogen DSC-Sensoren"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0002",
+    "group": "D_ABSKWP",
+    "name": "ASC MK60"
+  },
+  {
+    "series": "R50",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0003",
+    "group": "D_ABSKWP",
+    "name": "ABS MK60"
+  },
+  {
+    "series": "R50",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0004",
+    "group": "D_ABSKWP",
+    "name": "ASC MK60"
+  },
+  {
+    "series": "R50",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0005",
+    "group": "D_ABSKWP",
+    "name": "DSC MK60 mit SensorCluster"
+  },
+  {
+    "series": "E46",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0006",
+    "group": "D_ABSKWP",
+    "name": "DSC MK60 mit SensorCluster"
+  },
+  {
+    "series": "R50",
+    "ecuDescriptionFile": "DSC_MK60",
+    "identifier": "29 ---- 0007",
+    "group": "D_ABSKWP",
+    "name": "ABS MK70"
+  },
+  {
+    "series": "E53",
+    "ecuDescriptionFile": "DXC8",
+    "identifier": "29 ---- 0020",
+    "group": "D_ABSKWP",
+    "name": "DSC8 Allradsystem"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "DXC8",
+    "identifier": "29 ---- 0021",
+    "group": "D_ABSKWP",
+    "name": "DSC8 Allradsystem"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "DXC_83",
+    "identifier": "29 ---- 0022",
+    "group": "D_ABSKWP",
+    "name": "DXC8 Plus Allradsystem"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "DXC8",
+    "identifier": "29 ---- 0023",
+    "group": "D_ABSKWP",
+    "name": "DSC8 Allradsystem"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "DSC_85",
+    "identifier": "29 ---- 0030",
+    "group": "D_ABSKWP",
+    "name": "DSC MK60 E5"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "GS30",
+    "identifier": "32 .2M. 0550",
+    "group": "D_0032",
+    "name": "Sequentielles Schaltgetriebe"
+  },
+  {
+    "series": "E83",
+    "ecuDescriptionFile": "VGSG83",
+    "identifier": "34 ---- 0AD0",
+    "group": "D_VGSG",
+    "name": "Verteilergetriebe Steuergerät"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "EPS_E85",
+    "identifier": "37 ---- 04E0",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "EPS_85_2",
+    "identifier": "37 ---- 04E1",
+    "group": "D_EPS",
+    "name": "Elektrische Lenkung"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "CID_85",
+    "identifier": "46 ---- 0670",
+    "group": "D_CID",
+    "name": "Zentrales Info Display"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "SBSL85",
+    "identifier": "A1 ---- 0570",
+    "group": "D_SBSL2",
+    "name": "Satellit B-Säule links"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "SBSR85",
+    "identifier": "A2 ---- 0580",
+    "group": "D_SBSR2",
+    "name": "Satellit B-Säule rechts"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "SIM85",
+    "identifier": "A4 ---- 0560",
+    "group": "D_SIM",
+    "name": "Sicherheits- Informationsmodul"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "ACSM85",
+    "identifier": "A4 ---- 0B20",
+    "group": "D_SIM",
+    "name": "Airbag-Elektronik"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "STVL85",
+    "identifier": "AD ---- 0A10",
+    "group": "D_STVL2",
+    "name": "Satellit Tür vorne links"
+  },
+  {
+    "series": "E85",
+    "ecuDescriptionFile": "STVR85",
+    "identifier": "AE ---- 0A20",
+    "group": "D_STVR2",
+    "name": "Satellit Tür vorne rechts"
+  }
+]

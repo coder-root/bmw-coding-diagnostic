@@ -4,6 +4,7 @@ import android.content.Context
 import com.punhanaghayev.bimmerpro.core.bmw.ActuatorTestItem
 import com.punhanaghayev.bimmerpro.core.bmw.AdasCalibrationStatus
 import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
+import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
@@ -15,8 +16,10 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.EcuVariantResolver
 import com.punhanaghayev.bimmerpro.core.bmw.EpbServiceState
 import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
+import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateEntry
 import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
@@ -36,6 +39,10 @@ import com.punhanaghayev.bimmerpro.core.bmw.SoundTuningState
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleOrderOption
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
+import com.punhanaghayev.bimmerpro.core.bmw.VirtualDynoCalculator
+import com.punhanaghayev.bimmerpro.core.bmw.VirtualDynoResult
+import com.punhanaghayev.bimmerpro.core.bmw.VoCodingEngine
+import com.punhanaghayev.bimmerpro.core.bmw.VoCodingPlan
 import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
 import com.punhanaghayev.bimmerpro.core.bmw.ZfClutchAdaptation
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
@@ -56,6 +63,7 @@ import com.punhanaghayev.bimmerpro.core.protocol.PhysicalUdsParser
 import com.punhanaghayev.bimmerpro.core.protocol.ProtocolLogEntry
 import com.punhanaghayev.bimmerpro.core.protocol.TcpElmStnTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TcpEnetTransportAdapter
+import com.punhanaghayev.bimmerpro.core.protocol.TraceReplayTransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.TransportAdapter
 import com.punhanaghayev.bimmerpro.core.protocol.UdsClient
 import com.punhanaghayev.bimmerpro.core.protocol.UdsCodec
@@ -86,12 +94,25 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.sin
 
+enum class DragMode(val label: String, val startKmH: Int, val targetKmH: Int) {
+    ZERO_TO_100("0-100 km/h", 0, 100),
+    HUNDRED_TO_200("100-200 km/h", 100, 200),
+    SIXTY_TO_130_MPH("60-130 mph", 97, 209),
+    QUARTER_MILE("0-400m (1/4 Mile)", 0, 202)
+}
+
 data class PerformanceTimerState(
     val isArmed: Boolean = false,
     val isRunning: Boolean = false,
+    val dragMode: DragMode = DragMode.ZERO_TO_100,
     val currentSpeedKmh: Int = 0,
     val elapsedMs: Long = 0L,
-    val bestZeroToHundredSec: Double? = null
+    val distanceMeters: Double = 0.0,
+    val bestZeroToHundredSec: Double? = null,
+    val best100To200Sec: Double? = null,
+    val best60To130MphSec: Double? = null,
+    val bestQuarterMileSec: Double? = null,
+    val quarterMileTrapKmh: Int? = null
 )
 
 enum class ConnectionPurpose {
@@ -140,7 +161,11 @@ data class BimmerSessionState(
     val selectedBleAddress: String? = null,
     val performanceTimer: PerformanceTimerState = PerformanceTimerState(),
     val savedVehicles: List<SavedVehicleRecord> = emptyList(),
-    val activeOperation: ActiveOperationState? = null
+    val activeOperation: ActiveOperationState? = null,
+    val fscCertificates: List<FscCertificateEntry> = emptyList(),
+    val virtualDyno: VirtualDynoResult? = null,
+    val comparativeDiff: VehicleInspectionDiff? = null,
+    val pendingVoCodingPlan: VoCodingPlan? = null
 )
 
 data class ActiveOperationState(
@@ -169,6 +194,9 @@ class BimmerRepository(
     private var isReconnecting = false
 
     private var cachedLiveChannelsCatalog: List<LiveSensorChannel> = emptyList()
+    private val capturedDynoPoints = mutableListOf<com.punhanaghayev.bimmerpro.core.bmw.DynoPoint>()
+    private var prevTelemetrySpeedKmh: Double = 0.0
+    private var prevTelemetryTimestampMs: Long = 0L
 
     private val _session = MutableStateFlow(
         BimmerSessionState(
@@ -179,7 +207,12 @@ class BimmerRepository(
 
     init {
         appContext?.let { ctx ->
-            VoDependencyMapper.initializeFromDataPack(File(ctx.filesDir, "datapacks"))
+            val datapacksDir = File(ctx.filesDir, "datapacks")
+            VoDependencyMapper.initializeFromDataPack(datapacksDir)
+            runCatching { ctx.assets.open("datapacks/bmw_ecu_catalog.json") }.getOrNull()?.use { stream ->
+                EcuVariantResolver.initializeFromAssetStream(stream)
+            }
+            EcuVariantResolver.initializeFromDataPack(datapacksDir)
             DataPackDownloader.loadCachedDtcPack(ctx.filesDir)?.let { pack ->
                 BmwDtcDictionary.loadExternalPack(pack)
                 val meta = DataPackDownloader.loadCachedMeta(ctx.filesDir)
@@ -318,16 +351,22 @@ class BimmerRepository(
             val sim = activeTransport as? SimulatorTransportAdapter
             if (sim != null) {
                 val bundle = sim.bundle
+                val resolvedEcus = bundle.ecus.map { ecu ->
+                    val variant = EcuVariantResolver.resolveVariant(ecu.address, bundle.profile.chassis, ecu.softwareVersion)
+                    ecu.copy(variantName = variant, svkSummary = "HWEL: ${ecu.hardwareVersion} • SWFL: ${ecu.softwareVersion}")
+                }
                 val savedList = saveConnectedVehicle(bundle.profile, adapterType)
                 val dtcs = sim.currentDtcs()
                 val customChannels = applySavedLivePidOrder(bundle.liveChannels)
                 val health = OfflineFaultAnalyzer.analyze(dtcs, customChannels, bundle.ibsHealth, bundle.profile.batteryVoltage, bundle.zfAdaptations)
+                val fscs = VoCodingEngine.defaultFscCertificates(bundle.profile.chassis)
+                val latestDiff = garageHistoryStorage?.computeLatestDiffForVin(bundle.profile.vin)
                 _session.update {
                     it.copy(
                         connectionState = connState,
                         connectionPurpose = purpose,
                         vehicleProfile = bundle.profile,
-                        ecus = bundle.ecus,
+                        ecus = resolvedEcus,
                         dtcs = dtcs,
                         presets = bundle.presets,
                         cafdParameters = bundle.cafdParameters,
@@ -347,6 +386,8 @@ class BimmerRepository(
                         epbServiceState = EpbServiceState.NORMAL,
                         androidAutoPidIds = loadSavedAndroidAutoPids(),
                         offlineReport = health,
+                        fscCertificates = fscs,
+                        comparativeDiff = latestDiff,
                         isPhysicalSafeMode = false,
                         savedVehicles = savedList,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
@@ -581,6 +622,17 @@ class BimmerRepository(
                 )
                 delay(70)
             }
+            val simEcus = ecus.map { ecu ->
+                val svkResp = runCatching {
+                    udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_SVK), "UDS 0x22 Read SVK (${ecu.shortName})")
+                }.getOrNull() as? UdsResponse.Positive
+                val chassis = _session.value.vehicleProfile?.chassis ?: BmwChassis.F10
+                val svk = svkResp?.let { EcuVariantResolver.parseSvk(ecu.address, chassis, it.payload) }
+                ecu.copy(
+                    variantName = svk?.resolvedVariant ?: EcuVariantResolver.resolveVariant(ecu.address, chassis, ecu.softwareVersion),
+                    svkSummary = svk?.summaryText() ?: ecu.svkSummary
+                )
+            }
             val refreshedDtcs = sim.currentDtcs()
             val health = OfflineFaultAnalyzer.analyze(
                 refreshedDtcs,
@@ -589,19 +641,23 @@ class BimmerRepository(
                 _session.value.vehicleProfile?.batteryVoltage ?: 12.6,
                 _session.value.zfAdaptations
             )
+            val (savedWithSnap, diff) = persistScanSnapshot(simEcus, refreshedDtcs, health.overallScore)
             _session.update {
                 it.copy(
                     isScanning = false,
                     scanProgress = 1f,
                     scanStatusText = "Tarama tamamlandı (${refreshedDtcs.size} kayıt)",
+                    ecus = simEcus,
                     dtcs = refreshedDtcs,
                     offlineReport = health,
+                    savedVehicles = savedWithSnap ?: it.savedVehicles,
+                    comparativeDiff = diff ?: it.comparativeDiff,
                     lastOperationMessage = "Tüm modüller tarandı: ${refreshedDtcs.size} hata kaydı bulundu.",
                     activeOperation = ActiveOperationState(
                         inProgress = true,
                         title = "BMW Diagnostik Taraması",
                         currentStep = "Tarama Başarıyla Tamamlandı!",
-                        details = "${ecus.size} ECU tarandı, ${refreshedDtcs.size} arıza kaydı tespit edildi.",
+                        details = "${simEcus.size} ECU tarandı, ${refreshedDtcs.size} arıza kaydı tespit edildi.",
                         progress = 1f,
                         isCompleted = true,
                         isSuccess = true
@@ -673,6 +729,11 @@ class BimmerRepository(
                     udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(0xF195), "UDS 0x22 SWE (${ecu.shortName})")
                 }.getOrNull() as? UdsResponse.Positive
                 val swVersion = swResp?.let { PhysicalUdsParser.parseSoftwareVersion(it.payload) } ?: ecu.softwareVersion
+                val svkResp = runCatching {
+                    udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_SVK), "UDS 0x22 SVK (${ecu.shortName})")
+                }.getOrNull() as? UdsResponse.Positive
+                val chassis = _session.value.vehicleProfile?.chassis ?: BmwChassis.F10
+                val svk = svkResp?.let { EcuVariantResolver.parseSvk(ecu.address, chassis, it.payload) }
                 val ecuOdoResp = runCatching {
                     udsClient.sendUds(ecu.address, UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_ODOMETER), "UDS 0x22 KM (${ecu.shortName})")
                 }.getOrNull() as? UdsResponse.Positive
@@ -683,9 +744,12 @@ class BimmerRepository(
                 updatedEcus.add(
                     ecu.copy(
                         softwareVersion = swVersion,
+                        cafdId = svk?.cafd ?: ecu.cafdId,
                         reportedMileageKm = ecuKm ?: ecu.reportedMileageKm,
                         activeDtcCount = parsed.count { it.status == com.punhanaghayev.bimmerpro.core.bmw.DtcStatus.ACTIVE },
-                        shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW }
+                        shadowDtcCount = parsed.count { it.severity == com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity.SHADOW },
+                        variantName = svk?.resolvedVariant ?: EcuVariantResolver.resolveVariant(ecu.address, chassis, swVersion),
+                        svkSummary = svk?.summaryText()
                     )
                 )
             } else {
@@ -777,13 +841,16 @@ class BimmerRepository(
             volts,
             _session.value.zfAdaptations
         )
+        val finalEcus = updatedEcus.ifEmpty { ecus }
+        val (savedWithSnap, diff) = persistScanSnapshot(finalEcus, physicalDtcs, physicalHealth.overallScore)
+        val liveFscs = runCatching { fetchFscCertificatesInternal() }.getOrDefault(emptyList())
         _session.update {
             it.copy(
                 isScanning = false,
                 scanProgress = 1f,
                 scanStatusText = "Fiziksel tarama tamamlandı (${updatedEcus.size} ECU, ${physicalDtcs.size} kayıt)",
                 vehicleProfile = updatedProfile ?: it.vehicleProfile,
-                ecus = updatedEcus.ifEmpty { ecus },
+                ecus = finalEcus,
                 dtcs = physicalDtcs,
                 ibsHealth = liveIbs,
                 dpfHealth = liveDpf,
@@ -791,6 +858,9 @@ class BimmerRepository(
                 injectorCodes = liveInjectors,
                 shortCircuitChannels = liveSc,
                 offlineReport = physicalHealth,
+                savedVehicles = savedWithSnap ?: it.savedVehicles,
+                comparativeDiff = diff ?: it.comparativeDiff,
+                fscCertificates = liveFscs.ifEmpty { it.fscCertificates },
                 lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu.",
                 activeOperation = ActiveOperationState(
                     inProgress = true,
@@ -930,6 +1000,9 @@ class BimmerRepository(
                 )
             )
         }
+        val bufferBefore = ecuCafdBuffers[preset.targetAddress]
+            ?: ByteArray(64) { if (it == 0) preset.currentOptionIndex.toByte() else 0x00 }
+        val byteSnapHex = bufferBefore.joinToString("") { "%02X".format(it) }
         val snapshot = CodingBackupSnapshot(
             id = "bkp_${System.currentTimeMillis()}",
             timestamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date()),
@@ -937,7 +1010,8 @@ class BimmerRepository(
             ecuAddress = preset.targetAddress,
             cafdFile = preset.cafdKey,
             summary = "${preset.title}: ${preset.options[preset.currentOptionIndex]} -> ${preset.options[newOptionIndex]}",
-            previousValues = mapOf(presetId to preset.currentOptionIndex)
+            previousValues = mapOf(presetId to preset.currentOptionIndex),
+            cafdByteSnapshot = mapOf(preset.targetAddress to byteSnapHex)
         )
 
         _session.update {
@@ -1298,6 +1372,34 @@ class BimmerRepository(
         val state = _session.value
         val backup = state.backups.firstOrNull { it.id == backupId } ?: return
         var restoredPresets = state.presets
+        var changedBytesCount = 0
+
+        backup.cafdByteSnapshot.forEach { (addr, hexSnapshot) ->
+            if (hexSnapshot.isNotBlank() && hexSnapshot.length % 2 == 0) {
+                val restoredBytes = ByteArray(hexSnapshot.length / 2) { i ->
+                    hexSnapshot.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+                }
+                val currentBytes = ecuCafdBuffers[addr]
+                val byteDiffCount = if (currentBytes == null) {
+                    restoredBytes.size
+                } else {
+                    restoredBytes.indices.count { i -> i >= currentBytes.size || currentBytes[i] != restoredBytes[i] }
+                }
+                changedBytesCount += byteDiffCount.coerceAtLeast(1)
+                udsClient.sendUds(
+                    addr,
+                    UdsCodec.buildSessionControl(UdsSessionType.CODING),
+                    "UDS 0x10 Coding Session Rollback (0x%02X)".format(addr)
+                )
+                udsClient.sendUds(
+                    addr,
+                    UdsCodec.buildWriteDataById(0x3002, restoredBytes.take(32).toByteArray()),
+                    "UDS 0x2E Atomic CAFD Byte Rollback (0x%02X, $byteDiffCount diff bytes)".format(addr)
+                )
+                ecuCafdBuffers[addr] = restoredBytes
+            }
+        }
+
         backup.previousValues.forEach { (presetId, prevIndex) ->
             udsClient.sendUds(
                 backup.ecuAddress,
@@ -1308,12 +1410,104 @@ class BimmerRepository(
                 if (it.id == presetId) it.copy(currentOptionIndex = prevIndex) else it
             }
         }
+        val diffSuffix = if (changedBytesCount > 0) " ($changedBytesCount byte atomik fark geri yazıldı)" else ""
         _session.update {
             it.copy(
                 presets = restoredPresets,
-                lastOperationMessage = "${backup.ecuName} için önceki kodlama yedeği geri yüklendi."
+                lastOperationMessage = "${backup.ecuName} için önceki kodlama yedeği geri yüklendi$diffSuffix."
             )
         }
+    }
+
+    fun previewVoCodingPlan(code: String, description: String): VoCodingPlan? {
+        val cleanCode = code.trim().uppercase()
+        if (cleanCode.length < 3) return null
+        val plan = VoCodingEngine.buildCodingPlan(
+            voCode = cleanCode,
+            description = description.ifBlank { VoDependencyMapper.lookupOptionDescription(cleanCode) },
+            ecuBuffers = ecuCafdBuffers
+        )
+        _session.update { it.copy(pendingVoCodingPlan = plan) }
+        return plan
+    }
+
+    fun dismissVoCodingPlan() {
+        _session.update { it.copy(pendingVoCodingPlan = null) }
+    }
+
+    suspend fun applyVoCodingPlan(plan: VoCodingPlan) {
+        if (isPhysicalWriteBlocked()) {
+            _session.update { it.copy(lastOperationMessage = PHYSICAL_SAFE_MODE_MSG) }
+            return
+        }
+        val profile = _session.value.vehicleProfile ?: return
+        val preSnapshotBytes = plan.diffs.associate { diff ->
+            val buf = ecuCafdBuffers.getOrPut(diff.ecuAddress) { ByteArray(64) { 0x00 } }
+            diff.ecuAddress to buf.joinToString("") { "%02X".format(it) }
+        }
+        val backup = CodingBackupSnapshot(
+            id = "vo_bkp_${System.currentTimeMillis()}",
+            timestamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date()),
+            ecuName = "VO +S${plan.voCode}",
+            ecuAddress = plan.diffs.firstOrNull()?.ecuAddress ?: EcuAddress.ZGW_BDC,
+            cafdFile = plan.diffs.firstOrNull()?.cafdId ?: "FA_VO_CAFD",
+            summary = "VO Coding +S${plan.voCode} (${plan.diffs.size} byte diff across ${plan.affectedEcuNames.size} ECU)",
+            previousValues = emptyMap(),
+            cafdByteSnapshot = preSnapshotBytes
+        )
+
+        plan.diffs.forEach { diff ->
+            val buf = ecuCafdBuffers.getOrPut(diff.ecuAddress) { ByteArray(64) { 0x00 } }
+            val safeOffset = diff.byteOffset.coerceIn(0, buf.lastIndex)
+            val newVal = diff.afterByteHex.removePrefix("0x").toIntOrNull(16) ?: 0x01
+            val patched = CafdBitmaskEngine.writeMaskedValue(buf, safeOffset, diff.bitMask, newVal)
+            ecuCafdBuffers[diff.ecuAddress] = patched
+            udsClient.sendUds(
+                diff.ecuAddress,
+                UdsCodec.buildSessionControl(UdsSessionType.CODING),
+                "UDS 0x10 Coding Session (${diff.ecuName})"
+            )
+            udsClient.sendUds(
+                diff.ecuAddress,
+                UdsCodec.buildWriteDataById(0x3002, byteArrayOf(safeOffset.toByte(), patched[safeOffset])),
+                "UDS 0x2E VO Bitmask ${diff.ecuName} [0x%02X]: ${diff.beforeByteHex}->${diff.afterByteHex}".format(safeOffset)
+            )
+        }
+        addVehicleOrderOption(plan.voCode, plan.description)
+        val updatedBackups = listOf(backup) + _session.value.backups
+        backupStorage?.saveBackups(updatedBackups)
+        _session.update {
+            it.copy(
+                pendingVoCodingPlan = null,
+                backups = updatedBackups,
+                lastOperationMessage = "VO Coding (+S${plan.voCode}) ${plan.affectedEcuNames.size} ECU'ya uygulandı & CAFD byte yedeği alındı."
+            )
+        }
+    }
+
+    suspend fun readFscCertificates() {
+        val chassis = _session.value.vehicleProfile?.chassis ?: BmwChassis.F10
+        val parsed = fetchFscCertificatesInternal()
+        val finalList = parsed.ifEmpty { VoCodingEngine.defaultFscCertificates(chassis) }
+        _session.update {
+            it.copy(
+                fscCertificates = finalList,
+                lastOperationMessage = "${finalList.size} FSC aktivasyon sertifikası durumu okundu."
+            )
+        }
+    }
+
+    private suspend fun fetchFscCertificatesInternal(): List<FscCertificateEntry> {
+        val out = mutableListOf<FscCertificateEntry>()
+        listOf(EcuAddress.HU_MEDIA to "HU_MEDIA", EcuAddress.KAFAS_CAMERA to "KAFAS").forEach { (addr, name) ->
+            val resp = runCatching {
+                udsClient.sendUds(addr, UdsCodec.buildReadDataById(SimulatorTransportAdapter.DID_FSC_STATUS), "UDS 0x22 FSC Status ($name)")
+            }.getOrNull() as? UdsResponse.Positive
+            if (resp != null) {
+                out += VoCodingEngine.parseFscStatusPayload(name, addr, resp.payload)
+            }
+        }
+        return out
     }
 
     suspend fun addVehicleOrderOption(code: String, description: String) {
@@ -1352,6 +1546,10 @@ class BimmerRepository(
             .digest(previousMap.entries.joinToString(",").toByteArray())
             .take(4)
             .joinToString("") { "%02X".format(it) }
+        val byteSnap = _session.value.ecus.associate { ecu ->
+            val buf = ecuCafdBuffers[ecu.address] ?: ByteArray(16) { 0x00 }
+            ecu.address to buf.joinToString("") { "%02X".format(it) }
+        }
         val snapshot = CodingBackupSnapshot(
             id = "ncd_${System.currentTimeMillis()}",
             timestamp = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date()),
@@ -1359,7 +1557,8 @@ class BimmerRepository(
             ecuAddress = EcuAddress.ZGW_BDC,
             cafdFile = "NCD_SHA256_$digest",
             summary = "Tam Araç NCD Snapshot (${state.presets.size} parametre, SHA:$digest)",
-            previousValues = previousMap
+            previousValues = previousMap,
+            cafdByteSnapshot = byteSnap
         )
         val updated = listOf(snapshot) + state.backups
         backupStorage?.saveBackups(updated)
@@ -1449,6 +1648,19 @@ class BimmerRepository(
                     val v = polledValues[ch.id] ?: ch.currentValue
                     ch.copy(currentValue = v, history = (ch.history.drop(1) + v.toFloat()))
                 }
+                val speedNow = updated.firstOrNull { it.id == "speed" }?.currentValue ?: 0.0
+                val rpmNow = updated.firstOrNull { it.id == "rpm" }?.currentValue ?: 0.0
+                val nowMs = System.currentTimeMillis()
+                if (prevTelemetryTimestampMs > 0L && speedNow > prevTelemetrySpeedKmh + 0.5 && rpmNow > 1200.0) {
+                    val dt = (nowMs - prevTelemetryTimestampMs) / 1000.0
+                    val mass = VirtualDynoCalculator.defaultMassKgFor(_session.value.vehicleProfile?.chassis ?: BmwChassis.F10)
+                    VirtualDynoCalculator.calculateSample(speedNow, prevTelemetrySpeedKmh, dt, rpmNow, mass)?.let { pt ->
+                        capturedDynoPoints.add(pt)
+                        if (capturedDynoPoints.size > 60) capturedDynoPoints.removeAt(0)
+                    }
+                }
+                prevTelemetrySpeedKmh = speedNow
+                prevTelemetryTimestampMs = nowMs
                 _session.update { it.copy(liveChannels = updated) }
             }
             return
@@ -1473,14 +1685,31 @@ class BimmerRepository(
         _session.update { it.copy(liveChannels = updated) }
     }
 
-    fun startPerformanceRun() {
+    fun setDragMode(mode: DragMode) {
         _session.update {
             it.copy(
                 performanceTimer = it.performanceTimer.copy(
+                    dragMode = mode,
+                    isArmed = false,
+                    isRunning = false,
+                    currentSpeedKmh = mode.startKmH,
+                    elapsedMs = 0L,
+                    distanceMeters = 0.0
+                )
+            )
+        }
+    }
+
+    fun startPerformanceRun() {
+        _session.update { state ->
+            val mode = state.performanceTimer.dragMode
+            state.copy(
+                performanceTimer = state.performanceTimer.copy(
                     isArmed = true,
                     isRunning = true,
-                    currentSpeedKmh = 0,
-                    elapsedMs = 0L
+                    currentSpeedKmh = mode.startKmH,
+                    elapsedMs = 0L,
+                    distanceMeters = 0.0
                 )
             )
         }
@@ -1498,30 +1727,99 @@ class BimmerRepository(
         val timer = _session.value.performanceTimer
         if (!timer.isRunning) return
         val nextElapsed = timer.elapsedMs + deltaMs
-        // Realistic launch curve up to 105 km/h in ~5.4s for simulator demo
-        val nextSpeed = ((nextElapsed / 54.0).toInt()).coerceAtMost(112)
-        if (nextSpeed >= 100) {
+        val mode = timer.dragMode
+        val elapsedSec = nextElapsed / 1000.0
+        val nextSpeed = when (mode) {
+            DragMode.ZERO_TO_100 -> (mode.startKmH + (nextElapsed / 54.0)).toInt().coerceAtMost(112)
+            DragMode.HUNDRED_TO_200 -> (mode.startKmH + (elapsedSec * 9.6)).toInt().coerceAtMost(215)
+            DragMode.SIXTY_TO_130_MPH -> (mode.startKmH + (elapsedSec * 9.8)).toInt().coerceAtMost(220)
+            DragMode.QUARTER_MILE -> (elapsedSec * 16.5).toInt().coerceAtMost(215)
+        }
+        val avgSpeedMs = ((timer.currentSpeedKmh + nextSpeed) / 2.0) / 3.6
+        val nextDist = timer.distanceMeters + avgSpeedMs * (deltaMs / 1000.0)
+
+        val finished = when (mode) {
+            DragMode.QUARTER_MILE -> nextDist >= 402.34
+            else -> nextSpeed >= mode.targetKmH
+        }
+        if (finished) {
             val sec = (nextElapsed / 100.0) / 10.0
-            val best = timer.bestZeroToHundredSec?.let { minOf(it, sec) } ?: sec
+            val updatedTimer = when (mode) {
+                DragMode.ZERO_TO_100 -> timer.copy(
+                    isArmed = false,
+                    isRunning = false,
+                    currentSpeedKmh = mode.targetKmH,
+                    elapsedMs = nextElapsed,
+                    distanceMeters = nextDist,
+                    bestZeroToHundredSec = timer.bestZeroToHundredSec?.let { minOf(it, sec) } ?: sec
+                )
+                DragMode.HUNDRED_TO_200 -> timer.copy(
+                    isArmed = false,
+                    isRunning = false,
+                    currentSpeedKmh = mode.targetKmH,
+                    elapsedMs = nextElapsed,
+                    distanceMeters = nextDist,
+                    best100To200Sec = timer.best100To200Sec?.let { minOf(it, sec) } ?: sec
+                )
+                DragMode.SIXTY_TO_130_MPH -> timer.copy(
+                    isArmed = false,
+                    isRunning = false,
+                    currentSpeedKmh = mode.targetKmH,
+                    elapsedMs = nextElapsed,
+                    distanceMeters = nextDist,
+                    best60To130MphSec = timer.best60To130MphSec?.let { minOf(it, sec) } ?: sec
+                )
+                DragMode.QUARTER_MILE -> timer.copy(
+                    isArmed = false,
+                    isRunning = false,
+                    currentSpeedKmh = nextSpeed,
+                    elapsedMs = nextElapsed,
+                    distanceMeters = 402.34,
+                    bestQuarterMileSec = timer.bestQuarterMileSec?.let { minOf(it, sec) } ?: sec,
+                    quarterMileTrapKmh = nextSpeed
+                )
+            }
+            val msg = if (mode == DragMode.QUARTER_MILE) {
+                "${mode.label}: %.1f sn @ $nextSpeed km/h!".format(sec)
+            } else {
+                "${mode.label} tamamlandı: %.1f sn!".format(sec)
+            }
             _session.update {
                 it.copy(
-                    performanceTimer = timer.copy(
-                        isArmed = false,
-                        isRunning = false,
-                        currentSpeedKmh = 100,
-                        elapsedMs = nextElapsed,
-                        bestZeroToHundredSec = best
-                    ),
-                    lastOperationMessage = "0-100 km/h tamamlandı: %.1f sn!".format(sec)
+                    performanceTimer = updatedTimer,
+                    lastOperationMessage = msg
                 )
             }
         } else {
             _session.update {
                 it.copy(
-                    performanceTimer = timer.copy(currentSpeedKmh = nextSpeed, elapsedMs = nextElapsed)
+                    performanceTimer = timer.copy(
+                        currentSpeedKmh = nextSpeed,
+                        elapsedMs = nextElapsed,
+                        distanceMeters = nextDist
+                    )
                 )
             }
         }
+    }
+
+    fun runVirtualDynoPull(): VirtualDynoResult {
+        val profile = _session.value.vehicleProfile
+        val chassis = profile?.chassis ?: BmwChassis.F10
+        val engineCode = profile?.engineCode ?: "B58"
+        val mass = VirtualDynoCalculator.defaultMassKgFor(chassis)
+        val result = if (capturedDynoPoints.size >= 4) {
+            VirtualDynoCalculator.summarize(capturedDynoPoints.sortedBy { it.rpm }, mass)
+        } else {
+            VirtualDynoCalculator.generateSimulatedPull(chassis, engineCode)
+        }
+        _session.update {
+            it.copy(
+                virtualDyno = result,
+                lastOperationMessage = "Sanal Dyno Pull: ${result.summary}"
+            )
+        }
+        return result
     }
 
     suspend fun writeInjectorCode(cylinder: Int, imaCode: String) {
@@ -1758,6 +2056,139 @@ class BimmerRepository(
         return imported.size
     }
 
+    suspend fun connectWithTraceReplay(traceText: String): Result<Int> {
+        val replayAdapter = TraceReplayTransportAdapter(traceText, AdapterType.SIMULATOR_F10)
+        if (replayAdapter.recordedFrames.isEmpty()) {
+            return Result.failure(IllegalArgumentException("Trace dosyasında oynatılabilecek geçerli UDS/RX frame bulunamadı."))
+        }
+        keepAliveJob?.cancel()
+        keepAliveJob = null
+        activeTransport = replayAdapter
+        replayAdapter.connect()
+
+        val vinMatch = Regex("(WBA|WBS|WBX|WBY|4US|5UX|5YM|3MW|WMW)[A-HJ-NPR-Z0-9]{14}")
+            .find(traceText)?.value ?: "WBATRACEPLAY00001"
+        val chassis = PhysicalUdsParser.inferChassisFromVin(vinMatch)
+        val simCatalog = BmwSimulatorCatalog.buildBundle(AdapterType.SIMULATOR_F10)
+        val replayProfile = simCatalog.profile.copy(
+            vin = vinMatch,
+            chassis = chassis,
+            modelDisplayName = "TRACE REPLAY (${chassis.code} • ${replayAdapter.recordedFrames.size} frame)"
+        )
+
+        val parsedDtcs = mutableListOf<DtcFault>()
+        replayAdapter.recordedFrames.forEach { frame ->
+            val payload = frame.responseBytes
+            val sid = payload.firstOrNull()?.toInt()?.and(0xFF) ?: return@forEach
+            if (sid == 0x59 && payload.size >= 7) {
+                val ecuName = BmwEcuAndPidCatalog.allBmwEcus.firstOrNull { it.address == frame.ecuAddress }?.shortName
+                    ?: "ECU_0x%02X".format(frame.ecuAddress)
+                parsedDtcs += PhysicalUdsParser.parseDtcRecords(
+                    ecuAddress = frame.ecuAddress,
+                    ecuName = ecuName,
+                    payload = payload.copyOfRange(1, payload.size),
+                    odometerKm = replayProfile.odometerKm,
+                    voltage = replayProfile.batteryVoltage
+                )
+            }
+            udsClient.logInfo(
+                "REPLAY-RX",
+                frame.ecuAddress,
+                payload.joinToString(" ") { "%02X".format(it) }
+            )
+        }
+        val finalDtcs = parsedDtcs.distinctBy { "${it.ecuAddress}-${it.code}-${it.memoryType}" }
+        val touchedAddrs = replayAdapter.recordedFrames.map { it.ecuAddress }.toSet()
+        val replayEcus = simCatalog.ecus.map { ecu ->
+            val variant = EcuVariantResolver.resolveVariant(ecu.address, chassis, ecu.softwareVersion)
+            ecu.copy(
+                variantName = variant,
+                activeDtcCount = finalDtcs.count { it.ecuAddress == ecu.address }
+            )
+        }.let { list ->
+            val extra = touchedAddrs.filter { addr -> list.none { it.address == addr } }.map { addr ->
+                EcuModule(
+                    address = addr,
+                    shortName = "ECU_%02X".format(addr),
+                    fullName = "Trace ECU 0x%02X".format(addr),
+                    hardwareVersion = "TRACE",
+                    softwareVersion = "REPLAY",
+                    cafdId = null,
+                    codingCapability = CodingCapability.FDL_ONLY,
+                    activeDtcCount = finalDtcs.count { it.ecuAddress == addr },
+                    shadowDtcCount = 0,
+                    variantName = EcuVariantResolver.resolveVariant(addr, chassis, "")
+                )
+            }
+            list + extra
+        }
+
+        val health = OfflineFaultAnalyzer.analyze(
+            finalDtcs,
+            simCatalog.liveChannels,
+            simCatalog.ibsHealth,
+            replayProfile.batteryVoltage,
+            simCatalog.zfAdaptations
+        )
+        val fscs = VoCodingEngine.defaultFscCertificates(chassis)
+        _session.update {
+            it.copy(
+                selectedAdapter = AdapterType.SIMULATOR_F10,
+                connectionState = replayAdapter.connectionState.value,
+                vehicleProfile = replayProfile,
+                ecus = replayEcus,
+                dtcs = finalDtcs,
+                presets = simCatalog.presets,
+                cafdParameters = simCatalog.cafdParameters,
+                liveChannels = applySavedLivePidOrder(simCatalog.liveChannels),
+                serviceRoutines = simCatalog.serviceRoutines,
+                serviceHistory = simCatalog.serviceHistory,
+                zfAdaptations = simCatalog.zfAdaptations,
+                zfHealth = simCatalog.zfHealth,
+                dpfHealth = simCatalog.dpfHealth,
+                injectorCodes = simCatalog.injectorCodes,
+                actuatorTests = simCatalog.actuatorTests,
+                ibsHealth = simCatalog.ibsHealth,
+                shortCircuitChannels = simCatalog.shortCircuitChannels,
+                soundTuning = simCatalog.soundTuning,
+                offlineReport = health,
+                fscCertificates = fscs,
+                isPhysicalSafeMode = true,
+                lastOperationMessage = "Trace Playback aktif: ${replayAdapter.recordedFrames.size} UDS frame & ${finalDtcs.size} DTC çözümlendi."
+            )
+        }
+        return Result.success(replayAdapter.recordedFrames.size)
+    }
+
+    private fun persistScanSnapshot(
+        ecus: List<EcuModule>,
+        dtcs: List<DtcFault>,
+        healthScorePercent: Int
+    ): Pair<List<SavedVehicleRecord>?, VehicleInspectionDiff?> {
+        val profile = _session.value.vehicleProfile ?: return null to null
+        val svkDigest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(ecus.joinToString(",") { "${it.addressHex}:${it.softwareVersion}" }.toByteArray())
+            .take(4)
+            .joinToString("") { "%02X".format(it) }
+        val snap = VehicleScanSnapshot(
+            timestamp = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date()),
+            odometerKm = profile.odometerKm,
+            iLevel = profile.iLevel,
+            ecuCount = ecus.size,
+            dtcCodes = dtcs.map { it.code }.distinct().sorted(),
+            healthScorePercent = healthScorePercent,
+            svkHash = svkDigest
+        )
+        return garageHistoryStorage?.appendScanSnapshot(
+            vin = profile.vin,
+            modelName = profile.modelDisplayName,
+            chassisCode = profile.chassis.code,
+            odometerKm = profile.odometerKm,
+            adapterName = _session.value.selectedAdapter.displayName,
+            snapshot = snap
+        ) ?: (null to null)
+    }
+
     private fun saveConnectedVehicle(profile: VehicleProfile, adapter: AdapterType): List<SavedVehicleRecord> {
         val record = SavedVehicleRecord(
             vin = profile.vin,
@@ -1931,7 +2362,9 @@ class BimmerRepository(
         return runCatching {
             val pack = DataPackDownloader.downloadAndCacheDtcPack(ctx.filesDir)
             DataPackDownloader.downloadOptionalPacks(ctx.filesDir)
-            VoDependencyMapper.initializeFromDataPack(File(ctx.filesDir, "datapacks"))
+            val datapacksDir = File(ctx.filesDir, "datapacks")
+            VoDependencyMapper.initializeFromDataPack(datapacksDir)
+            EcuVariantResolver.initializeFromDataPack(datapacksDir)
             BmwDtcDictionary.loadExternalPack(pack)
             val total = BmwDtcDictionary.totalCodeCount()
             val added = (total - prevCount).coerceAtLeast(0)

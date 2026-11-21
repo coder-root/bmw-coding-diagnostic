@@ -40,6 +40,7 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 fun PacketInspectorScreen(
     protocolLogs: List<ProtocolLogEntry>,
     onExportTrace: () -> Unit,
+    onImportAndReplayTrace: () -> Unit,
     onClearLogs: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -69,6 +70,16 @@ fun PacketInspectorScreen(
                     )
                     Text(strings.packetInspectorSub, color = theme.textSecondary, fontSize = 11.sp)
                 }
+            }
+        }
+
+        item {
+            OutlinedButton(
+                onClick = onImportAndReplayTrace,
+                modifier = Modifier.fillMaxWidth().height(40.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text(strings.traceLoadReplayBtn, color = theme.primaryBright, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
 

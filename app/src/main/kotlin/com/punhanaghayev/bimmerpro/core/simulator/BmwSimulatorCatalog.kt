@@ -758,6 +758,61 @@ object BmwSimulatorCatalog {
                 warningNote = "Sıfırlama öncesi ampul veya tesisattaki kısa devrenin fiziksel olarak giderildiğinden emin olun."
             )
         )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.COOLANT_BLEEDING,
+                title = "Elektrikli Su Pompası Hava Alma (Coolant Bleed 12 Dk)",
+                targetEcu = "DME/DDE",
+                targetAddress = EcuAddress.DME_DDE,
+                routineId = 0xF0A2,
+                description = "N52/N54/N55/B48/B58 motorlarda termostat veya radyatör değişimi sonrası otomatik soğutma hava alma döngüsünü başlatır.",
+                warningNote = "Akü şarj cihazı bağlayın (>12.5V), kontak açık / motor kapalı olmalı ve klima sıcağa ayarlanmalıdır."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.DSC_ABS_BLEED,
+                title = "DSC / ABS Fren Hidroliği Hava Alma (Valve Bleed)",
+                targetEcu = "DSC",
+                targetAddress = EcuAddress.DSC,
+                routineId = 0xF0A4,
+                description = "Kaliper veya fren merkezi değişimi sonrası DSC valflerini ve ABS pompasını devir daim yaptırır.",
+                warningNote = "Fren hidroliği deposunda basınçlı doldurma cihazı bağlı olmalı ve seviye MIN altına düşmemelidir."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.VTG_TRANSFER_CASE_RESET,
+                title = "xDrive VTG Transfer Kutusu Yağ Sıfırlama & Kalibrasyon",
+                targetEcu = "VTG",
+                targetAddress = EcuAddress.VTG_TRANSFER,
+                routineId = 0xF0A6,
+                description = "xDrive VTG arazi şanzımanı yağ aşınma sayacını sıfırlar ve servo aktüatör açısını kalibre eder.",
+                warningNote = "Yalnızca taze BMW DTF-1 transfer kutusu yağı doldurulduktan sonra çalıştırın."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.VALVETRONIC_LIMIT_LEARN,
+                title = "Valvetronic Limit & Gaz Kelebeği Adaptasyonu",
+                targetEcu = "DME/DDE",
+                targetAddress = EcuAddress.DME_DDE,
+                routineId = 0xF0A8,
+                description = "Valvetronic eksantrik mili alt/üst mekanik limitlerini ve gaz kelebeği konumunu yeniden öğrenir.",
+                warningNote = "Kontak açık, motor kapalı ve akü gerilimi >12.2V olmalıdır."
+            )
+        )
+        add(
+            ServiceRoutine(
+                type = ServiceRoutineType.EHC_AIR_SUSPENSION_CAL,
+                title = "EHC Hava Süspansiyon Yükseklik Kalibrasyonu",
+                targetEcu = "EHC",
+                targetAddress = EcuAddress.EHC_SUSPENSION,
+                routineId = 0xF0AA,
+                description = "Arka sağ/sol pnömatik körük yükseklik sensör ofsetlerini fabrika sürüş yüksekliğine kalibre eder.",
+                warningNote = "Araç tamamen düz ve yüksüz zeminde olmalı, tüm kapılar kapalı tutulmalıdır."
+            )
+        )
     }
 
     fun defaultAdasStatus(): AdasCalibrationStatus = AdasCalibrationStatus(

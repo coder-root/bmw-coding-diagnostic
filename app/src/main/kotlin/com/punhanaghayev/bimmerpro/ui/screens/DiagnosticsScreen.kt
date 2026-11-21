@@ -62,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -278,6 +279,73 @@ fun DiagnosticsScreen(
                             healthReport.recommendations.forEach { rec ->
                                 Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
                             }
+                        }
+                    }
+                }
+            }
+
+            if (healthReport.rootCauseCorrelations.isNotEmpty()) {
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = StatusAmber.copy(alpha = 0.08f)),
+                        border = BorderStroke(1.dp, StatusAmber.copy(alpha = 0.55f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(18.dp))
+                                Text(strings.rootCauseTitle, color = StatusAmber, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                            healthReport.rootCauseCorrelations.forEach { rc ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(theme.card)
+                                        .padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(rc.localizedTitle(strings), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(
+                                        text = rc.involvedCodes.joinToString(" + "),
+                                        color = theme.primaryBright,
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                    Text(rc.localizedSummary(strings), color = theme.textSecondary, fontSize = 11.sp)
+                                    Text("${strings.rootCauseActionPrefix}: ${rc.localizedAction(strings)}", color = StatusGreen, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val compDiff = session.comparativeDiff
+        if (compDiff != null) {
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(strings.comparativeDiffTitle, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("${compDiff.previousTimestamp} → ${compDiff.currentTimestamp}", color = theme.textSecondary, fontSize = 11.sp)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("${strings.comparativeKmDeltaLabel}: ${if (compDiff.kmDelta >= 0) "+" else ""}${compDiff.kmDelta} km", color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            val healthColor = if (compDiff.healthScoreDelta >= 0) StatusGreen else StatusRed
+                            Text("${strings.comparativeHealthDeltaLabel}: ${if (compDiff.healthScoreDelta >= 0) "+" else ""}${compDiff.healthScoreDelta}", color = healthColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (compDiff.newlyAppearedDtcs.isNotEmpty()) {
+                            Text("${strings.comparativeNewDtcLabel}: ${compDiff.newlyAppearedDtcs.joinToString(", ")}", color = StatusRed, fontSize = 11.sp)
+                        }
+                        if (compDiff.resolvedDtcs.isNotEmpty()) {
+                            Text("${strings.comparativeResolvedDtcLabel}: ${compDiff.resolvedDtcs.joinToString(", ")}", color = StatusGreen, fontSize = 11.sp)
                         }
                     }
                 }
@@ -555,7 +623,9 @@ private fun ExpandableEcuCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "${ecu.softwareVersion} | ${GlobalTextLocalizer.localize(ecu.codingCapability.label, strings.language)}",
+                        "${ecu.softwareVersion}" +
+                            (ecu.variantName?.let { " • $it" } ?: "") +
+                            " | ${GlobalTextLocalizer.localize(ecu.codingCapability.label, strings.language)}",
                         color = theme.textSecondary,
                         fontSize = 11.sp
                     )
@@ -578,6 +648,14 @@ private fun ExpandableEcuCard(
                         color = theme.textSecondary,
                         fontSize = 11.sp
                     )
+                    if (!ecu.svkSummary.isNullOrBlank()) {
+                        Text(
+                            text = "SVK: ${ecu.svkSummary}",
+                            color = theme.primaryBright,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = onClearDtc,

@@ -184,6 +184,12 @@ object PhysicalUdsParser {
             "dpf_soot" -> u16 / 100.0
             "dpf_regen_km" -> u16.toDouble()
             "inj_1", "inj_2", "inj_3", "inj_4" -> s16 / 100.0
+            "timing_corr", "timing_corr_2", "timing_corr_3", "timing_corr_4", "timing_corr_5", "timing_corr_6" -> s16 / 10.0
+            "ltft", "stft" -> s16 / 10.0
+            "lambda_afr" -> u16 / 1000.0
+            "vanos_in", "vanos_in_target" -> s16 / 10.0
+            "hpfp_target", "hpfp_actual" -> u16 / 10.0
+            "misfire_total" -> u16.toDouble()
             else -> null
         }
     }

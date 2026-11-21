@@ -175,6 +175,15 @@ fun MainNavigation(
         }
     }
 
+    val importTraceLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            if (text != null) viewModel.connectWithTraceReplay(text)
+        }
+    }
+
     val btPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
@@ -440,6 +449,7 @@ fun MainNavigation(
                         OverlayRoute.PACKET_INSPECTOR -> PacketInspectorScreen(
                             protocolLogs = protocolLogs,
                             onExportTrace = { viewModel.exportSessionTrace(context) },
+                            onImportAndReplayTrace = { importTraceLauncher.launch(arrayOf("text/*", "*/*")) },
                             onClearLogs = viewModel::clearProtocolLogs,
                             onBack = { activeOverlay = null }
                         )
@@ -498,6 +508,10 @@ fun MainNavigation(
                                 onExportBackupsJson = { viewModel.exportBackupsJson(context) },
                                 onImportBackupsJson = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
                                 onAddVoOption = viewModel::addVehicleOrderOption,
+                                onPreviewVoCoding = viewModel::previewVoCodingPlan,
+                                onDismissVoPlan = viewModel::dismissVoCodingPlan,
+                                onApplyVoPlan = viewModel::applyVoCodingPlan,
+                                onReadFsc = viewModel::readFscCertificates,
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
 
@@ -511,6 +525,8 @@ fun MainNavigation(
                                 onSetSelectedPids = viewModel::setSelectedLivePids,
                                 onSetAndroidAutoPids = viewModel::setAndroidAutoPids,
                                 onMoveLiveChannel = viewModel::moveLiveChannel,
+                                onSelectDragMode = viewModel::setDragMode,
+                                onRunVirtualDynoPull = viewModel::runVirtualDynoPull,
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
 

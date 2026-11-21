@@ -347,6 +347,23 @@ data class AppStrings(
     var supportBundleTitle: String = "Diagnostics Support Bundle"
     var supportBundleBtn: String = "Create Support Bundle"
     var supportBundleSub: String = "Exports vehicle VIN, ECU SVT tree, 3-layer DTCs, and UDS/AT logs."
+
+    // Advanced Engine, E-Sys VO/FSC, Virtual Dyno, Trace Replay & Correlation Strings
+    var rootCauseTitle: String = "Root-Cause Multi-Fault Correlation"
+    var rootCauseActionPrefix: String = "Action"
+    var comparativeDiffTitle: String = "Comparative Inspection vs Previous Scan"
+    var comparativeKmDeltaLabel: String = "Odometer Δ"
+    var comparativeNewDtcLabel: String = "New DTCs"
+    var comparativeResolvedDtcLabel: String = "Resolved DTCs"
+    var comparativeHealthDeltaLabel: String = "Health Δ"
+    var voPreviewCalcBtn: String = "Calculate VO Diff"
+    var voDiffDialogTitle: String = "E-Sys Auto VO Coding Hex Byte Diff"
+    var voApplyAllBtn: String = "Code All Affected ECUs"
+    var fscTitle: String = "FSC Activation Certificates (CarPlay / Maps / SLI)"
+    var fscRefreshBtn: String = "Read FSC Status"
+    var virtualDynoTitle: String = "Pro-Tuner Virtual Dyno (HP / Nm)"
+    var virtualDynoPullBtn: String = "Run Dyno Pull"
+    var traceLoadReplayBtn: String = "Load & Replay Trace (.txt)"
     fun adapterTitle(type: AdapterType): String = when (language) {
         AppLanguage.AZ -> when (type) {
             AdapterType.ENET_USB -> "USB-C to ENET Kabel"

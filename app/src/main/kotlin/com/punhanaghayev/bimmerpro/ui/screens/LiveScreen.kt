@@ -80,8 +80,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.LiveSensorChannel
+import com.punhanaghayev.bimmerpro.core.bmw.VirtualDynoResult
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.data.DragMode
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
@@ -99,6 +101,8 @@ fun LiveScreen(
     onSetSelectedPids: (List<String>) -> Unit,
     onSetAndroidAutoPids: (List<String>) -> Unit,
     onMoveLiveChannel: (Int, Int) -> Unit,
+    onSelectDragMode: (DragMode) -> Unit = {},
+    onRunVirtualDynoPull: () -> Unit = {},
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
@@ -396,7 +400,7 @@ fun LiveScreen(
             }
         }
 
-        // 0-100 km/h Performance Timer
+        // Extended Drag Performance Timer + Virtual Dyno (Pro-Tuner)
         item {
             val timer = session.performanceTimer
             Card(
@@ -408,15 +412,38 @@ fun LiveScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
+                            Text(
+                                text = strings.perfTimerTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 13.sp
+                            )
+                        }
                         Text(
-                            text = strings.perfTimerTitle,
+                            text = "${timer.currentSpeedKmh} km/h" + if (timer.dragMode == DragMode.QUARTER_MILE) " • ${timer.distanceMeters.toInt()}m" else "",
+                            color = theme.primaryBright,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = theme.textPrimary,
-                            fontSize = 13.sp
+                            fontFamily = FontFamily.Monospace
                         )
+                    }
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        DragMode.entries.forEach { mode ->
+                            FilterChip(
+                                selected = timer.dragMode == mode,
+                                onClick = { onSelectDragMode(mode) },
+                                label = { Text(mode.label, fontSize = 10.sp) }
+                            )
+                        }
                     }
 
                     Row(
@@ -425,14 +452,20 @@ fun LiveScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("0-100 km/h", color = theme.textSecondary, fontSize = 11.sp)
+                            Text(timer.dragMode.label, color = theme.textSecondary, fontSize = 11.sp)
                             val timeStr = if (timer.isRunning) "%.2fs".format(timer.elapsedMs / 1000.0)
                                 else if (timer.isArmed) "..." else "--.--s"
                             Text(timeStr, color = theme.primaryBright, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(strings.bestTimerLabel, color = theme.textSecondary, fontSize = 11.sp)
-                            val bestStr = timer.bestZeroToHundredSec?.let { "%.2fs".format(it) } ?: "--.--s"
+                            val modeBest = when (timer.dragMode) {
+                                DragMode.ZERO_TO_100 -> timer.bestZeroToHundredSec
+                                DragMode.HUNDRED_TO_200 -> timer.best100To200Sec
+                                DragMode.SIXTY_TO_130_MPH -> timer.best60To130MphSec
+                                DragMode.QUARTER_MILE -> timer.bestQuarterMileSec
+                            }
+                            val bestStr = modeBest?.let { "%.2fs".format(it) } ?: "--.--s"
                             Text(bestStr, color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                         }
                     }
@@ -445,6 +478,14 @@ fun LiveScreen(
                     )
                 }
             }
+        }
+
+        // Pro-Tuner Virtual Dyno (HP & Nm Curve)
+        item {
+            VirtualDynoCard(
+                dyno = session.virtualDyno,
+                onRunDynoPull = onRunVirtualDynoPull
+            )
         }
 
         // Sport Displays Gauges (Power & Torque)
@@ -900,6 +941,102 @@ private fun LiveSportGauge(
                 color = theme.primaryBright,
                 trackColor = theme.outline.copy(alpha = 0.3f)
             )
+        }
+    }
+}
+
+@Composable
+private fun VirtualDynoCard(
+    dyno: VirtualDynoResult?,
+    onRunDynoPull: () -> Unit
+) {
+    val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = theme.card),
+        border = BorderStroke(1.dp, theme.outline),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(strings.virtualDynoTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                OutlinedButton(
+                    onClick = onRunDynoPull,
+                    modifier = Modifier.height(34.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                ) {
+                    Text(strings.virtualDynoPullBtn, fontSize = 11.sp, color = theme.primaryBright, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
+            }
+
+            if (dyno != null && dyno.points.size >= 2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${dyno.peakHp} HP @ ${dyno.peakHpRpm} rpm",
+                        color = theme.primaryBright,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = "${dyno.peakTorqueNm} Nm @ ${dyno.peakTorqueRpm} rpm",
+                        color = StatusAmber,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp
+                    )
+                }
+
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(theme.cardElevated)
+                        .padding(10.dp)
+                ) {
+                    val pts = dyno.points
+                    val maxVal = maxOf(
+                        pts.maxOf { it.horsepower },
+                        pts.maxOf { it.torqueNm },
+                        100.0
+                    )
+                    val gridColor = theme.outline.copy(alpha = 0.25f)
+                    for (i in 1..3) {
+                        val y = size.height * i / 4f
+                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+                    }
+
+                    val hpPath = Path()
+                    val nmPath = Path()
+                    val denom = (pts.size - 1).coerceAtLeast(1)
+                    pts.forEachIndexed { idx, pt ->
+                        val x = size.width * idx / denom.toFloat()
+                        val hpY = size.height - ((pt.horsepower / maxVal).toFloat().coerceIn(0f, 1f) * size.height)
+                        val nmY = size.height - ((pt.torqueNm / maxVal).toFloat().coerceIn(0f, 1f) * size.height)
+                        if (idx == 0) {
+                            hpPath.moveTo(x, hpY)
+                            nmPath.moveTo(x, nmY)
+                        } else {
+                            hpPath.lineTo(x, hpY)
+                            nmPath.lineTo(x, nmY)
+                        }
+                    }
+                    drawPath(hpPath, color = theme.primaryBright, style = Stroke(width = 3.5f, cap = StrokeCap.Round))
+                    drawPath(nmPath, color = StatusAmber, style = Stroke(width = 3f, cap = StrokeCap.Round))
+                }
+                Text(
+                    text = "${dyno.summary} • ${dyno.vehicleMassKg} kg",
+                    color = theme.textSecondary,
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }

@@ -15,7 +15,8 @@ private data class BackupJsonDto(
     val ecuAddress: Int,
     val cafdFile: String,
     val summary: String,
-    val previousValues: Map<String, Int>
+    val previousValues: Map<String, Int>,
+    val cafdByteSnapshot: Map<Int, String> = emptyMap()
 )
 
 class BackupStorage(private val storageDir: File) {
@@ -25,7 +26,16 @@ class BackupStorage(private val storageDir: File) {
 
     fun exportToJson(backups: List<CodingBackupSnapshot>): String {
         val dtos = backups.map {
-            BackupJsonDto(it.id, it.timestamp, it.ecuName, it.ecuAddress, it.cafdFile, it.summary, it.previousValues)
+            BackupJsonDto(
+                it.id,
+                it.timestamp,
+                it.ecuName,
+                it.ecuAddress,
+                it.cafdFile,
+                it.summary,
+                it.previousValues,
+                it.cafdByteSnapshot
+            )
         }
         return json.encodeToString(dtos)
     }
@@ -33,7 +43,16 @@ class BackupStorage(private val storageDir: File) {
     fun importFromJson(rawJson: String): List<CodingBackupSnapshot> {
         val dtos = json.decodeFromString<List<BackupJsonDto>>(rawJson)
         return dtos.map {
-            CodingBackupSnapshot(it.id, it.timestamp, it.ecuName, it.ecuAddress, it.cafdFile, it.summary, it.previousValues)
+            CodingBackupSnapshot(
+                it.id,
+                it.timestamp,
+                it.ecuName,
+                it.ecuAddress,
+                it.cafdFile,
+                it.summary,
+                it.previousValues,
+                it.cafdByteSnapshot
+            )
         }
     }
 
@@ -56,6 +75,9 @@ class BackupStorage(private val storageDir: File) {
         val prevEncoded = b.previousValues.entries.joinToString(",") { (k, v) ->
             "${encodeB64(k)}=$v"
         }
+        val byteSnapEncoded = b.cafdByteSnapshot.entries.joinToString(",") { (addr, hex) ->
+            "$addr=${encodeB64(hex)}"
+        }
         return listOf(
             encodeB64(b.id),
             encodeB64(b.timestamp),
@@ -63,7 +85,8 @@ class BackupStorage(private val storageDir: File) {
             b.ecuAddress.toString(),
             encodeB64(b.cafdFile),
             encodeB64(b.summary),
-            prevEncoded
+            prevEncoded,
+            byteSnapEncoded
         ).joinToString("|")
     }
 
@@ -78,6 +101,15 @@ class BackupStorage(private val storageDir: File) {
                 if (kv.size == 2) decodeB64(kv[0]) to (kv[1].toIntOrNull() ?: 0) else null
             }.toMap()
         }
+        val byteSnapMap = if (parts.size >= 8 && parts[7].isNotBlank()) {
+            parts[7].split(",").mapNotNull { entry ->
+                val kv = entry.split("=")
+                val addr = kv.getOrNull(0)?.toIntOrNull()
+                if (kv.size == 2 && addr != null) addr to decodeB64(kv[1]) else null
+            }.toMap()
+        } else {
+            emptyMap()
+        }
         return CodingBackupSnapshot(
             id = decodeB64(parts[0]),
             timestamp = decodeB64(parts[1]),
@@ -85,7 +117,8 @@ class BackupStorage(private val storageDir: File) {
             ecuAddress = parts[3].toIntOrNull() ?: return null,
             cafdFile = decodeB64(parts[4]),
             summary = decodeB64(parts[5]),
-            previousValues = prevMap
+            previousValues = prevMap,
+            cafdByteSnapshot = byteSnapMap
         )
     }
 

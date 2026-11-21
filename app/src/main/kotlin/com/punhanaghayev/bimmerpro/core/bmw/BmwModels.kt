@@ -79,7 +79,8 @@ object EcuAddress {
     const val ZGW_BDC = 0x10
     const val DME_DDE = 0x12
     const val EGS = 0x18
-    const val ACC_RADAR = 0x19
+    const val VTG_TRANSFER = 0x19
+    const val ACC_RADAR = 0x59
     const val DSC = 0x29
     const val ASD = 0x3C
     const val FEM_CAS = 0x40
@@ -89,6 +90,7 @@ object EcuAddress {
     const val SME_HV_BATTERY = 0x6E
     const val FRM = 0x72
     const val REM = 0x73
+    const val EHC_SUSPENSION = 0x76
     const val IHKA = 0x78
 }
 
@@ -108,7 +110,9 @@ data class EcuModule(
     val codingCapability: CodingCapability,
     val activeDtcCount: Int,
     val shadowDtcCount: Int,
-    val reportedMileageKm: Int? = null
+    val reportedMileageKm: Int? = null,
+    val variantName: String? = null,
+    val svkSummary: String? = null
 ) {
     val addressHex: String get() = "0x%02X".format(address)
 }
@@ -339,6 +343,20 @@ data class LiveSensorChannel(
             "inj_4" -> "Injector 4 Deviation"
             "turbo_target" -> "Target Boost Pressure"
             "alt_load" -> "Alternator Load"
+            "timing_corr" -> "Ignition Timing Correction (Cyl 1)"
+            "timing_corr_2" -> "Ignition Timing Correction (Cyl 2)"
+            "timing_corr_3" -> "Ignition Timing Correction (Cyl 3)"
+            "timing_corr_4" -> "Ignition Timing Correction (Cyl 4)"
+            "timing_corr_5" -> "Ignition Timing Correction (Cyl 5)"
+            "timing_corr_6" -> "Ignition Timing Correction (Cyl 6)"
+            "ltft" -> "Long Term Fuel Trim (LTFT)"
+            "stft" -> "Short Term Fuel Trim (STFT)"
+            "lambda_afr" -> "Air-Fuel Ratio (Lambda)"
+            "vanos_in_target" -> "VANOS Intake Target Angle"
+            "vanos_in" -> "VANOS Intake Actual Angle"
+            "hpfp_target" -> "HPFP Target Pressure"
+            "hpfp_actual" -> "HPFP Actual Pressure"
+            "misfire_total" -> "Total Misfire Counter"
             else -> name
         }
         com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> when (id) {
@@ -362,6 +380,20 @@ data class LiveSensorChannel(
             "inj_4" -> "Farsunka 4 Meyletmə"
             "turbo_target" -> "Hədəf Boost Təzyiqi"
             "alt_load" -> "Generator Yükü"
+            "timing_corr" -> "Alışma Avansı Düzəlişi (Sil 1)"
+            "timing_corr_2" -> "Alışma Avansı Düzəlişi (Sil 2)"
+            "timing_corr_3" -> "Alışma Avansı Düzəlişi (Sil 3)"
+            "timing_corr_4" -> "Alışma Avansı Düzəlişi (Sil 4)"
+            "timing_corr_5" -> "Alışma Avansı Düzəlişi (Sil 5)"
+            "timing_corr_6" -> "Alışma Avansı Düzəlişi (Sil 6)"
+            "ltft" -> "Uzun Müddətli Yanacaq Trimi (LTFT)"
+            "stft" -> "Qısa Müddətli Yanacaq Trimi (STFT)"
+            "lambda_afr" -> "Hava-Yanacaq Nisbəti (Lambda)"
+            "vanos_in_target" -> "VANOS Giriş Hədəf Bucağı"
+            "vanos_in" -> "VANOS Giriş Faktiki Bucağı"
+            "hpfp_target" -> "HPFP Hədəf Təzyiq"
+            "hpfp_actual" -> "HPFP Faktiki Təzyiq"
+            "misfire_total" -> "Ümumi Misfire Sayğacı"
             else -> name
         }
         com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> when (id) {
@@ -385,6 +417,20 @@ data class LiveSensorChannel(
             "inj_4" -> "Коррекция форсунки 4"
             "turbo_target" -> "Целевое давление наддува"
             "alt_load" -> "Нагрузка генератора"
+            "timing_corr" -> "Коррекция УОЗ (Цил. 1)"
+            "timing_corr_2" -> "Коррекция УОЗ (Цил. 2)"
+            "timing_corr_3" -> "Коррекция УОЗ (Цил. 3)"
+            "timing_corr_4" -> "Коррекция УОЗ (Цил. 4)"
+            "timing_corr_5" -> "Коррекция УОЗ (Цил. 5)"
+            "timing_corr_6" -> "Коррекция УОЗ (Цил. 6)"
+            "ltft" -> "Долгосрочная коррекция топлива (LTFT)"
+            "stft" -> "Краткосрочная коррекция топлива (STFT)"
+            "lambda_afr" -> "Состав смеси (Lambda)"
+            "vanos_in_target" -> "Целевой угол VANOS впуск"
+            "vanos_in" -> "Фактический угол VANOS впуск"
+            "hpfp_target" -> "Целевое давление ТНВД (HPFP)"
+            "hpfp_actual" -> "Фактическое давление ТНВД (HPFP)"
+            "misfire_total" -> "Счетчик пропусков зажигания"
             else -> name
         }
         com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> name
@@ -401,7 +447,12 @@ enum class ServiceRoutineType {
     KAFAS_CAMERA_CALIBRATION,
     ACC_RADAR_CALIBRATION,
     HV_BATTERY_CONTACTOR_CHECK,
-    SHORT_CIRCUIT_RESET
+    SHORT_CIRCUIT_RESET,
+    COOLANT_BLEEDING,
+    DSC_ABS_BLEED,
+    VTG_TRANSFER_CASE_RESET,
+    VALVETRONIC_LIMIT_LEARN,
+    EHC_AIR_SUSPENSION_CAL
 }
 
 data class ServiceRoutine(
@@ -474,6 +525,36 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс блокировки короткого замыкания FRM / FEM"
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
         }
+        ServiceRoutineType.COOLANT_BLEEDING -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Electric Water Pump Coolant Bleeding (12 Min)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Elektrikli Su Nasosu Hava Alma (12 Dəq)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Прокачка электропомпы охлаждения (12 мин)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.DSC_ABS_BLEED -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "DSC / ABS Hydraulic Brake Bleed Routine"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "DSC / ABS Əyləc Hidravlik Hava Alma Rutini"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Прокачка тормозной системы DSC / ABS"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.VTG_TRANSFER_CASE_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "xDrive VTG Transfer Case Oil Reset & Servo Cal"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "xDrive VTG Razdatka Yağ Sıfırlama & Kalibrasiya"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс износа масла и калибровка VTG xDrive"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.VALVETRONIC_LIMIT_LEARN -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Valvetronic & Throttle Stop-Limit Learning"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Valvetronic & Qaz Qapağı Limit Öyrənmə"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Обучение упоров Valvetronic и дросселя"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
+        ServiceRoutineType.EHC_AIR_SUSPENSION_CAL -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "EHC Air Suspension Ride Height Calibration"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "EHC Pnevmatik Asqı Hündürlük Kalibrasiyası"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Калибровка высоты пневмоподвески EHC"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> title
+        }
     }
 
     fun localizedDescription(strings: com.punhanaghayev.bimmerpro.core.i18n.AppStrings): String = when (type) {
@@ -523,6 +604,36 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Clears FRM/FEM/BDC short-circuit output lock counters after lamp/wiring repair."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Lampa və ya naqil təmirindən sonra FRM/FEM/BDC qısa qapanma blokunu sıfırlayır."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс счетчиков блокировки выхода FRM/FEM/BDC после устранения замыкания."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.COOLANT_BLEEDING -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Activates electric coolant pump cycling (12 min) after thermostat, radiator, or pump service."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Termostat, radiator və ya nasos təmirindən sonra elektrikli su nasosunu 12 dəq dövriyyəyə salır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Запускает 12-минутный цикл прокачки электропомпы после обслуживания системы охлаждения."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.DSC_ABS_BLEED -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Cycles DSC hydraulic valves & ABS pump per wheel circuit for brake fluid bleeding."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Əyləc mayesinin havasını almaq üçün DSC klapanlarını və ABS nasosunu işə salır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Активация клапанов DSC и насоса ABS для прокачки тормозных контуров."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.VTG_TRANSFER_CASE_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Resets VTG transfer case oil wear counter and runs actuator angle calibration."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "VTG razdatka yağ aşınma sayğacını sıfırlayır və servo bucaq kalibrasiyasını icra edir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сброс счетчика старения масла раздатки VTG и калибровка сервопривода."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.VALVETRONIC_LIMIT_LEARN -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Re-learns Valvetronic eccentric shaft minimum/maximum stops and throttle adaptation."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Valvetronic eksentrik valının min/maks limitlərini və qaz qapağını yenidən öyrədir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Адаптация крайних положений вала Valvetronic и дроссельной заслонки."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
+        }
+        ServiceRoutineType.EHC_AIR_SUSPENSION_CAL -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Calibrates left/right rear air spring ride height offsets via EHC level sensors."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "EHC səviyyə sensorları ilə sağ/sol pnevmatik asqı hündürlük dəyərlərini kalibrləyir."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Калибровка датчиков уровня пневмоподвески EHC (левый/правый контур)."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> description
         }
         else -> description
@@ -587,6 +698,36 @@ data class ServiceRoutine(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Ensure bulb/wiring short circuit is physically repaired before resetting counter."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Sıfırlamadan əvvəl lampa/naqil qısa qapanmasının aradan qaldırıldığından əmin olun."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Убедитесь, что короткое замыкание устранено физически перед сбросом."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.COOLANT_BLEEDING -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Connect a battery charger (>12.5V), ignition ON, engine OFF, heater set to max temperature."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Şarj cihazı qoşun (>12.5V), açar ON, mühərrik SÖNÜLÜ, salon isitməsini maksimuma qoyun."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Подключите ЗУ (>12.5V), зажигание ВКЛ, двигатель ВЫКЛ, печка на максимум."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.DSC_ABS_BLEED -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Use a brake bleeder pressurizing reservoir and keep fluid level above MIN."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Əyləc maye qabına təzyiq verən cihaz qoşun və səviyyəni MIN üzərində saxlayın."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Используйте установку под давлением и следите, чтобы уровень жидкости не упал ниже MIN."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.VTG_TRANSFER_CASE_RESET -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Perform oil reset only after filling fresh BMW DTF-1 transfer case oil."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Yalnız yeni BMW DTF-1 razdatka yağı doldurduqdan sonra sıfırlama edin."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Сбрасывайте только после заливки свежего масла BMW DTF-1."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.VALVETRONIC_LIMIT_LEARN -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Ignition ON, engine OFF; battery voltage must remain steady above 12.2V."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Açar ON, mühərrik SÖNÜLÜ; akkumulyator gərginliyi 12.2V üzərində sabit olmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Зажигание ВКЛ, двигатель ВЫКЛ; напряжение АКБ стабильно выше 12.2V."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
+        }
+        ServiceRoutineType.EHC_AIR_SUSPENSION_CAL -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Vehicle must be unloaded on a completely flat surface; doors closed."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Avtomobil tam düz səthdə yüksüz olmalı və qapılar bağlı qalmalıdır."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Автомобиль без нагрузки на ровной площадке, все двери закрыты."
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> warningNote
         }
     }
@@ -695,7 +836,8 @@ data class CodingBackupSnapshot(
     val ecuAddress: Int,
     val cafdFile: String,
     val summary: String,
-    val previousValues: Map<String, Int>
+    val previousValues: Map<String, Int>,
+    val cafdByteSnapshot: Map<Int, String> = emptyMap()
 )
 
 data class HvCellVoltage(
