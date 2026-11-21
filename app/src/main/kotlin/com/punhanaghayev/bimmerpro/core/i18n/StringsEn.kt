@@ -280,7 +280,7 @@ object StringsEn {
         hvCellDistributionLabel = "96-Cell Voltage Distribution (Min: %d mV, Avg: %d mV, Max: %d mV)"
         contactorClosedLabel = "Contactor: CLOSED (Active)"
         contactorOpenLabel = "Contactor: OPEN"
-        moduleTempsLabel = "Module Temperatures: Min %d°C / Max %d°C (Avg: %d°C)"
+        moduleTempsLabel = "Module Temperatures: Min %.1f°C / Max %.1f°C (Avg: %.1f°C)"
         radarOkLabel = "RADAR OK"
         radarAlignRequiredLabel = "ALIGNMENT REQUIRED"
         toleranceLabel = "Tolerance: ±15.0 mrad"

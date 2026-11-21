@@ -196,8 +196,8 @@ class BimmerRepository(
         purpose: ConnectionPurpose = _session.value.connectionPurpose
     ) {
         activeTransport.disconnect()
-        activeTransport = when (adapterType) {
-            AdapterType.VLINKER_BM_WIFI -> TcpElmStnTransportAdapter(
+        activeTransport = when (adapterType.transportKind) {
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.WIFI_ELM_STN -> TcpElmStnTransportAdapter(
                 adapterType = adapterType,
                 context = appContext,
                 host = customHost.ifBlank { TcpElmStnTransportAdapter.DEFAULT_VLINKER_HOST },
@@ -205,15 +205,9 @@ class BimmerRepository(
                 onAtLog = { msg -> udsClient.logInfo("AT", EcuAddress.ZGW_BDC, msg) }
             )
 
-            AdapterType.SIMULATOR_F10,
-            AdapterType.SIMULATOR_F10_528I,
-            AdapterType.SIMULATOR_F30,
-            AdapterType.SIMULATOR_G30,
-            AdapterType.SIMULATOR_G20,
-            AdapterType.SIMULATOR_E90 -> SimulatorTransportAdapter(adapterType)
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.SIMULATOR -> SimulatorTransportAdapter(adapterType)
 
-            AdapterType.ENET_WIFI,
-            AdapterType.ENET_USB -> {
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.ENET_TCP -> {
                 val targetPort = customPort ?: TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT
                 if (targetPort == DoIpProtocol.DEFAULT_DOIP_PORT) {
                     DoIpTransportAdapter(
@@ -232,16 +226,16 @@ class BimmerRepository(
                 }
             }
 
-            AdapterType.BLE_OBD -> {
-                val ctx = appContext ?: error("BLE için Android Context gerekli")
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.BLE_OBD -> {
+                val ctx = appContext ?: error("Android Context required for BLE")
                 val targetMac = bleAddress ?: throw IllegalStateException(
-                    "Önce 'Donanım Tara' ile bir BLE OBD adaptörü (OBDLink/UniCarScan) seçin."
+                    "Scan hardware first and select a Bluetooth/BLE OBD adapter."
                 )
                 BleObdTransportAdapter(ctx, targetMac)
             }
 
-            AdapterType.USB_KDCAN -> {
-                val ctx = appContext ?: error("USB K+DCAN için Android Context gerekli")
+            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.USB_KDCAN -> {
+                val ctx = appContext ?: error("Android Context required for USB K+DCAN")
                 UsbKdcanTransportAdapter(ctx)
             }
         }

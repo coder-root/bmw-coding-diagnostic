@@ -11,25 +11,48 @@ import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 
+enum class AdapterTransportKind {
+    WIFI_ELM_STN,
+    ENET_TCP,
+    BLE_OBD,
+    USB_KDCAN,
+    SIMULATOR
+}
+
 enum class AdapterType(
     val displayName: String,
     val protocolSummary: String,
-    val supportsEnetspeed: Boolean
+    val supportsEnetspeed: Boolean,
+    val transportKind: AdapterTransportKind
 ) {
-    VLINKER_BM_WIFI("Vgate vLinker BM Wi-Fi", "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)", false),
-    ENET_WIFI("Wi-Fi ENET (Thor / MHD / BM3)", "HSFZ / DoIP TCP:6801", true),
-    ENET_USB("USB-C to ENET Kablo", "HSFZ / DoIP 100Mbps Ethernet", true),
-    BLE_OBD("OBDLink CX / UniCarScan BLE", "ISO-TP over CAN (BLE GATT)", false),
-    USB_KDCAN("USB OTG K+DCAN Kablo", "E-Series K-Line / D-CAN", false),
-    SIMULATOR_F10("BMW F10 520d Simülasyonu", "Virtual HSFZ / ENET + UDS", true),
-    SIMULATOR_F10_528I("BMW F10 528i Simülasyonu", "Virtual HSFZ / ENET + N20 Benzin", true),
-    SIMULATOR_F30("BMW F30 328i Simülasyonu", "Virtual HSFZ / ENET + N20", true),
-    SIMULATOR_G30("BMW G30 530i Simülasyonu", "Virtual DoIP / HSFZ + Secure Coding Check", true),
-    SIMULATOR_G20("BMW G20 M340i Simülasyonu", "Virtual DoIP / B58 + iDrive 7", true),
-    SIMULATOR_E90("BMW E90 335i Simülasyonu", "Virtual K+DCAN / KWP2000 + Tamper Alert Demo", false);
+    ENET_WIFI("ENET Cable / Wi-Fi", "HSFZ / DoIP TCP:6801 (100 Mbps)", true, AdapterTransportKind.ENET_TCP),
+    UNICARSCAN_3000("UniCarScan - 3000", "BLE / BT Dual-Mode ISO-TP (E/F/G/I)", false, AdapterTransportKind.BLE_OBD),
+    UNICARSCAN_2100("UniCarScan - 2100", "BLE ISO-TP over CAN (E/F/G)", false, AdapterTransportKind.BLE_OBD),
+    BLE_OBD("OBDLink CX / CX+", "STN BLE GATT ISO-TP (F/G/I)", false, AdapterTransportKind.BLE_OBD),
+    OBDLINK_MX_PLUS("OBDLink MX+", "STN Bluetooth High-Speed ISO-TP", false, AdapterTransportKind.BLE_OBD),
+    VLINKER_BM_WIFI("vLinker Wi-Fi", "STN2255 Wi-Fi TCP 192.168.0.10:35000", false, AdapterTransportKind.WIFI_ELM_STN),
+    VLINKER_BT("vLinker Bluetooth", "STN2255 BLE / BT ISO-TP (BM+ / MC+)", false, AdapterTransportKind.BLE_OBD),
+    VGATE_ICAR_BT("Vgate iCar Bluetooth", "ELM327 BLE / BT ISO-TP", false, AdapterTransportKind.BLE_OBD),
+    VEEPEAK_BT("Veepeak Bluetooth", "OBDCheck BLE+ ISO-TP", false, AdapterTransportKind.BLE_OBD),
+    KONNWEI("Konnwei", "KW902 / KW903 Bluetooth ELM327", false, AdapterTransportKind.BLE_OBD),
+    MODBM_ENET("modBM ENET", "Wi-Fi ENET HSFZ / DoIP TCP:6801", true, AdapterTransportKind.ENET_TCP),
+    THOR("THOR", "THOR Wi-Fi ENET HSFZ / DoIP", true, AdapterTransportKind.ENET_TCP),
+    KIES_WIFI("KIES Wi-Fi", "KIES Wi-Fi ENET HSFZ / DoIP", true, AdapterTransportKind.ENET_TCP),
+    MG_FLASHER("MG Flasher", "MG Flasher Wi-Fi ENET / DoIP", true, AdapterTransportKind.ENET_TCP),
+    BM3("bm3", "bootmod3 Wi-Fi ENET / DoIP", true, AdapterTransportKind.ENET_TCP),
+    MHD_UNIVERSAL("MHD Universal", "MHD Universal Wi-Fi ENET / DoIP", true, AdapterTransportKind.ENET_TCP),
+    XHP("xHP", "xHP Wi-Fi ENET / DoIP", true, AdapterTransportKind.ENET_TCP),
+    ENET_USB("USB-C to ENET Cable", "HSFZ / DoIP 100Mbps Ethernet", true, AdapterTransportKind.ENET_TCP),
+    USB_KDCAN("USB OTG K+DCAN Cable", "E-Series K-Line / D-CAN (Pin 7+8)", false, AdapterTransportKind.USB_KDCAN),
+    SIMULATOR_F10("BMW F10 520d", "Virtual HSFZ / ENET + UDS", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_F10_528I("BMW F10 528i", "Virtual HSFZ / ENET + N20 Petrol", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_F30("BMW F30 328i", "Virtual HSFZ / ENET + N20", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_G30("BMW G30 530i", "Virtual DoIP / HSFZ + Secure Coding", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_G20("BMW G20 M340i", "Virtual DoIP / B58 + iDrive 7", true, AdapterTransportKind.SIMULATOR),
+    SIMULATOR_E90("BMW E90 335i", "Virtual K+DCAN / KWP2000 + Tamper Demo", false, AdapterTransportKind.SIMULATOR);
 
     val isSimulator: Boolean
-        get() = name.startsWith("SIMULATOR")
+        get() = transportKind == AdapterTransportKind.SIMULATOR
 }
 
 sealed interface ConnectionState {

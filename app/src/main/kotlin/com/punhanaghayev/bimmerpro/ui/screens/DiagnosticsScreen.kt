@@ -69,6 +69,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
+import com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
@@ -135,33 +136,6 @@ fun DiagnosticsScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = onRunScan,
-                    enabled = !session.isScanning,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                ) {
-                    Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(if (session.isScanning) strings.scanningText else strings.scanAllEcusBtn, maxLines = 1, softWrap = false, fontSize = 12.sp)
-                }
-                OutlinedButton(
-                    onClick = onExportPdf,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.7f))
-                ) {
-                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(strings.expertisePdfBtn, color = theme.primaryBright, maxLines = 1, softWrap = false, fontSize = 12.sp)
-                }
-            }
-        }
-
         if (session.isScanning || session.scanStatusText.isNotBlank()) {
             item {
                 Card(
@@ -529,8 +503,17 @@ private fun ExpandableEcuCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("${ecu.shortName} (${ecu.addressHex}) • ${ecu.fullName}", color = theme.textPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text("${ecu.softwareVersion} | ${ecu.codingCapability.label}", color = theme.textSecondary, fontSize = 11.sp)
+                    Text(
+                        "${ecu.shortName} (${ecu.addressHex}) • ${GlobalTextLocalizer.localize(ecu.fullName, strings.language)}",
+                        color = theme.textPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "${ecu.softwareVersion} | ${GlobalTextLocalizer.localize(ecu.codingCapability.label, strings.language)}",
+                        color = theme.textSecondary,
+                        fontSize = 11.sp
+                    )
                 }
                 val isOffline = total == 0 && (ecu.softwareVersion.contains("error", ignoreCase = true) || ecu.hardwareVersion.contains("error", ignoreCase = true))
                 if (isOffline) {
@@ -619,11 +602,20 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                     tint = theme.textSecondary
                 )
             }
-            Text(dtc.localizedTitle(strings), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Text(
+                GlobalTextLocalizer.localize(dtc.localizedTitle(strings), strings.language),
+                color = theme.textPrimary,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp
+            )
 
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                    Text(dtc.technicalDetail, color = theme.textSecondary, fontSize = 12.sp)
+                    Text(
+                        GlobalTextLocalizer.localize(dtc.technicalDetail, strings.language),
+                        color = theme.textSecondary,
+                        fontSize = 12.sp
+                    )
 
                     Box(
                         modifier = Modifier
@@ -654,7 +646,7 @@ private fun ExpandableDtcCard(dtc: DtcFault) {
                         Column {
                             Text(strings.istaControlPlan, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             Spacer(Modifier.height(4.dp))
-                            Text(dtc.istaGuidance, color = theme.textPrimary, fontSize = 12.sp)
+                            Text(GlobalTextLocalizer.localize(dtc.istaGuidance, strings.language), color = theme.textPrimary, fontSize = 12.sp)
                         }
                     }
                 }

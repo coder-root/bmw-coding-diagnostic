@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
+import com.punhanaghayev.bimmerpro.ui.components.BmwDangerButton
 import com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton
 import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
 import androidx.compose.material3.AlertDialog
@@ -210,7 +211,7 @@ fun LiveScreen(
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(def.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = theme.textPrimary)
-                                        Text("DID 0x%04X • ${def.unit}".format(def.did), fontSize = 10.sp, color = theme.textSecondary)
+                                        Text("DID 0x%04X • %s".format(def.did, def.unit), fontSize = 10.sp, color = theme.textSecondary)
                                     }
                                 }
                             }
@@ -278,53 +279,28 @@ fun LiveScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Button(
-                            onClick = onToggleLiveStream,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(42.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isLiveStreamRunning) StatusRed else theme.primary
+                        if (isLiveStreamRunning) {
+                            BmwDangerButton(
+                                text = strings.stopBtn,
+                                icon = Icons.Default.Stop,
+                                modifier = Modifier.weight(1f),
+                                onClick = onToggleLiveStream
                             )
-                        ) {
-                            Icon(
-                                imageVector = if (isLiveStreamRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = if (isLiveStreamRunning) strings.stopBtn else strings.startBtn,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                softWrap = false
+                        } else {
+                            BmwPrimaryButton(
+                                text = strings.startBtn,
+                                icon = Icons.Default.PlayArrow,
+                                modifier = Modifier.weight(1f),
+                                onClick = onToggleLiveStream
                             )
                         }
 
-                        OutlinedButton(
-                            onClick = onExportCsv,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(42.dp),
-                            border = BorderStroke(1.dp, theme.primaryBright.copy(alpha = 0.7f))
-                        ) {
-                            Icon(
-                                Icons.Default.Download,
-                                contentDescription = null,
-                                tint = theme.primaryBright,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = strings.exportCsvBtn,
-                                color = theme.primaryBright,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                softWrap = false
-                            )
-                        }
+                        BmwOutlinedButton(
+                            text = strings.exportCsvBtn,
+                            icon = Icons.Default.Download,
+                            modifier = Modifier.weight(1f),
+                            onClick = onExportCsv
+                        )
                     }
                 }
             }

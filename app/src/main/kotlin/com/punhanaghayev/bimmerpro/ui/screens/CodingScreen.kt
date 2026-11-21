@@ -800,8 +800,21 @@ private fun PresetCodingCard(
     onSelectOption: (Int) -> Unit
 ) {
     val theme = LocalThemeStyle.current
+    val strings = LocalAppStrings.current
     val effectiveIndex = stagedIndex ?: preset.currentOptionIndex
     val isStaged = stagedIndex != null && stagedIndex != preset.currentOptionIndex
+    val selectedBadgeText = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "STAGED"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "SEÇİLDİ"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "ВЫБРАНО"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "SEÇİLDİ"
+    }
+    val pendingSuffix = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "(Pending)"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "(Gözləyir)"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "(Ожидает)"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "(Bekliyor)"
+    }
     Card(
         colors = CardDefaults.cardColors(containerColor = theme.card),
         border = BorderStroke(
@@ -826,7 +839,7 @@ private fun PresetCodingCard(
                             .background(theme.primaryBright.copy(alpha = 0.2f))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text("SEÇİLDİ", color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(selectedBadgeText, color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 } else if (preset.isLockedBySecureCoding) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -836,17 +849,27 @@ private fun PresetCodingCard(
                     }
                 }
             }
-            Text(preset.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Text(preset.description, color = theme.textSecondary, fontSize = 12.sp)
+            Text(
+                com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(preset.title, strings.language),
+                color = theme.textPrimary,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+            Text(
+                com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(preset.description, strings.language),
+                color = theme.textSecondary,
+                fontSize = 12.sp
+            )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 preset.options.forEachIndexed { idx, label ->
                     val selected = effectiveIndex == idx
+                    val localizedOpt = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(label, strings.language)
                     FilterChip(
                         selected = selected,
                         onClick = { if (enabled) onSelectOption(idx) },
                         label = {
                             Text(
-                                text = if (selected && isStaged) "$label (Bekliyor)" else label,
+                                text = if (selected && isStaged) "$localizedOpt $pendingSuffix" else localizedOpt,
                                 fontSize = 11.sp
                             )
                         }

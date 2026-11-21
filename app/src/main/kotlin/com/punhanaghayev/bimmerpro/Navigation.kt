@@ -186,21 +186,21 @@ fun MainNavigation(
             when (event) {
                 is UiEvent.Snackbar -> snackbarHostState.showSnackbar(event.message)
                 is UiEvent.ShareFile -> {
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        event.file
-                    )
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = event.mimeType
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        putExtra(Intent.EXTRA_SUBJECT, "BMW Expert PRO: ${event.file.name}")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
                     runCatching {
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            event.file
+                        )
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = event.mimeType
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            putExtra(Intent.EXTRA_SUBJECT, "BMW Expert PRO: ${event.file.name}")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
                         context.startActivity(Intent.createChooser(shareIntent, event.chooserTitle))
-                    }.onFailure {
-                        snackbarHostState.showSnackbar(event.file.name)
+                    }.onFailure { err ->
+                        snackbarHostState.showSnackbar("Saved: ${event.file.name} (${err.message ?: ""})")
                     }
                 }
                 is UiEvent.InstallApk -> {
@@ -564,7 +564,10 @@ private fun OperationProgressDialog(
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = operation.title.ifBlank { strings.operationProgressTitle },
+                    text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(
+                        operation.title.ifBlank { strings.operationProgressTitle },
+                        strings.language
+                    ),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = theme.textPrimary
@@ -609,7 +612,7 @@ private fun OperationProgressDialog(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = operation.currentStep,
+                        text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(operation.currentStep, strings.language),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = if (operation.isCompleted && !operation.isSuccess) StatusRed else theme.textPrimary,
@@ -617,7 +620,7 @@ private fun OperationProgressDialog(
                     )
                     if (operation.details.isNotBlank()) {
                         Text(
-                            text = operation.details,
+                            text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(operation.details, strings.language),
                             fontSize = 12.sp,
                             color = theme.textSecondary,
                             textAlign = TextAlign.Center,
@@ -626,7 +629,7 @@ private fun OperationProgressDialog(
                     }
                     if (operation.errorMessage != null) {
                         Text(
-                            text = operation.errorMessage,
+                            text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(operation.errorMessage, strings.language),
                             fontSize = 11.sp,
                             color = StatusRed,
                             textAlign = TextAlign.Center

@@ -73,6 +73,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.HvCellVoltage
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutine
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceRoutineType
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
+import com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
@@ -379,7 +380,7 @@ fun ServiceScreen(
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Column(
                             modifier = Modifier.weight(1f),
@@ -524,7 +525,12 @@ fun ServiceScreen(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        Text(hv.healthAssessment, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = GlobalTextLocalizer.localize(hv.healthAssessment, strings.language),
+                            color = theme.primaryBright,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -647,21 +653,35 @@ fun ServiceScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Icon(Icons.Default.Tune, contentDescription = null, tint = sootColor, modifier = Modifier.size(18.dp))
-                                Text(strings.dpfMonitorTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                                Text(
+                                    text = strings.dpfMonitorTitle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = theme.textPrimary,
+                                    fontSize = 13.sp,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
+                            Spacer(Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
                                     .background(if (dpf.isRegenActive) StatusGreen.copy(alpha = 0.2f) else theme.cardElevated)
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = if (dpf.isRegenActive) strings.dpfStatusActive else strings.dpfStatusIdle,
                                     color = if (dpf.isRegenActive) StatusGreen else theme.textSecondary,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    softWrap = false,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -680,38 +700,45 @@ fun ServiceScreen(
                             )
                         }
 
-                        // DPF Stats Grid
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column {
-                                Text(strings.dpfAshLabel, color = theme.textSecondary, fontSize = 10.sp)
-                                Text("%.1f g".format(dpf.ashMassGrams), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        // DPF Stats 2x2 Grid (clean spacing, never collides)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(strings.dpfAshLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("%.1f g".format(dpf.ashMassGrams), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(strings.dpfBackpressureLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("%.1f mbar".format(dpf.backpressureMbar), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
                             }
-                            Column {
-                                Text(strings.dpfBackpressureLabel, color = theme.textSecondary, fontSize = 10.sp)
-                                Text("%.1f mbar".format(dpf.backpressureMbar), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                            Column {
-                                Text(strings.dpfLastRegenLabel, color = theme.textSecondary, fontSize = 10.sp)
-                                Text("%,d km".format(dpf.distanceSinceLastRegenKm), color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                            Column {
-                                Text(strings.dpfPreTempLabel, color = theme.textSecondary, fontSize = 10.sp)
-                                Text("%d°C".format(dpf.exhaustTempPreDpfC), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(strings.dpfLastRegenLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("%,d km".format(dpf.distanceSinceLastRegenKm), color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(strings.dpfPreTempLabel, color = theme.textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("%d°C".format(dpf.exhaustTempPreDpfC), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
                             }
                         }
 
                         // Trigger Regen Button
                         val regenRoutine = session.serviceRoutines.firstOrNull { it.type == ServiceRoutineType.DPF_REGENERATION }
                         if (regenRoutine != null) {
-                            Button(
-                                onClick = { onExecuteRoutine(regenRoutine, 0x01) },
-                                modifier = Modifier.fillMaxWidth().height(36.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                            ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text(strings.dpfTriggerBtn, fontSize = 11.sp, maxLines = 1)
-                            }
+                            BmwPrimaryButton(
+                                text = strings.dpfTriggerBtn,
+                                icon = Icons.Default.PlayArrow,
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    if (rememberRoutineConfirmation) {
+                                        onExecuteRoutine(regenRoutine, 0x01)
+                                    } else {
+                                        pendingRoutineToExecute = regenRoutine to 0x01
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -732,10 +759,22 @@ fun ServiceScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Icon(Icons.Default.Tune, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                                Text(strings.adasTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                                Text(
+                                    text = strings.adasTitle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = theme.textPrimary,
+                                    fontSize = 13.sp,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
+                            Spacer(Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
@@ -746,7 +785,9 @@ fun ServiceScreen(
                                     text = if (adas.isAccWithinTolerance) strings.radarOkLabel else strings.radarAlignRequiredLabel,
                                     color = if (adas.isAccWithinTolerance) StatusGreen else StatusAmber,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    softWrap = false,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -763,7 +804,7 @@ fun ServiceScreen(
                                 color = theme.primaryBright,
                                 trackColor = theme.outline.copy(alpha = 0.3f)
                             )
-                            Text(adas.kafasStatus, color = theme.textSecondary, fontSize = 10.sp)
+                            Text(GlobalTextLocalizer.localize(adas.kafasStatus, strings.language), color = theme.textSecondary, fontSize = 10.sp)
                         }
 
                         // ACC Radar Offsets
@@ -823,21 +864,35 @@ fun ServiceScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Icon(Icons.Default.Settings, contentDescription = null, tint = scoreColor, modifier = Modifier.size(18.dp))
-                            Text(strings.zfAdaptTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            Text(
+                                text = strings.zfAdaptTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
+                        Spacer(Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(scoreColor.copy(alpha = 0.18f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "$overallScore% ${strings.zfHealthScoreLabel}",
+                                text = "$overallScore%",
                                 color = scoreColor,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                softWrap = false,
+                                maxLines = 1
                             )
                         }
                     }
@@ -884,7 +939,7 @@ fun ServiceScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(c.clutchName, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text(GlobalTextLocalizer.localize(c.clutchName, strings.language), color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     "%+d mbar • %+d ms".format(c.pressureMbar, c.fillTimeMs),
@@ -991,7 +1046,11 @@ fun ServiceScreen(
                                 Text("%,d km".format(rec.mileageKm), color = theme.primaryBright, fontSize = 12.sp)
                             }
                             Text(rec.dealerCode, color = theme.textSecondary, fontSize = 11.sp)
-                            Text(rec.performedItems.joinToString(" • "), color = theme.textSecondary, fontSize = 11.sp)
+                            Text(
+                                rec.performedItems.joinToString(" • ") { GlobalTextLocalizer.localize(it, strings.language) },
+                                color = theme.textSecondary,
+                                fontSize = 11.sp
+                            )
                         }
                     }
                 }

@@ -423,8 +423,45 @@ fun DeveloperScreen(
                     }
 
                     val filteredModels = BmwModelSupportCatalog.filterByCategory(selectedCategory)
+                    val modelsCountLabel = when (strings.language) {
+                        AppLanguage.EN -> "${filteredModels.size} Supported Models & Chassis"
+                        AppLanguage.AZ -> "${filteredModels.size} Dəstəklənən Model və Kuzov"
+                        AppLanguage.RU -> "${filteredModels.size} поддерживаемых моделей и кузовов"
+                        AppLanguage.TR -> "${filteredModels.size} Desteklenen Model & Kasa"
+                    }
+                    val diagPrefix = when (strings.language) {
+                        AppLanguage.EN -> "• Diagnostics:"
+                        AppLanguage.AZ -> "• Diaqnostika:"
+                        AppLanguage.RU -> "• Диагностика:"
+                        AppLanguage.TR -> "• Teşhis:"
+                    }
+                    val codingPrefix = when (strings.language) {
+                        AppLanguage.EN -> "• Coding:"
+                        AppLanguage.AZ -> "• Kodlaşdırma:"
+                        AppLanguage.RU -> "• Кодирование:"
+                        AppLanguage.TR -> "• Kodlama:"
+                    }
+                    val adapterPrefix = when (strings.language) {
+                        AppLanguage.EN -> "• Required Adapter:"
+                        AppLanguage.AZ -> "• Tələb olunan Adapter:"
+                        AppLanguage.RU -> "• Необходимый адаптер:"
+                        AppLanguage.TR -> "• Gerekli Adaptör:"
+                    }
+                    val limitPrefix = when (strings.language) {
+                        AppLanguage.EN -> "⚠️ Limitation:"
+                        AppLanguage.AZ -> "⚠️ Məhdudiyyət:"
+                        AppLanguage.RU -> "⚠️ Ограничение:"
+                        AppLanguage.TR -> "⚠️ Kısıtlama Nedeni:"
+                    }
+                    val solutionPrefix = when (strings.language) {
+                        AppLanguage.EN -> "💡 Solution:"
+                        AppLanguage.AZ -> "💡 Həll yolu:"
+                        AppLanguage.RU -> "💡 Решение:"
+                        AppLanguage.TR -> "💡 Çözüm:"
+                    }
+
                     Text(
-                        text = "${filteredModels.size} Desteklenen Model & Kasa",
+                        text = modelsCountLabel,
                         color = theme.primaryBright,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -442,41 +479,67 @@ fun DeveloperScreen(
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(theme.cardElevated)
                                 .padding(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    modifier = Modifier.weight(1f, fill = false)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(theme.primary.copy(alpha = 0.25f))
-                                            .padding(horizontal = 7.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(model.chassisCodes, color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                                    }
-                                    Text(model.yearRange, color = theme.textSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                                }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(badgeColor.copy(alpha = 0.15f))
-                                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                                        .background(theme.primary.copy(alpha = 0.25f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
-                                    Text(model.supportLevel.label, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = model.chassisCodes,
+                                        color = theme.primaryBright,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
                                 }
+                                Text(
+                                    text = model.yearRange,
+                                    color = theme.textSecondary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
                             }
 
-                            Text("• Teşhis: ${model.diagnosticSummary}", color = theme.textPrimary, fontSize = 11.sp)
-                            Text("• Kodlama: ${model.codingSummary}", color = theme.textSecondary, fontSize = 11.sp)
-                            Text("• Gerekli Adaptör: ${model.requiredAdapter}", color = theme.primaryBright, fontSize = 11.sp)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(badgeColor.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.supportLevel.label, strings.language),
+                                    color = badgeColor,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Text(
+                                "$diagPrefix ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.diagnosticSummary, strings.language)}",
+                                color = theme.textPrimary,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                "$codingPrefix ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.codingSummary, strings.language)}",
+                                color = theme.textSecondary,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                "$adapterPrefix ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.requiredAdapter, strings.language)}",
+                                color = theme.primaryBright,
+                                fontSize = 11.sp
+                            )
 
                             if (model.limitationNote != null) {
                                 Box(
@@ -487,9 +550,18 @@ fun DeveloperScreen(
                                         .padding(8.dp)
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text("⚠️ Kısıtlama Nedeni: ${model.limitationNote}", color = StatusAmber, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            "$limitPrefix ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.limitationNote, strings.language)}",
+                                            color = StatusAmber,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
                                         if (model.howToSupportSolution != null) {
-                                            Text("💡 Çözüm: ${model.howToSupportSolution}", color = theme.textPrimary, fontSize = 10.sp)
+                                            Text(
+                                                "$solutionPrefix ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(model.howToSupportSolution, strings.language)}",
+                                                color = theme.textPrimary,
+                                                fontSize = 10.sp
+                                            )
                                         }
                                     }
                                 }

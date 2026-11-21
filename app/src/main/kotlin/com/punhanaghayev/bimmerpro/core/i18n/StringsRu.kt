@@ -280,7 +280,7 @@ object StringsRu {
         hvCellDistributionLabel = "Распределение напряжений 96 ячеек (Мин: %d мВ, Ср: %d мВ, Макс: %d мВ)"
         contactorClosedLabel = "Контактор: ЗАМКНУТ (Активен)"
         contactorOpenLabel = "Контактор: РАЗОМКНУТ"
-        moduleTempsLabel = "Температуры модулей: Мин %d°C / Макс %d°C (Ср: %d°C)"
+        moduleTempsLabel = "Температуры модулей: Мин %.1f°C / Макс %.1f°C (Ср: %.1f°C)"
         radarOkLabel = "РАДАР OK"
         radarAlignRequiredLabel = "ТРЕБУЕТСЯ КАЛИБРОВКА"
         toleranceLabel = "Допуск: ±15.0 мрад"

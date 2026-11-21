@@ -289,20 +289,24 @@ class BimmerViewModel(
         val state = session.value
         val profile = state.vehicleProfile ?: return
         viewModelScope.launch {
-            val file = withContext(Dispatchers.IO) {
-                InspectionReportGenerator.generatePdf(
-                    context = context,
-                    profile = profile,
-                    ecus = state.ecus,
-                    dtcs = state.dtcs,
-                    ibsHealth = state.ibsHealth,
-                    dpfHealth = state.dpfHealth,
-                    zfHealth = state.zfHealth,
-                    serviceHistory = state.serviceHistory,
-                    hvBatteryHealth = state.hvBatteryHealth
-                )
+            runCatching {
+                val file = withContext(Dispatchers.IO) {
+                    InspectionReportGenerator.generatePdf(
+                        context = context,
+                        profile = profile,
+                        ecus = state.ecus,
+                        dtcs = state.dtcs,
+                        ibsHealth = state.ibsHealth,
+                        dpfHealth = state.dpfHealth,
+                        zfHealth = state.zfHealth,
+                        serviceHistory = state.serviceHistory,
+                        hvBatteryHealth = state.hvBatteryHealth
+                    )
+                }
+                _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "BMW Expert PRO PDF Report"))
+            }.onFailure { err ->
+                _uiEvents.emit(UiEvent.Snackbar("PDF Error: ${err.message ?: "Unknown"}"))
             }
-            _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "Ekspertiz PDF Raporunu Paylaş"))
         }
     }
 
@@ -310,20 +314,24 @@ class BimmerViewModel(
         val state = session.value
         val profile = state.vehicleProfile ?: return
         viewModelScope.launch {
-            val file = withContext(Dispatchers.IO) {
-                InspectionReportGenerator.generateHtmlReport(
-                    context = context,
-                    profile = profile,
-                    ecus = state.ecus,
-                    dtcs = state.dtcs,
-                    ibsHealth = state.ibsHealth,
-                    dpfHealth = state.dpfHealth,
-                    zfHealth = state.zfHealth,
-                    serviceHistory = state.serviceHistory,
-                    hvBatteryHealth = state.hvBatteryHealth
-                )
+            runCatching {
+                val file = withContext(Dispatchers.IO) {
+                    InspectionReportGenerator.generateHtmlReport(
+                        context = context,
+                        profile = profile,
+                        ecus = state.ecus,
+                        dtcs = state.dtcs,
+                        ibsHealth = state.ibsHealth,
+                        dpfHealth = state.dpfHealth,
+                        zfHealth = state.zfHealth,
+                        serviceHistory = state.serviceHistory,
+                        hvBatteryHealth = state.hvBatteryHealth
+                    )
+                }
+                _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "BMW Expert PRO HTML Report"))
+            }.onFailure { err ->
+                _uiEvents.emit(UiEvent.Snackbar("HTML Error: ${err.message ?: "Unknown"}"))
             }
-            _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "Ekspertiz HTML Raporunu Paylaş"))
         }
     }
 

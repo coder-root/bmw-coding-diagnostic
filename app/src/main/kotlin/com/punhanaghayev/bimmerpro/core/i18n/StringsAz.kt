@@ -280,7 +280,7 @@ object StringsAz {
         hvCellDistributionLabel = "96-Hüceyrə Voltaj Paylanması (Min: %d mV, Orta: %d mV, Maks: %d mV)"
         contactorClosedLabel = "Kontaktor: BAĞLI (Aktiv)"
         contactorOpenLabel = "Kontaktor: AÇIQ"
-        moduleTempsLabel = "Modul Temperaturları: Min %d°C / Maks %d°C (Orta: %d°C)"
+        moduleTempsLabel = "Modul Temperaturları: Min %.1f°C / Maks %.1f°C (Orta: %.1f°C)"
         radarOkLabel = "RADAR OK"
         radarAlignRequiredLabel = "DÜZƏLİŞ TƏLƏB OLUNUR"
         toleranceLabel = "Tolerantlıq: ±15.0 mrad"

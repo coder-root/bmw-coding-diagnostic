@@ -158,7 +158,7 @@ object InspectionReportGenerator {
         if (ibs != null) {
             val soc = ibs.stateOfChargePercent
             val soh = ibs.stateOfHealthPercent
-            canvas1.drawText("Şarj Durumu (SOC): %$soc   |   Akü Sağlığı (SOH): %$soh".format(), 32f, y1, boldBodyPaint)
+            canvas1.drawText("Şarj Durumu (SOC): $soc%   |   Akü Sağlığı (SOH): $soh%", 32f, y1, boldBodyPaint)
             canvas1.drawText("Kapasite: ${ibs.capacityAh} Ah (" + (if (ibs.isAgm) "AGM" else "Sulu") + ")", 330f, y1, bodyPaint)
             y1 += 14f
             canvas1.drawText("Son 5 Gün Şarj Trendi: ${ibs.last5DaysSoc.joinToString("% -> ") { it.toString() }}%", 32f, y1, bodyPaint)
@@ -207,8 +207,8 @@ object InspectionReportGenerator {
         canvas1.drawText("5. ZF 8HP / 6HP ŞANZIMAN SAĞLIK VE AŞINMA ANALİZİ", 32f, y1, sectionPaint)
         y1 += 16f
         if (zfHealth != null) {
-            canvas1.drawText("Genel Şanzıman Durumu: %${zfHealth.overallHealthScorePercent}   |   Yağ Sıcaklığı: ${zfHealth.oilTemperatureC}°C".format(), 32f, y1, boldBodyPaint)
-            canvas1.drawText("Yağ Kondisyonu: %${zfHealth.oilDegradationScorePercent}".format(), 330f, y1, bodyPaint)
+            canvas1.drawText("Genel Şanzıman Durumu: ${zfHealth.overallHealthScorePercent}%   |   Yağ Sıcaklığı: ${zfHealth.oilTemperatureC}°C", 32f, y1, boldBodyPaint)
+            canvas1.drawText("Yağ Kondisyonu: ${zfHealth.oilDegradationScorePercent}%", 330f, y1, bodyPaint)
             y1 += 14f
             canvas1.drawText(zfHealth.wearSummary, 32f, y1, bodyPaint)
             y1 += 15f

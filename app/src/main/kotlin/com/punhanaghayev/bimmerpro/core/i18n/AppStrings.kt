@@ -310,10 +310,7 @@ data class AppStrings(
     var toleranceLabel: String = ""
     fun adapterTitle(type: AdapterType): String = when (language) {
         AppLanguage.AZ -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
-            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
             AdapterType.ENET_USB -> "USB-C to ENET Kabel"
-            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
             AdapterType.USB_KDCAN -> "USB OTG K+DCAN Kabel"
             AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulyasiyası"
             AdapterType.SIMULATOR_F10_528I -> "BMW F10 528i (N20) Simulyasiyası"
@@ -321,26 +318,30 @@ data class AppStrings(
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulyasiyası"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulyasiyası"
             AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulyasiyası"
+            else -> type.displayName
         }
-        AppLanguage.TR -> type.displayName
+        AppLanguage.TR -> when (type) {
+            AdapterType.ENET_USB -> "USB-C to ENET Kablo"
+            AdapterType.USB_KDCAN -> "USB OTG K+DCAN Kablo"
+            AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simülasyonu"
+            AdapterType.SIMULATOR_F10_528I -> "BMW F10 528i (N20) Simülasyonu"
+            AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simülasyonu"
+            AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simülasyonu"
+            AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simülasyonu"
+            AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simülasyonu"
+            else -> type.displayName
+        }
         AppLanguage.EN -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
-            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
-            AdapterType.ENET_USB -> "USB-C to ENET Cable"
-            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
-            AdapterType.USB_KDCAN -> "USB OTG K+DCAN Cable"
             AdapterType.SIMULATOR_F10 -> "BMW F10 520d Simulation"
             AdapterType.SIMULATOR_F10_528I -> "BMW F10 528i (N20 Petrol) Simulation"
             AdapterType.SIMULATOR_F30 -> "BMW F30 328i Simulation"
             AdapterType.SIMULATOR_G30 -> "BMW G30 530i Simulation"
             AdapterType.SIMULATOR_G20 -> "BMW G20 M340i Simulation"
             AdapterType.SIMULATOR_E90 -> "BMW E90 335i Simulation"
+            else -> type.displayName
         }
         AppLanguage.RU -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "Vgate vLinker BM Wi-Fi"
-            AdapterType.ENET_WIFI -> "Wi-Fi ENET (Thor / MHD / BM3)"
             AdapterType.ENET_USB -> "Кабель USB-C — ENET"
-            AdapterType.BLE_OBD -> "OBDLink CX / UniCarScan BLE"
             AdapterType.USB_KDCAN -> "Кабель USB OTG K+DCAN"
             AdapterType.SIMULATOR_F10 -> "Симуляция BMW F10 520d"
             AdapterType.SIMULATOR_F10_528I -> "Симуляция BMW F10 528i (N20)"
@@ -348,49 +349,30 @@ data class AppStrings(
             AdapterType.SIMULATOR_G30 -> "Симуляция BMW G30 530i"
             AdapterType.SIMULATOR_G20 -> "Симуляция BMW G20 M340i"
             AdapterType.SIMULATOR_E90 -> "Симуляция BMW E90 335i"
+            else -> type.displayName
         }
     }
 
     fun adapterDesc(type: AdapterType): String = when (language) {
         AppLanguage.AZ -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
-            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
-            AdapterType.ENET_USB -> "HSFZ / DoIP 100Mbps Ethernet"
-            AdapterType.BLE_OBD -> "CAN üzərindən ISO-TP (BLE GATT)"
-            AdapterType.USB_KDCAN -> "E-Seriyası K-Line / D-CAN"
             AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
             AdapterType.SIMULATOR_F10_528I -> "Virtual HSFZ / ENET + N20 Benzin"
             AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
             AdapterType.SIMULATOR_E90 -> "Virtual K+DCAN / KM Yoxlaması Demo"
+            else -> type.protocolSummary
         }
         AppLanguage.TR -> type.protocolSummary
-        AppLanguage.EN -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
-            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
-            AdapterType.ENET_USB -> "HSFZ / DoIP 100Mbps Ethernet"
-            AdapterType.BLE_OBD -> "ISO-TP over CAN (BLE GATT)"
-            AdapterType.USB_KDCAN -> "E-Series K-Line / D-CAN"
-            AdapterType.SIMULATOR_F10 -> "Virtual HSFZ / ENET + UDS"
-            AdapterType.SIMULATOR_F10_528I -> "Virtual HSFZ / ENET + N20 Petrol"
-            AdapterType.SIMULATOR_F30 -> "Virtual HSFZ / ENET + N20"
-            AdapterType.SIMULATOR_G30 -> "Virtual DoIP / HSFZ + Secure Coding"
-            AdapterType.SIMULATOR_G20 -> "Virtual DoIP / B58 + iDrive 7"
-            AdapterType.SIMULATOR_E90 -> "Virtual K+DCAN / Tamper Alert Demo"
-        }
+        AppLanguage.EN -> type.protocolSummary
         AppLanguage.RU -> when (type) {
-            AdapterType.VLINKER_BM_WIFI -> "STN2255 Wi-Fi TCP 192.168.0.10:35000 (F/G/E)"
-            AdapterType.ENET_WIFI -> "HSFZ / DoIP TCP:6801"
-            AdapterType.ENET_USB -> "HSFZ / DoIP 100 Мбит/с Ethernet"
-            AdapterType.BLE_OBD -> "ISO-TP по CAN (BLE GATT)"
-            AdapterType.USB_KDCAN -> "E-серия K-Line / D-CAN"
             AdapterType.SIMULATOR_F10 -> "Виртуальный HSFZ / ENET + UDS"
             AdapterType.SIMULATOR_F10_528I -> "Виртуальный HSFZ / ENET + N20 Бензин"
             AdapterType.SIMULATOR_F30 -> "Виртуальный HSFZ / ENET + N20"
             AdapterType.SIMULATOR_G30 -> "Виртуальный DoIP / HSFZ + Secure Coding"
             AdapterType.SIMULATOR_G20 -> "Виртуальный DoIP / B58 + iDrive 7"
             AdapterType.SIMULATOR_E90 -> "Виртуальный K+DCAN / Тест пробега"
+            else -> type.protocolSummary
         }
     }
 }

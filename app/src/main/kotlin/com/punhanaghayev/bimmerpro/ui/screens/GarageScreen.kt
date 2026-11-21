@@ -498,21 +498,8 @@ fun GarageScreen(
                     }
 
                     if (!isSimulatorMode) {
-                        when (activeAdapter) {
-                            AdapterType.VLINKER_BM_WIFI -> {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(theme.primary.copy(alpha = 0.14f))
-                                        .padding(10.dp)
-                                ) {
-                                    Text(
-                                        text = "Vgate vLinker BM Wi-Fi: 'vLinker-BM' Wi-Fi ağına bağlanın (192.168.0.10:35000). Otomatik Wi-Fi soket kilidi aktiftir.",
-                                        color = theme.primaryBright,
-                                        fontSize = 11.sp
-                                    )
-                                }
+                        when (activeAdapter.transportKind) {
+                            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.WIFI_ELM_STN -> {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = vlinkerHost,
@@ -531,7 +518,7 @@ fun GarageScreen(
                                 }
                             }
 
-                            AdapterType.ENET_WIFI, AdapterType.ENET_USB -> {
+                            com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.ENET_TCP -> {
                                 OutlinedTextField(
                                     value = enetHost,
                                     onValueChange = { enetHost = it },
@@ -627,14 +614,14 @@ fun GarageScreen(
                     val isConnecting = session.connectionState is ConnectionState.Connecting
                     Button(
                         onClick = {
-                            when (activeAdapter) {
-                                AdapterType.VLINKER_BM_WIFI -> onConnect(
+                            when (activeAdapter.transportKind) {
+                                com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.WIFI_ELM_STN -> onConnect(
                                     activeAdapter,
                                     vlinkerHost.trim(),
                                     vlinkerPort.toIntOrNull() ?: TcpElmStnTransportAdapter.DEFAULT_VLINKER_PORT,
                                     selectedPurpose
                                 )
-                                AdapterType.ENET_WIFI, AdapterType.ENET_USB -> onConnect(
+                                com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.ENET_TCP -> onConnect(
                                     activeAdapter,
                                     enetHost.trim(),
                                     TcpEnetTransportAdapter.DEFAULT_HSFZ_PORT,

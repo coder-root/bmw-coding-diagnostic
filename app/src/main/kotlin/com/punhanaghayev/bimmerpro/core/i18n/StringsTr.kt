@@ -280,7 +280,7 @@ object StringsTr {
         hvCellDistributionLabel = "96-Hücre Voltaj Dağılımı (Min: %d mV, Ort: %d mV, Max: %d mV)"
         contactorClosedLabel = "Kontaktör: KAPALI (Aktif)"
         contactorOpenLabel = "Kontaktör: AÇIK"
-        moduleTempsLabel = "Modül Sıcaklıkları: Min %d°C / Max %d°C (Ort: %d°C)"
+        moduleTempsLabel = "Modül Sıcaklıkları: Min %.1f°C / Max %.1f°C (Ort: %.1f°C)"
         radarOkLabel = "RADAR OK"
         radarAlignRequiredLabel = "HİZALAMA GEREKLİ"
         toleranceLabel = "Tolerans: ±15.0 mrad"
