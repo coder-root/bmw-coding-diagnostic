@@ -230,4 +230,23 @@ class AdvancedEngineFeaturesTest {
         assertTrue(repo.session.value.dtcs.any { it.code == "120308" })
         assertTrue(repo.session.value.dtcs.any { it.code == "D35A53" })
     }
+
+    @Test
+    fun `motor did profiles resolve family specific u0x22 dids automatically`() {
+        val ddeProfile = BmwMotorDidProfiles.detectProfile("N47D20 Diesel", BmwChassis.F10)
+        assertEquals(EngineDidProfile.DDE7_DIESEL, ddeProfile)
+        assertEquals(0x5812, BmwMotorDidProfiles.overrideDidFor("boost", ddeProfile))
+
+        val gSeriesProfile = BmwMotorDidProfiles.detectProfile("B58B30M1", BmwChassis.G20)
+        assertEquals(EngineDidProfile.MG1_MD1_G_SERIES, gSeriesProfile)
+        assertEquals(0x5910, BmwMotorDidProfiles.overrideDidFor("timing_corr", gSeriesProfile))
+
+        val eSeriesProfile = BmwMotorDidProfiles.detectProfile("N54B30", BmwChassis.E90)
+        assertEquals(EngineDidProfile.MSD80_E_SERIES, eSeriesProfile)
+        assertEquals(0x2011, BmwMotorDidProfiles.overrideDidFor("timing_corr", eSeriesProfile))
+
+        val fPetrolProfile = BmwMotorDidProfiles.detectProfile("N20B20", BmwChassis.F30)
+        assertEquals(EngineDidProfile.MEVD17_F_PETROL, fPetrolProfile)
+        assertTrue(BmwMotorDidProfiles.resolveLiveCatalogFor(gSeriesProfile).any { it.id == "timing_corr" && it.did == 0x5910 })
+    }
 }

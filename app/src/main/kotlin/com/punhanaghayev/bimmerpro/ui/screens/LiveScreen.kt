@@ -363,9 +363,9 @@ fun LiveScreen(
                             color = theme.textPrimary
                         )
                         Text(
-                            text = "UDS 0x22 DID Telemetry Stream",
-                            color = theme.textSecondary,
-                            fontSize = 12.sp
+                            text = "UDS 0x22 • ${session.engineDidProfile.ecuFamilyTag} (${session.engineDidProfile.displayName})",
+                            color = theme.primaryBright,
+                            fontSize = 11.sp
                         )
                     }
 

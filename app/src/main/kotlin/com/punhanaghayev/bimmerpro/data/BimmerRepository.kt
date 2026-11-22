@@ -7,6 +7,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.BmwActuatorCatalog
 import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
 import com.punhanaghayev.bimmerpro.core.bmw.BmwDtcDictionary
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
+import com.punhanaghayev.bimmerpro.core.bmw.BmwMotorDidProfiles
 import com.punhanaghayev.bimmerpro.core.bmw.CafdParameter
 import com.punhanaghayev.bimmerpro.core.bmw.CodingBackupSnapshot
 import com.punhanaghayev.bimmerpro.core.bmw.CodingCapability
@@ -17,6 +18,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcMemoryType
 import com.punhanaghayev.bimmerpro.core.bmw.EcuAddress
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
 import com.punhanaghayev.bimmerpro.core.bmw.EcuVariantResolver
+import com.punhanaghayev.bimmerpro.core.bmw.EngineDidProfile
 import com.punhanaghayev.bimmerpro.core.bmw.EpbServiceState
 import com.punhanaghayev.bimmerpro.core.bmw.ExhaustFlapMode
 import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateEntry
@@ -165,7 +167,8 @@ data class BimmerSessionState(
     val fscCertificates: List<FscCertificateEntry> = emptyList(),
     val virtualDyno: VirtualDynoResult? = null,
     val comparativeDiff: VehicleInspectionDiff? = null,
-    val pendingVoCodingPlan: VoCodingPlan? = null
+    val pendingVoCodingPlan: VoCodingPlan? = null,
+    val engineDidProfile: EngineDidProfile = EngineDidProfile.MEVD17_F_PETROL
 )
 
 data class ActiveOperationState(
@@ -361,6 +364,7 @@ class BimmerRepository(
                 val health = OfflineFaultAnalyzer.analyze(dtcs, customChannels, bundle.ibsHealth, bundle.profile.batteryVoltage, bundle.zfAdaptations)
                 val fscs = VoCodingEngine.defaultFscCertificates(bundle.profile.chassis)
                 val latestDiff = garageHistoryStorage?.computeLatestDiffForVin(bundle.profile.vin)
+                val didProfile = BmwMotorDidProfiles.detectProfile(bundle.profile.engineCode, bundle.profile.chassis, resolvedEcus)
                 _session.update {
                     it.copy(
                         connectionState = connState,
@@ -388,6 +392,7 @@ class BimmerRepository(
                         offlineReport = health,
                         fscCertificates = fscs,
                         comparativeDiff = latestDiff,
+                        engineDidProfile = didProfile,
                         isPhysicalSafeMode = false,
                         savedVehicles = savedList,
                         lastOperationMessage = "${bundle.profile.modelDisplayName} başarıyla bağlandı."
@@ -470,6 +475,7 @@ class BimmerRepository(
                         epbServiceState = EpbServiceState.NORMAL,
                         androidAutoPidIds = loadSavedAndroidAutoPids(),
                         offlineReport = health,
+                        engineDidProfile = BmwMotorDidProfiles.detectProfile(physicalProfile.engineCode, inferredChassis, fullEcuTree),
                         isPhysicalSafeMode = true,
                         savedVehicles = savedList,
                         lastOperationMessage = "Fiziksel Salt-Okunur Güvenli Mod: $extractedVin (%.1f V)".format(batteryVolts)
@@ -861,6 +867,11 @@ class BimmerRepository(
                 savedVehicles = savedWithSnap ?: it.savedVehicles,
                 comparativeDiff = diff ?: it.comparativeDiff,
                 fscCertificates = liveFscs.ifEmpty { it.fscCertificates },
+                engineDidProfile = BmwMotorDidProfiles.detectProfile(
+                    (updatedProfile ?: it.vehicleProfile)?.engineCode ?: "",
+                    (updatedProfile ?: it.vehicleProfile)?.chassis ?: BmwChassis.F10,
+                    finalEcus
+                ),
                 lastOperationMessage = "Fiziksel araç tarandı: ${updatedEcus.size} ECU yanıt verdi, ${physicalDtcs.size} hata kaydı bulundu.",
                 activeOperation = ActiveOperationState(
                     inProgress = true,
@@ -1626,8 +1637,9 @@ class BimmerRepository(
 
         val sim = activeTransport as? SimulatorTransportAdapter
         if (sim == null) {
-            // Cyclic Multi-ECU live PID polling across BmwEcuAndPidCatalog (4 PIDs per tick)
-            val pidMap = BmwEcuAndPidCatalog.livePidDefinitions.associateBy { it.id }
+            // Engine-family specific DID polling (DDE7 / MEVD17 / MG1 / MSD80)
+            val resolvedDefs = BmwMotorDidProfiles.resolveLiveCatalogFor(_session.value.engineDidProfile)
+            val pidMap = resolvedDefs.associateBy { it.id }
             val activeDefs = current.mapNotNull { ch -> pidMap[ch.id] }
             if (activeDefs.isNotEmpty()) {
                 val batchSize = 4

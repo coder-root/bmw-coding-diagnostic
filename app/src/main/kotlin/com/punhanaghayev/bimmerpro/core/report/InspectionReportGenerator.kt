@@ -9,12 +9,16 @@ import com.punhanaghayev.bimmerpro.core.bmw.DtcFault
 import com.punhanaghayev.bimmerpro.core.bmw.DtcSeverity
 import com.punhanaghayev.bimmerpro.core.bmw.DpfHealthStatus
 import com.punhanaghayev.bimmerpro.core.bmw.EcuModule
+import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateEntry
+import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateStatus
 import com.punhanaghayev.bimmerpro.core.bmw.HvBatteryHealth
 import com.punhanaghayev.bimmerpro.core.bmw.IbsBatteryHealth
+import com.punhanaghayev.bimmerpro.core.bmw.OfflineDiagnosticReport
 import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
+import com.punhanaghayev.bimmerpro.data.VehicleInspectionDiff
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -36,7 +40,10 @@ object InspectionReportGenerator {
         dpfHealth: DpfHealthStatus? = null,
         zfHealth: ZfGearboxHealth? = null,
         serviceHistory: List<ServiceHistoryRecord> = emptyList(),
-        hvBatteryHealth: HvBatteryHealth? = null
+        hvBatteryHealth: HvBatteryHealth? = null,
+        offlineReport: OfflineDiagnosticReport? = null,
+        comparativeDiff: VehicleInspectionDiff? = null,
+        fscCertificates: List<FscCertificateEntry> = emptyList()
     ): File {
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -314,9 +321,90 @@ object InspectionReportGenerator {
         }
 
         // Footer page 2
+        val hasPage3 = (offlineReport?.rootCauseCorrelations?.isNotEmpty() == true) ||
+            comparativeDiff != null ||
+            fscCertificates.isNotEmpty()
+        val totalPages = if (hasPage3) 3 else 2
         canvas2.drawLine(32f, 810f, 563f, 810f, mCyan)
-        canvas2.drawText("BMW Expert PRO — Sayfa 2/2 — Bu rapor ISO 14229 / ISO 13400 standartlarına göre üretilmiştir.", 32f, 825f, subtitlePaint)
+        canvas2.drawText("BMW Expert PRO — Sayfa 2/$totalPages — Bu rapor ISO 14229 / ISO 13400 standartlarına göre üretilmiştir.", 32f, 825f, subtitlePaint)
         pdf.finishPage(page2)
+
+        if (hasPage3) {
+            val pageInfo3 = PdfDocument.PageInfo.Builder(pageA4Width, pageA4Height, 3).create()
+            val page3 = pdf.startPage(pageInfo3)
+            val canvas3 = page3.canvas
+
+            canvas3.drawRect(0f, 0f, 595f, 40f, headerBg)
+            canvas3.drawText("BMW Expert PRO — Kök-Neden Korelasyonu, Kıyaslamalı Ekspertiz & FSC (Sayfa 3)", 32f, 25f, subtitlePaint)
+            var y3 = 64f
+
+            val correlations = offlineReport?.rootCauseCorrelations.orEmpty()
+            canvas3.drawText("10. KÖK-NEDEN ÇOKLU ARIZA KORELASYONU (${correlations.size} Bulgu)", 32f, y3, sectionPaint)
+            y3 += 16f
+            if (correlations.isEmpty()) {
+                canvas3.drawText("Çoklu modüller arasında zincirleme arıza korelasyonu tespit edilmedi.", 40f, y3, bodyPaint)
+                y3 += 15f
+            } else {
+                correlations.take(4).forEach { rc ->
+                    canvas3.drawText("• ${rc.title} [${rc.involvedCodes.joinToString(" + ")}]", 40f, y3, boldBodyPaint)
+                    y3 += 13f
+                    canvas3.drawText("  Özet: ${rc.rootCauseSummary.take(92)}", 40f, y3, bodyPaint)
+                    y3 += 12f
+                    canvas3.drawText("  Öneri: ${rc.actionPlan.take(92)}", 40f, y3, alertPaint)
+                    y3 += 15f
+                }
+            }
+            y3 += 8f
+            canvas3.drawLine(32f, y3 - 8f, 563f, y3 - 8f, dividerPaint)
+
+            canvas3.drawText("11. KIYASLAMALI EKSPERTİZ FARKI (ÖNCEKİ TARAMA İLE KARŞILAŞTIRMA)", 32f, y3, sectionPaint)
+            y3 += 16f
+            if (comparativeDiff == null) {
+                canvas3.drawText("Bu VIN için yalnızca tek tarama kaydı mevcut; sonraki taramada fark hesaplanır.", 40f, y3, bodyPaint)
+                y3 += 16f
+            } else {
+                canvas3.drawText("Dönem: ${comparativeDiff.previousTimestamp}  ->  ${comparativeDiff.currentTimestamp}", 40f, y3, boldBodyPaint)
+                y3 += 14f
+                canvas3.drawText(
+                    "Kilometre Farkı: %+d km   |   Sağlık Skoru Değişimi: %+d puan   |   I-Level Değişimi: %s".format(
+                        comparativeDiff.kmDelta,
+                        comparativeDiff.healthScoreDelta,
+                        if (comparativeDiff.iLevelChanged) "EVET (${comparativeDiff.previousILevel} -> ${comparativeDiff.currentILevel})" else "Hayır"
+                    ),
+                    40f,
+                    y3,
+                    bodyPaint
+                )
+                y3 += 14f
+                if (comparativeDiff.newlyAppearedDtcs.isNotEmpty()) {
+                    canvas3.drawText("Yeni Ortaya Çıkan DTC'ler: ${comparativeDiff.newlyAppearedDtcs.joinToString(", ")}", 40f, y3, alertPaint)
+                    y3 += 13f
+                }
+                if (comparativeDiff.resolvedDtcs.isNotEmpty()) {
+                    canvas3.drawText("Çözülen DTC'ler: ${comparativeDiff.resolvedDtcs.joinToString(", ")}", 40f, y3, bodyPaint)
+                    y3 += 13f
+                }
+            }
+            y3 += 8f
+            canvas3.drawLine(32f, y3 - 8f, 563f, y3 - 8f, dividerPaint)
+
+            canvas3.drawText("12. FSC AKTİVASYON SERTİFİKA DURUMLARI (${fscCertificates.size} Sertifika)", 32f, y3, sectionPaint)
+            y3 += 16f
+            fscCertificates.take(10).forEach { cert ->
+                val stColor = when (cert.status) {
+                    FscCertificateStatus.ACCEPTED -> Color.rgb(21, 128, 61)
+                    FscCertificateStatus.REJECTED, FscCertificateStatus.EXPIRED -> Color.rgb(185, 28, 28)
+                    FscCertificateStatus.NOT_LOADED -> Color.rgb(180, 100, 0)
+                }
+                val certPaint = Paint(boldBodyPaint).apply { color = stColor }
+                canvas3.drawText("• ${cert.title} (${cert.ecuName} / App ${cert.appIdHex}) -> ${cert.status.label}", 40f, y3, certPaint)
+                y3 += 13f
+            }
+
+            canvas3.drawLine(32f, 810f, 563f, 810f, mCyan)
+            canvas3.drawText("BMW Expert PRO — Sayfa 3/3 — Lead Developer: Punhan Aghayev", 32f, 825f, subtitlePaint)
+            pdf.finishPage(page3)
+        }
 
         FileOutputStream(outFile).use { pdf.writeTo(it) }
         pdf.close()
@@ -332,7 +420,10 @@ object InspectionReportGenerator {
         dpfHealth: DpfHealthStatus? = null,
         zfHealth: ZfGearboxHealth? = null,
         serviceHistory: List<ServiceHistoryRecord> = emptyList(),
-        hvBatteryHealth: HvBatteryHealth? = null
+        hvBatteryHealth: HvBatteryHealth? = null,
+        offlineReport: OfflineDiagnosticReport? = null,
+        comparativeDiff: VehicleInspectionDiff? = null,
+        fscCertificates: List<FscCertificateEntry> = emptyList()
     ): File {
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -417,6 +508,33 @@ object InspectionReportGenerator {
                 dtcs.forEach { d ->
                     val badgeClass = if (d.severity == DtcSeverity.CRITICAL) "badge-err" else "badge-warn"
                     appendLine("<tr><td>${d.ecuName}</td><td><span class=\"$badgeClass\">${d.code}</span></td><td><b>${d.title}</b><br><small>${d.technicalDetail}</small></td><td>%,d km | %.1f V | %d rpm</td></tr>".format(d.freezeFrame.mileageKm, d.freezeFrame.batteryVoltage, d.freezeFrame.engineRpm))
+                }
+                appendLine("</tbody></table>")
+            }
+
+            val htmlCorrs = offlineReport?.rootCauseCorrelations.orEmpty()
+            if (htmlCorrs.isNotEmpty()) {
+                appendLine("<h2>6. Kök-Neden Arıza Korelasyonları (${htmlCorrs.size})</h2>")
+                htmlCorrs.forEach { rc ->
+                    appendLine("<div class=\"card\"><b>${rc.title}</b> (${rc.involvedCodes.joinToString(" + ")})<br>${rc.rootCauseSummary}<br><small>${rc.actionPlan}</small></div>")
+                }
+            }
+
+            if (comparativeDiff != null) {
+                appendLine("<h2>7. Kıyaslamalı Ekspertiz Farkı</h2>")
+                appendLine("<div class=\"card\"><b>Dönem:</b> ${comparativeDiff.previousTimestamp} &rarr; ${comparativeDiff.currentTimestamp}<br><b>KM Farkı:</b> %+d km | <b>Sağlık Δ:</b> %+d<br><b>Yeni DTC:</b> ${comparativeDiff.newlyAppearedDtcs.joinToString(", ").ifBlank { "-" }} | <b>Çözülen:</b> ${comparativeDiff.resolvedDtcs.joinToString(", ").ifBlank { "-" }}</div>".format(comparativeDiff.kmDelta, comparativeDiff.healthScoreDelta))
+            }
+
+            if (fscCertificates.isNotEmpty()) {
+                appendLine("<h2>8. FSC Aktivasyon Sertifikaları</h2>")
+                appendLine("<table class=\"table\"><thead><tr><th>Uygulama</th><th>ECU</th><th>AppID</th><th>Durum</th></tr></thead><tbody>")
+                fscCertificates.forEach { cert ->
+                    val cls = when (cert.status) {
+                        FscCertificateStatus.ACCEPTED -> "badge-ok"
+                        FscCertificateStatus.NOT_LOADED -> "badge-warn"
+                        else -> "badge-err"
+                    }
+                    appendLine("<tr><td>${cert.title}</td><td>${cert.ecuName}</td><td>${cert.appIdHex}</td><td><span class=\"$cls\">${cert.status.label}</span></td></tr>")
                 }
                 appendLine("</tbody></table>")
             }

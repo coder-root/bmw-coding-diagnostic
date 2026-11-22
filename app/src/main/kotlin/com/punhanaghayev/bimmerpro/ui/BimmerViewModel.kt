@@ -340,7 +340,10 @@ class BimmerViewModel(
                         dpfHealth = state.dpfHealth,
                         zfHealth = state.zfHealth,
                         serviceHistory = state.serviceHistory,
-                        hvBatteryHealth = state.hvBatteryHealth
+                        hvBatteryHealth = state.hvBatteryHealth,
+                        offlineReport = state.offlineReport,
+                        comparativeDiff = state.comparativeDiff,
+                        fscCertificates = state.fscCertificates
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "BMW Expert PRO PDF Report"))
@@ -365,7 +368,10 @@ class BimmerViewModel(
                         dpfHealth = state.dpfHealth,
                         zfHealth = state.zfHealth,
                         serviceHistory = state.serviceHistory,
-                        hvBatteryHealth = state.hvBatteryHealth
+                        hvBatteryHealth = state.hvBatteryHealth,
+                        offlineReport = state.offlineReport,
+                        comparativeDiff = state.comparativeDiff,
+                        fscCertificates = state.fscCertificates
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "BMW Expert PRO HTML Report"))
