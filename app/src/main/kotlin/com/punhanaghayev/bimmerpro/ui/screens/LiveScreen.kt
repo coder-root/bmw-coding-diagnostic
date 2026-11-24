@@ -104,6 +104,7 @@ fun LiveScreen(
     onMoveLiveChannel: (Int, Int) -> Unit,
     onSelectDragMode: (DragMode) -> Unit = {},
     onRunVirtualDynoPull: () -> Unit = {},
+    onOpenPerformanceDyno: () -> Unit = {},
     onGoToGarage: () -> Unit
 ) {
     val profile = session.vehicleProfile
@@ -410,185 +411,34 @@ fun LiveScreen(
             }
         }
 
-        // Extended Drag Performance Timer + Virtual Dyno (Pro-Tuner)
+        // Quick navigation shortcut to dedicated Performance & Dyno screen
         item {
-            val timer = session.performanceTimer
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, if (timer.isArmed) theme.primaryBright else theme.outline),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
-                            Text(
-                                text = strings.perfTimerTitle,
-                                fontWeight = FontWeight.Bold,
-                                color = theme.textPrimary,
-                                fontSize = 13.sp
-                            )
-                        }
-                        Text(
-                            text = "${timer.currentSpeedKmh} km/h" + if (timer.dragMode == DragMode.QUARTER_MILE) " • ${timer.distanceMeters.toInt()}m" else "",
-                            color = theme.primaryBright,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(DragMode.ZERO_TO_100, DragMode.HUNDRED_TO_200).forEach { mode ->
-                                FilterChip(
-                                    selected = timer.dragMode == mode,
-                                    onClick = { onSelectDragMode(mode) },
-                                    modifier = Modifier.weight(1f).height(38.dp),
-                                    label = {
-                                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                            Text(mode.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        FilterChip(
-                            selected = timer.dragMode == DragMode.QUARTER_MILE,
-                            onClick = { onSelectDragMode(DragMode.QUARTER_MILE) },
-                            modifier = Modifier.fillMaxWidth().height(38.dp),
-                            label = {
-                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                    Text(DragMode.QUARTER_MILE.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
-                                }
-                            }
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(timer.dragMode.label, color = theme.textSecondary, fontSize = 11.sp)
-                            val timeStr = if (timer.isRunning) "%.2fs".format(timer.elapsedMs / 1000.0)
-                                else if (timer.isArmed) "..." else "--.--s"
-                            Text(timeStr, color = theme.primaryBright, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(strings.bestTimerLabel, color = theme.textSecondary, fontSize = 11.sp)
-                            val modeBest = when (timer.dragMode) {
-                                DragMode.ZERO_TO_100 -> timer.bestZeroToHundredSec
-                                DragMode.HUNDRED_TO_200 -> timer.best100To200Sec
-                                DragMode.SIXTY_TO_130_MPH -> timer.best60To130MphSec
-                                DragMode.QUARTER_MILE -> timer.bestQuarterMileSec
-                            }
-                            val bestStr = modeBest?.let { "%.2fs".format(it) } ?: "--.--s"
-                            Text(bestStr, color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                        }
-                    }
-
-                    BmwPrimaryButton(
-                        text = if (timer.isArmed) strings.stopBtn else strings.startBtn,
-                        icon = if (timer.isArmed) Icons.Default.Stop else Icons.Default.PlayArrow,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onTogglePerformanceRun
-                    )
-                }
+            val perfTitle = when (strings.language) {
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Performance & Dyno (0-100 / Virtual Dyno)"
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Performans və Dyno (0-100 / Virtual Dyno)"
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Динамика и Dyno (0-100 / Virtual Dyno)"
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Performans & Dyno (0-100 / Virtual Dyno)"
             }
-        }
-
-        // Pro-Tuner Virtual Dyno (HP & Nm Curve)
-        item {
-            VirtualDynoCard(
-                dyno = session.virtualDyno,
-                onRunDynoPull = onRunVirtualDynoPull
+            BmwOutlinedButton(
+                text = perfTitle,
+                icon = Icons.Default.Speed,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onOpenPerformanceDyno
             )
         }
 
-        // Sport Displays Gauges (Power & Torque)
-        item {
-            val rpmVal = session.liveChannels.firstOrNull { it.id == "rpm" }?.currentValue ?: 780.0
-            val boostVal = session.liveChannels.firstOrNull { it.id == "boost_press" || it.id == "boost" }?.currentValue ?: 0.25
-            val estHp = ((rpmVal / 6500.0) * 245.0 * (1.0 + boostVal.coerceAtLeast(0.0) * 0.45)).toInt().coerceAtLeast(20)
-            val estNm = (260 + (boostVal.coerceAtLeast(0.0) * 180)).toInt()
-
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.Speed, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                        Text(strings.sportGaugeTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        val powerLabel = when (strings.language) {
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Power"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Güc"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Мощность"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Güç"
-                        }
-                        val torqueLabel = when (strings.language) {
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Torque"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Fırlanma anı"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Крутящий момент"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Tork"
-                        }
-                        LiveSportGauge(title = powerLabel, value = "$estHp", unit = "HP", fraction = (estHp / 320f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
-                        LiveSportGauge(title = torqueLabel, value = "$estNm", unit = "Nm", fraction = (estNm / 450f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-
-        // Live Sensors Toolbar (Android Auto & Customize Modules below title with equal width)
+        // Live Sensors Toolbar (Android Auto & Customize Modules below title with equal width + template Reorder button)
         item {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${strings.tabLive} (${session.liveChannels.size})",
-                        color = theme.textPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                    OutlinedButton(
-                        onClick = { isReorderMode = !isReorderMode },
-                        modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                        border = BorderStroke(1.dp, if (isReorderMode) theme.primaryBright else theme.outline)
-                    ) {
-                        Icon(
-                            if (isReorderMode) Icons.Default.Check else Icons.Default.SwapVert,
-                            contentDescription = null,
-                            tint = if (isReorderMode) theme.primaryBright else theme.textSecondary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = if (isReorderMode) strings.doneBtn else strings.editOrderBtn,
-                            fontSize = 11.sp,
-                            color = if (isReorderMode) theme.primaryBright else theme.textPrimary,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                }
+                Text(
+                    text = "${strings.tabLive} (${session.liveChannels.size})",
+                    color = theme.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -610,6 +460,21 @@ fun LiveScreen(
                             draftSelectedPids = session.liveChannels.map { it.id }.toSet()
                             showCustomizeSensorsDialog = true
                         }
+                    )
+                }
+                if (isReorderMode) {
+                    BmwPrimaryButton(
+                        text = strings.doneBtn,
+                        icon = Icons.Default.Check,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { isReorderMode = false }
+                    )
+                } else {
+                    BmwOutlinedButton(
+                        text = strings.editOrderBtn,
+                        icon = Icons.Default.SwapVert,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { isReorderMode = true }
                     )
                 }
             }

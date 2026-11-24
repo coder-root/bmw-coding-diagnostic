@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -371,17 +372,24 @@ fun BmwOutlinedButton(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(44.dp),
+        modifier = modifier.heightIn(min = 46.dp),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.5.dp, strokeColor),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
     ) {
         if (icon != null) {
             Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(text = text, color = color, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text(
+            text = text,
+            color = color,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            maxLines = 2,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
     }
 }
 

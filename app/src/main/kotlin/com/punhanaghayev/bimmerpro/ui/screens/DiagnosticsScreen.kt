@@ -109,6 +109,21 @@ fun DiagnosticsScreen(
     var selectedMemoryTab by remember { mutableStateOf<DtcMemoryType?>(null) }
     var showClearDialog by remember { mutableStateOf(false) }
     var dtcLookupQuery by remember { mutableStateOf("") }
+    var showOfflineHealth by remember { mutableStateOf(true) }
+    var showRootCause by remember { mutableStateOf(true) }
+    var showMileageCheck by remember { mutableStateOf(true) }
+    val showLabel = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Show"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Göstər"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Показать"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Göster"
+    }
+    val hideLabel = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Hide"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Gizlət"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Скрыть"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Gizle"
+    }
     val lookupResults = remember(dtcLookupQuery) { BmwDtcDictionary.search(dtcLookupQuery) }
 
     val filteredDtcs = remember(session.dtcs, filterMode, selectedMemoryTab) {
@@ -214,7 +229,9 @@ fun DiagnosticsScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showOfflineHealth = !showOfflineHealth },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -223,7 +240,7 @@ fun DiagnosticsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = theme.textPrimary,
                                 fontSize = 14.sp,
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier.weight(1f)
                             )
                             Spacer(Modifier.width(8.dp))
                             Box(
@@ -236,48 +253,75 @@ fun DiagnosticsScreen(
                                     text = "${healthReport.overallScore} / 100",
                                     color = overallColor,
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     maxLines = 1,
                                     softWrap = false
                                 )
                             }
-                        }
-                        healthReport.subsystemScores.forEach { sub ->
-                            val subColor = when {
-                                sub.scorePercent >= 85 -> StatusGreen
-                                sub.scorePercent >= 65 -> StatusAmber
-                                else -> StatusRed
-                            }
-                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Spacer(Modifier.width(6.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(theme.cardElevated)
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                            ) {
                                 Text(
-                                    text = sub.localizedName(strings),
-                                    color = theme.textPrimary,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "${sub.scorePercent}% • ${sub.localizedNote(strings)}",
-                                    color = subColor,
+                                    text = if (showOfflineHealth) hideLabel else showLabel,
+                                    color = theme.primaryBright,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.SemiBold,
+                                    softWrap = false
                                 )
-                                LinearProgressIndicator(
-                                    progress = { (sub.scorePercent / 100f).coerceIn(0f, 1f) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(5.dp),
-                                    color = subColor,
-                                    trackColor = theme.outline.copy(alpha = 0.35f)
+                                Icon(
+                                    imageVector = if (showOfflineHealth) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = theme.primaryBright,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
-                        if (healthReport.recommendationItems.isNotEmpty()) {
-                            healthReport.recommendationItems.forEach { recItem ->
-                                Text("• ${recItem.localized(strings)}", color = theme.textSecondary, fontSize = 11.sp)
-                            }
-                        } else {
-                            healthReport.recommendations.forEach { rec ->
-                                Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
+                        AnimatedVisibility(visible = showOfflineHealth) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                healthReport.subsystemScores.forEach { sub ->
+                                    val subColor = when {
+                                        sub.scorePercent >= 85 -> StatusGreen
+                                        sub.scorePercent >= 65 -> StatusAmber
+                                        else -> StatusRed
+                                    }
+                                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        Text(
+                                            text = sub.localizedName(strings),
+                                            color = theme.textPrimary,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${sub.scorePercent}% • ${sub.localizedNote(strings)}",
+                                            color = subColor,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        LinearProgressIndicator(
+                                            progress = { (sub.scorePercent / 100f).coerceIn(0f, 1f) },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(5.dp),
+                                            color = subColor,
+                                            trackColor = theme.outline.copy(alpha = 0.35f)
+                                        )
+                                    }
+                                }
+                                if (healthReport.recommendationItems.isNotEmpty()) {
+                                    healthReport.recommendationItems.forEach { recItem ->
+                                        Text("• ${recItem.localized(strings)}", color = theme.textSecondary, fontSize = 11.sp)
+                                    }
+                                } else {
+                                    healthReport.recommendations.forEach { rec ->
+                                        Text("• $rec", color = theme.textSecondary, fontSize = 11.sp)
+                                    }
+                                }
                             }
                         }
                     }
@@ -293,30 +337,66 @@ fun DiagnosticsScreen(
                     ) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showRootCause = !showRootCause },
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(18.dp))
-                                Text(strings.rootCauseTitle, color = StatusAmber, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            }
-                            healthReport.rootCauseCorrelations.forEach { rc ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(theme.card)
-                                        .padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Text(rc.localizedTitle(strings), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Icon(Icons.Default.Warning, contentDescription = null, tint = StatusAmber, modifier = Modifier.size(18.dp))
+                                    Text(strings.rootCauseTitle, color = StatusAmber, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Spacer(Modifier.width(6.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(theme.card)
+                                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                                ) {
                                     Text(
-                                        text = rc.involvedCodes.joinToString(" + "),
-                                        color = theme.primaryBright,
+                                        text = if (showRootCause) hideLabel else showLabel,
+                                        color = StatusAmber,
                                         fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace
+                                        fontWeight = FontWeight.SemiBold,
+                                        softWrap = false
                                     )
-                                    Text(rc.localizedSummary(strings), color = theme.textSecondary, fontSize = 11.sp)
-                                    Text("${strings.rootCauseActionPrefix}: ${rc.localizedAction(strings)}", color = StatusGreen, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                    Icon(
+                                        imageVector = if (showRootCause) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        tint = StatusAmber,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            AnimatedVisibility(visible = showRootCause) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    healthReport.rootCauseCorrelations.forEach { rc ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(theme.card)
+                                                .padding(10.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(rc.localizedTitle(strings), color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text(
+                                                text = rc.involvedCodes.joinToString(" + "),
+                                                color = theme.primaryBright,
+                                                fontSize = 11.sp,
+                                                fontFamily = FontFamily.Monospace
+                                            )
+                                            Text(rc.localizedSummary(strings), color = theme.textSecondary, fontSize = 11.sp)
+                                            Text("${strings.rootCauseActionPrefix}: ${rc.localizedAction(strings)}", color = StatusGreen, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -362,31 +442,69 @@ fun DiagnosticsScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = if (isTampered) Icons.Default.Warning else Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = badgeColor
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
-                            Text(mv.status.localized(strings), color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showMileageCheck = !showMileageCheck },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = if (isTampered) Icons.Default.Warning else Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = badgeColor
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                                Text(mv.status.localized(strings), color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            }
+                        }
+                        Spacer(Modifier.width(6.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(theme.cardElevated)
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (showMileageCheck) hideLabel else showLabel,
+                                color = theme.primaryBright,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                softWrap = false
+                            )
+                            Icon(
+                                imageVector = if (showMileageCheck) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                tint = theme.primaryBright,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
-                    Text(mv.localizedSummary(strings), color = theme.textSecondary, fontSize = 12.sp)
-                    mv.readings.forEach { reading ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(reading.localizedModuleName(strings), color = theme.textSecondary, fontSize = 12.sp)
-                            Text(
-                                text = "%,d km".format(reading.mileageKm) + (reading.engineHours?.let { " • ${it}h" } ?: ""),
-                                color = theme.textPrimary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
-                            )
+                    AnimatedVisibility(visible = showMileageCheck) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(mv.localizedSummary(strings), color = theme.textSecondary, fontSize = 12.sp)
+                            mv.readings.forEach { reading ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(reading.localizedModuleName(strings), color = theme.textSecondary, fontSize = 12.sp)
+                                    Text(
+                                        text = "%,d km".format(reading.mileageKm) + (reading.engineHours?.let { " • ${it}h" } ?: ""),
+                                        color = theme.textPrimary,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }

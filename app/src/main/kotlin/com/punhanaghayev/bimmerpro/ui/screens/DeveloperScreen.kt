@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,22 +16,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -38,14 +35,11 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,24 +49,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.punhanaghayev.bimmerpro.BuildConfig
-import com.punhanaghayev.bimmerpro.core.bmw.BmwChassis
-import com.punhanaghayev.bimmerpro.core.bmw.BmwModelSupportCatalog
-import com.punhanaghayev.bimmerpro.core.bmw.ModelSupportLevel
-import com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily
-import com.punhanaghayev.bimmerpro.core.bmw.SupportedBmwModelEntry
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
+import com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
 import com.punhanaghayev.bimmerpro.core.update.DataPackStatus
 import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
-import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
-import com.punhanaghayev.bimmerpro.ui.components.BmwRoundelLogo
+import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
@@ -97,141 +84,144 @@ fun DeveloperScreen(
     onTogglePhysicalWriteUnlock: (Boolean) -> Unit,
     onDownloadDataPack: () -> Unit,
     onExportSupportBundle: () -> Unit,
+    onOpenUpdatesAndReleases: () -> Unit = {},
+    onOpenDeveloperInfo: () -> Unit = {},
     workshopProfile: com.punhanaghayev.bimmerpro.data.WorkshopProfile = com.punhanaghayev.bimmerpro.data.WorkshopProfile(),
     onSaveWorkshopProfile: (com.punhanaghayev.bimmerpro.data.WorkshopProfile) -> Unit = {}
 ) {
     val strings = LocalAppStrings.current
     val theme = LocalThemeStyle.current
-    var langExpanded by remember { mutableStateOf(false) }
     var themeExpanded by remember { mutableStateOf(false) }
-    var changelogExpanded by remember { mutableStateOf(false) }
-    var archExpanded by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf("TÃ¼mÃ¼") }
-
-    val changelogList = when (otaState) {
-        is OtaCheckState.UpToDate -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
-        is OtaCheckState.UpdateAvailable -> otaState.releases.ifEmpty { OtaUpdateManager.builtinChangelog }
-        else -> OtaUpdateManager.builtinChangelog
-    }
-    var selectedReleaseTag by remember(changelogList) {
-        mutableStateOf(changelogList.firstOrNull()?.tagName ?: "v1.0.0")
-    }
-    val selectedRelease = changelogList.firstOrNull { it.tagName == selectedReleaseTag } ?: changelogList.first()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Modern App Language Selector Card
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.primary.copy(alpha = 0.7f)),
-                shape = RoundedCornerShape(18.dp)
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        BmwRoundelLogo(size = 76.dp)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "Punhan Aghayev",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = theme.textPrimary
-                        )
-                        Text(
-                            text = "Lead Architect",
-                            color = theme.primaryBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = "BMW Diagnostics Developer",
-                            color = theme.textPrimary,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp
-                        )
                         Row(
-                            modifier = Modifier
-                                .padding(top = 4.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(theme.cardElevated)
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Email,
+                                imageVector = Icons.Default.Language,
                                 contentDescription = null,
                                 tint = theme.primaryBright,
-                                modifier = Modifier.size(15.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "cwghost@hotmail.com",
-                                color = theme.textPrimary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                                text = strings.languageTitle,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary
                             )
                         }
-                        Text(
-                            text = "BMW Expert PRO v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
-                            color = theme.textSecondary,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+
+                        val languagePairs = AppLanguage.entries.chunked(2)
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            languagePairs.forEach { pair ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    pair.forEach { lang ->
+                                        val isSelected = lang == currentLanguage
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { onSelectLanguage(lang) },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSelected) {
+                                                    theme.primary.copy(alpha = 0.16f)
+                                                } else {
+                                                    theme.cardElevated
+                                                }
+                                            ),
+                                            border = BorderStroke(
+                                                width = if (isSelected) 1.5.dp else 1.dp,
+                                                color = if (isSelected) theme.primaryBright else theme.outline.copy(alpha = 0.6f)
+                                            ),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(
+                                                                if (isSelected) theme.primary else theme.card
+                                                            )
+                                                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = lang.flagCode,
+                                                            color = if (isSelected) Color.White else theme.primaryBright,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = lang.nativeName,
+                                                        color = theme.textPrimary,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                                if (isSelected) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = null,
+                                                        tint = StatusGreen,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (pair.size == 1) {
+                                        Spacer(Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
                     }
                     MSportAccentStrip()
                 }
             }
         }
 
-        // Language & Multi-Theme Dropdown Settings Card
+        // Theme Selector Card
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ExposedDropdownMenuBox(
-                        expanded = langExpanded,
-                        onExpandedChange = { langExpanded = !langExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = "${currentLanguage.flagCode} • ${currentLanguage.nativeName}",
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(strings.languageTitle) },
-                            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = theme.primaryBright) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = langExpanded,
-                            onDismissRequest = { langExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            AppLanguage.entries.forEach { lang ->
-                                DropdownMenuItem(
-                                    text = { Text("${lang.flagCode} • ${lang.nativeName}", color = theme.textPrimary) },
-                                    onClick = {
-                                        onSelectLanguage(lang)
-                                        langExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     ExposedDropdownMenuBox(
                         expanded = themeExpanded,
                         onExpandedChange = { themeExpanded = !themeExpanded }
@@ -278,23 +268,14 @@ fun DeveloperScreen(
             }
         }
 
-        // OTA Update & Version Tracking Card
-        item {
-            OtaUpdateCard(
-                otaState = otaState,
-                onCheckOta = onCheckOta,
-                onDownloadOta = onDownloadOta
-            )
-        }
-
-        // Physical Safe Mode & On-Demand DTC DataPack Card
+        // Physical Safe Mode, Cloud DTC DataPack & Support Bundle Card
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -330,7 +311,9 @@ fun DeveloperScreen(
                             )
                         )
                     }
+
                     HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
+
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = "${strings.dataPackTitle} ($dtcDictionaryCount)",
@@ -341,20 +324,13 @@ fun DeveloperScreen(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedButton(
+                        BmwOutlinedButton(
+                            text = strings.dataPackDownloadBtn,
                             onClick = onDownloadDataPack,
+                            icon = Icons.Default.CloudDownload,
                             enabled = dataPackStatus !is DataPackStatus.Downloading,
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            if (dataPackStatus is DataPackStatus.Downloading) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
-                            }
-                            Spacer(Modifier.width(8.dp))
-                            Text(strings.dataPackDownloadBtn, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
-                        }
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         val (statusText, statusColor) = when (dataPackStatus) {
                             DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
                             DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
@@ -373,188 +349,49 @@ fun DeveloperScreen(
                             color = statusColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+
                     HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(strings.supportBundleTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         Text(strings.supportBundleSub, color = theme.textSecondary, fontSize = 11.sp)
-                        OutlinedButton(
+                        BmwOutlinedButton(
+                            text = strings.supportBundleBtn,
                             onClick = onExportSupportBundle,
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(strings.supportBundleBtn, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
-                        }
+                            icon = Icons.Default.Share,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
         }
 
-
-        // Release History / Changelog Dropdown Section
+        // Quick Links to dedicated Update & Releases and Developer screens
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = strings.changelogTitle,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = theme.textPrimary
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BmwOutlinedButton(
+                        text = GlobalTextLocalizer.localize("Güncelleme ve Sürümler", strings.language),
+                        onClick = onOpenUpdatesAndReleases,
+                        icon = Icons.Default.SystemUpdate,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    ExposedDropdownMenuBox(
-                        expanded = changelogExpanded,
-                        onExpandedChange = { changelogExpanded = !changelogExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = "${selectedRelease.tagName} • ${selectedRelease.publishedDate.substringBefore(" ")}",
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(strings.selectVersionLabel) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = changelogExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = changelogExpanded,
-                            onDismissRequest = { changelogExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            changelogList.forEach { rel ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text("${rel.tagName} • ${rel.publishedDate.substringBefore(" ")}", color = theme.textPrimary)
-                                    },
-                                    onClick = {
-                                        selectedReleaseTag = rel.tagName
-                                        changelogExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(theme.primary.copy(alpha = 0.25f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                        ) {
-                            Text(selectedRelease.tagName, color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Text(selectedRelease.publishedDate.substringBefore(" "), color = theme.textSecondary, fontSize = 11.sp)
-                    }
-                    Text(selectedRelease.title, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    Text(selectedRelease.changelog, color = theme.textSecondary, fontSize = 12.sp, lineHeight = 18.sp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OtaUpdateCard(
-    otaState: OtaCheckState,
-    onCheckOta: () -> Unit,
-    onDownloadOta: (AppReleaseInfo) -> Unit
-) {
-    val strings = LocalAppStrings.current
-    val theme = LocalThemeStyle.current
-    Card(
-        colors = CardDefaults.cardColors(containerColor = theme.card),
-        border = BorderStroke(1.dp, theme.outline),
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(strings.otaTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary)
-                Text(
-                    text = "Repo: github.com/${OtaUpdateManager.GITHUB_OWNER}/${OtaUpdateManager.GITHUB_REPO}",
-                    color = theme.textSecondary,
-                    fontSize = 11.sp
-                )
-            }
-
-            when (otaState) {
-                OtaCheckState.Idle -> {
-                    Text(
-                        text = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
-                        color = theme.textSecondary,
-                        fontSize = 12.sp
+                    BmwOutlinedButton(
+                        text = GlobalTextLocalizer.localize("Geliştirici Bilgileri", strings.language),
+                        onClick = onOpenDeveloperInfo,
+                        icon = Icons.Default.Code,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-                OtaCheckState.Checking -> {
-                    Text("GitHub Releases...", color = theme.primaryBright, fontSize = 12.sp)
-                }
-                is OtaCheckState.UpToDate -> {
-                    Text("v${otaState.currentVersion} OK", color = StatusGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-                is OtaCheckState.UpdateAvailable -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.NewReleases, contentDescription = null, tint = StatusGreen, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = "${otaState.latest.tagName} Ready",
-                                color = StatusGreen,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                        }
-                        Button(
-                            onClick = { onDownloadOta(otaState.latest) },
-                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary),
-                            modifier = Modifier.fillMaxWidth().height(44.dp)
-                        ) {
-                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("OTA (${otaState.latest.tagName})", color = Color.White, maxLines = 1, softWrap = false)
-                        }
-                    }
-                }
-                is OtaCheckState.Downloading -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("v${otaState.version}: ${(otaState.progress * 100).toInt()}%", color = theme.primaryBright, fontSize = 12.sp)
-                        LinearProgressIndicator(progress = { otaState.progress }, modifier = Modifier.fillMaxWidth(), color = theme.primaryBright)
-                    }
-                }
-                is OtaCheckState.ReadyToInstall -> {
-                    Text("v${otaState.version} ready to install.", color = StatusGreen, fontSize = 12.sp)
-                }
-                is OtaCheckState.Error -> {
-                    Text(otaState.message, color = StatusRed, fontSize = 12.sp)
-                }
-            }
-
-            OutlinedButton(
-                onClick = onCheckOta,
-                enabled = otaState !is OtaCheckState.Checking && otaState !is OtaCheckState.Downloading,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                if (otaState is OtaCheckState.Checking) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(strings.checkUpdatesBtn, fontSize = 13.sp, maxLines = 1, softWrap = false)
             }
         }
     }

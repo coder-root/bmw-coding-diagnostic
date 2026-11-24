@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,18 +19,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -61,6 +63,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -86,13 +90,16 @@ import com.punhanaghayev.bimmerpro.ui.UiEvent
 import com.punhanaghayev.bimmerpro.ui.components.BmwRoundelLogo
 import com.punhanaghayev.bimmerpro.ui.components.MSportAccentStrip
 import com.punhanaghayev.bimmerpro.ui.screens.CodingScreen
+import com.punhanaghayev.bimmerpro.ui.screens.DeveloperInfoScreen
 import com.punhanaghayev.bimmerpro.ui.screens.DeveloperScreen
 import com.punhanaghayev.bimmerpro.ui.screens.DiagnosticsScreen
 import com.punhanaghayev.bimmerpro.ui.screens.GarageScreen
 import com.punhanaghayev.bimmerpro.ui.screens.LiveScreen
-import com.punhanaghayev.bimmerpro.ui.screens.ServiceScreen
 import com.punhanaghayev.bimmerpro.ui.screens.PacketInspectorScreen
+import com.punhanaghayev.bimmerpro.ui.screens.PerformanceDynoScreen
 import com.punhanaghayev.bimmerpro.ui.screens.SavedVehiclesScreen
+import com.punhanaghayev.bimmerpro.ui.screens.ServiceScreen
+import com.punhanaghayev.bimmerpro.ui.screens.UpdatesAndReleasesScreen
 import com.punhanaghayev.bimmerpro.ui.theme.AppThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.BimmerProTheme
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
@@ -121,7 +128,10 @@ private enum class OverlayRoute {
     SAVED_VEHICLES,
     PACKET_INSPECTOR,
     SUPPORTED_BMW,
-    WORKSHOP_BRANDING
+    WORKSHOP_BRANDING,
+    PERFORMANCE_DYNO,
+    UPDATES_RELEASES,
+    DEVELOPER_INFO
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -199,7 +209,10 @@ fun MainNavigation(
     LaunchedEffect(Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
-                is UiEvent.Snackbar -> snackbarHostState.showSnackbar(event.message)
+                is UiEvent.Snackbar -> {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(event.message)
+                }
                 is UiEvent.ShareFile -> {
                     runCatching {
                         val uri = FileProvider.getUriForFile(
@@ -367,29 +380,100 @@ fun MainNavigation(
                                 if (showLanguagePickerDialog) {
                                     AlertDialog(
                                         onDismissRequest = { showLanguagePickerDialog = false },
-                                        title = { Text(strings.languageTitle, fontWeight = FontWeight.Bold) },
+                                        containerColor = theme.surface,
+                                        title = {
+                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Language,
+                                                        contentDescription = null,
+                                                        tint = theme.primaryBright,
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                    Text(
+                                                        text = strings.languageTitle,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = theme.textPrimary
+                                                    )
+                                                }
+                                                MSportAccentStrip()
+                                            }
+                                        },
                                         text = {
-                                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                                 AppLanguage.entries.forEach { lang ->
-                                                    TextButton(
-                                                        onClick = {
-                                                            viewModel.setAppLanguage(lang)
-                                                            showLanguagePickerDialog = false
-                                                        },
-                                                        modifier = Modifier.fillMaxWidth()
+                                                    val isSelected = lang == appLanguage
+                                                    Card(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(12.dp))
+                                                            .clickable {
+                                                                viewModel.setAppLanguage(lang)
+                                                                showLanguagePickerDialog = false
+                                                            },
+                                                        colors = CardDefaults.cardColors(
+                                                            containerColor = if (isSelected) {
+                                                                theme.primary.copy(alpha = 0.18f)
+                                                            } else {
+                                                                theme.card
+                                                            }
+                                                        ),
+                                                        border = BorderStroke(
+                                                            width = if (isSelected) 1.5.dp else 1.dp,
+                                                            color = if (isSelected) theme.primaryBright else theme.outline
+                                                        ),
+                                                        shape = RoundedCornerShape(12.dp)
                                                     ) {
-                                                        Text(
-                                                            text = "${lang.flagCode}  •  ${lang.nativeName}",
-                                                            fontWeight = if (lang == appLanguage) FontWeight.ExtraBold else FontWeight.Normal,
-                                                            color = if (lang == appLanguage) theme.primaryBright else theme.textPrimary
-                                                        )
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                            ) {
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .clip(RoundedCornerShape(6.dp))
+                                                                        .background(if (isSelected) theme.primary else theme.cardElevated)
+                                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = lang.flagCode,
+                                                                        color = if (isSelected) Color.White else theme.primaryBright,
+                                                                        fontSize = 11.sp,
+                                                                        fontWeight = FontWeight.ExtraBold
+                                                                    )
+                                                                }
+                                                                Text(
+                                                                    text = lang.nativeName,
+                                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                                    color = theme.textPrimary,
+                                                                    fontSize = 14.sp
+                                                                )
+                                                            }
+                                                            if (isSelected) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.CheckCircle,
+                                                                    contentDescription = null,
+                                                                    tint = StatusGreen,
+                                                                    modifier = Modifier.size(20.dp)
+                                                                )
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
                                         },
                                         confirmButton = {
                                             TextButton(onClick = { showLanguagePickerDialog = false }) {
-                                                Text(strings.cancelBtn)
+                                                Text(strings.cancelBtn, color = theme.primaryBright, fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     )
@@ -413,6 +497,23 @@ fun MainNavigation(
                                             onClick = {
                                                 topMenuExpanded = false
                                                 showLanguagePickerDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.Speed, contentDescription = null, tint = theme.primaryBright) },
+                                            text = {
+                                                Text(
+                                                    when (strings.language) {
+                                                        AppLanguage.EN -> "Performance & Dyno"
+                                                        AppLanguage.AZ -> "Performans & Dyno"
+                                                        AppLanguage.RU -> "Динамика и Dyno"
+                                                        AppLanguage.TR -> "Performans & Dyno"
+                                                    }
+                                                )
+                                            },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.PERFORMANCE_DYNO
                                             }
                                         )
                                         DropdownMenuItem(
@@ -463,6 +564,40 @@ fun MainNavigation(
                                             onClick = {
                                                 topMenuExpanded = false
                                                 activeOverlay = OverlayRoute.WORKSHOP_BRANDING
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = theme.primaryBright) },
+                                            text = {
+                                                Text(
+                                                    when (strings.language) {
+                                                        AppLanguage.EN -> "Update & Releases"
+                                                        AppLanguage.AZ -> "Yeniləmə & Buraxılışlar"
+                                                        AppLanguage.RU -> "Обновления и релизы"
+                                                        AppLanguage.TR -> "Güncelleme & Sürümler"
+                                                    }
+                                                )
+                                            },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.UPDATES_RELEASES
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = theme.primaryBright) },
+                                            text = {
+                                                Text(
+                                                    when (strings.language) {
+                                                        AppLanguage.EN -> "Developer"
+                                                        AppLanguage.AZ -> "Tərtibatçı"
+                                                        AppLanguage.RU -> "Разработчик"
+                                                        AppLanguage.TR -> "Geliştirici"
+                                                    }
+                                                )
+                                            },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.DEVELOPER_INFO
                                             }
                                         )
                                     }
@@ -526,6 +661,25 @@ fun MainNavigation(
                         OverlayRoute.WORKSHOP_BRANDING -> com.punhanaghayev.bimmerpro.ui.screens.WorkshopBrandingScreen(
                             workshopProfile = workshopProfile,
                             onSaveWorkshopProfile = viewModel::saveWorkshopProfile,
+                            onBack = { activeOverlay = null }
+                        )
+
+                        OverlayRoute.PERFORMANCE_DYNO -> PerformanceDynoScreen(
+                            session = session,
+                            onTogglePerformanceRun = viewModel::togglePerformanceRun,
+                            onSelectDragMode = viewModel::setDragMode,
+                            onRunVirtualDynoPull = viewModel::runVirtualDynoPull,
+                            onBack = { activeOverlay = null }
+                        )
+
+                        OverlayRoute.UPDATES_RELEASES -> UpdatesAndReleasesScreen(
+                            otaState = otaState,
+                            onCheckOta = { viewModel.checkForOtaUpdates(silent = false) },
+                            onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
+                            onBack = { activeOverlay = null }
+                        )
+
+                        OverlayRoute.DEVELOPER_INFO -> DeveloperInfoScreen(
                             onBack = { activeOverlay = null }
                         )
 
@@ -603,6 +757,7 @@ fun MainNavigation(
                                 onMoveLiveChannel = viewModel::moveLiveChannel,
                                 onSelectDragMode = viewModel::setDragMode,
                                 onRunVirtualDynoPull = viewModel::runVirtualDynoPull,
+                                onOpenPerformanceDyno = { activeOverlay = OverlayRoute.PERFORMANCE_DYNO },
                                 onGoToGarage = { activeTab = BimmerTab.GARAGE }
                             )
 
@@ -636,6 +791,8 @@ fun MainNavigation(
                                 onTogglePhysicalWriteUnlock = viewModel::setPhysicalWriteUnlocked,
                                 onDownloadDataPack = viewModel::downloadDataPack,
                                 onExportSupportBundle = { viewModel.exportSupportBundle(context) },
+                                onOpenUpdatesAndReleases = { activeOverlay = OverlayRoute.UPDATES_RELEASES },
+                                onOpenDeveloperInfo = { activeOverlay = OverlayRoute.DEVELOPER_INFO },
                                 workshopProfile = workshopProfile,
                                 onSaveWorkshopProfile = viewModel::saveWorkshopProfile
                             )

@@ -1244,6 +1244,7 @@ fun ServiceScreen(
                     }
 
                     if (sound.asdSupported) {
+                        var draftAsdVol by remember(sound.asdVolumePercent) { mutableStateOf(sound.asdVolumePercent.toFloat()) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1255,17 +1256,18 @@ fun ServiceScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(strings.asdEnableLabel, color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                                Text("${strings.asdVolumeLabel}: ${sound.asdVolumePercent}%", color = theme.textSecondary, fontSize = 10.sp)
+                                Text("${strings.asdVolumeLabel}: ${draftAsdVol.toInt()}%", color = theme.textSecondary, fontSize = 10.sp)
                             }
                             Switch(
                                 checked = sound.asdEnabled,
-                                onCheckedChange = { checked -> onSetAsdState(checked, sound.asdVolumePercent) }
+                                onCheckedChange = { checked -> onSetAsdState(checked, draftAsdVol.toInt()) }
                             )
                         }
                         if (sound.asdEnabled) {
                             Slider(
-                                value = sound.asdVolumePercent.toFloat(),
-                                onValueChange = { onSetAsdState(true, it.toInt()) },
+                                value = draftAsdVol,
+                                onValueChange = { draftAsdVol = it },
+                                onValueChangeFinished = { onSetAsdState(true, draftAsdVol.toInt()) },
                                 valueRange = 20f..100f
                             )
                         }

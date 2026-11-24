@@ -141,7 +141,7 @@ fun SupportedBmwScreen(
                         onExpandedChange = { categoryExpanded = !categoryExpanded }
                     ) {
                         OutlinedTextField(
-                            value = selectedCategory,
+                            value = GlobalTextLocalizer.localize(selectedCategory, strings.language),
                             onValueChange = {},
                             readOnly = true,
                             singleLine = true,
@@ -158,7 +158,7 @@ fun SupportedBmwScreen(
                         ) {
                             BmwModelSupportCatalog.allCategories.forEach { cat ->
                                 DropdownMenuItem(
-                                    text = { Text(cat, fontSize = 13.sp, color = theme.textPrimary) },
+                                    text = { Text(GlobalTextLocalizer.localize(cat, strings.language), fontSize = 13.sp, color = theme.textPrimary) },
                                     onClick = {
                                         selectedCategory = cat
                                         categoryExpanded = false
