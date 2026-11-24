@@ -76,6 +76,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.punhanaghayev.bimmerpro.core.bmw.BmwEcuAndPidCatalog
@@ -418,11 +419,7 @@ fun LiveScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Timer, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(20.dp))
                             Text(
@@ -435,24 +432,43 @@ fun LiveScreen(
                         Text(
                             text = "${timer.currentSpeedKmh} km/h" + if (timer.dragMode == DragMode.QUARTER_MILE) " • ${timer.distanceMeters.toInt()}m" else "",
                             color = theme.primaryBright,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             fontFamily = FontFamily.Monospace
                         )
                     }
 
-                    FlowRow(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        DragMode.entries.forEach { mode ->
-                            FilterChip(
-                                selected = timer.dragMode == mode,
-                                onClick = { onSelectDragMode(mode) },
-                                label = { Text(mode.label, fontSize = 10.sp) }
-                            )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(DragMode.ZERO_TO_100, DragMode.HUNDRED_TO_200).forEach { mode ->
+                                FilterChip(
+                                    selected = timer.dragMode == mode,
+                                    onClick = { onSelectDragMode(mode) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    label = {
+                                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                            Text(mode.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+                                        }
+                                    }
+                                )
+                            }
                         }
+                        FilterChip(
+                            selected = timer.dragMode == DragMode.QUARTER_MILE,
+                            onClick = { onSelectDragMode(DragMode.QUARTER_MILE) },
+                            modifier = Modifier.fillMaxWidth().height(38.dp),
+                            label = {
+                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                    Text(DragMode.QUARTER_MILE.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+                                }
+                            }
+                        )
                     }
 
                     Row(
@@ -515,55 +531,46 @@ fun LiveScreen(
                         Text(strings.sportGaugeTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                     }
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        LiveSportGauge(title = "Güç / Power", value = "$estHp", unit = "HP", fraction = (estHp / 320f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
-                        LiveSportGauge(title = "Tork / Torque", value = "$estNm", unit = "Nm", fraction = (estNm / 450f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
+                        val powerLabel = when (strings.language) {
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Power"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Güc"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Мощность"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Güç"
+                        }
+                        val torqueLabel = when (strings.language) {
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Torque"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Fırlanma anı"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Крутящий момент"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Tork"
+                        }
+                        LiveSportGauge(title = powerLabel, value = "$estHp", unit = "HP", fraction = (estHp / 320f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
+                        LiveSportGauge(title = torqueLabel, value = "$estNm", unit = "Nm", fraction = (estNm / 450f).coerceIn(0f, 1f), modifier = Modifier.weight(1f))
                     }
                 }
             }
         }
 
-        // Live Sensors Toolbar (Customize & Reorder Mode)
+        // Live Sensors Toolbar (Android Auto & Customize Modules below title with equal width)
         item {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "${strings.tabLive} (${session.liveChannels.size})",
-                    color = theme.textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedButton(
-                        onClick = {
-                            draftAutoPids = session.androidAutoPidIds
-                            showAndroidAutoDialog = true
-                        },
-                        modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.DirectionsCar, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(3.dp))
-                        Text(strings.androidAutoSensorsBtn, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            draftSelectedPids = session.liveChannels.map { it.id }.toSet()
-                            showCustomizeSensorsDialog = true
-                        },
-                        modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.DashboardCustomize, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(strings.customizeSensorsBtn, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${strings.tabLive} (${session.liveChannels.size})",
+                        color = theme.textPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                     OutlinedButton(
                         onClick = { isReorderMode = !isReorderMode },
                         modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                         border = BorderStroke(1.dp, if (isReorderMode) theme.primaryBright else theme.outline)
                     ) {
                         Icon(
@@ -581,6 +588,29 @@ fun LiveScreen(
                             softWrap = false
                         )
                     }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BmwOutlinedButton(
+                        text = strings.androidAutoSensorsBtn,
+                        icon = Icons.Default.DirectionsCar,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            draftAutoPids = session.androidAutoPidIds
+                            showAndroidAutoDialog = true
+                        }
+                    )
+                    BmwOutlinedButton(
+                        text = strings.customizeSensorsBtn,
+                        icon = Icons.Default.DashboardCustomize,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            draftSelectedPids = session.liveChannels.map { it.id }.toSet()
+                            showCustomizeSensorsDialog = true
+                        }
+                    )
                 }
             }
         }
@@ -819,18 +849,27 @@ private fun LiveTelemetryChartCard(
                 }
             }
 
-            // Channel Selector Chips
-            FlowRow(
+            // Channel Selector List (stacked vertically one below the other)
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 channels.forEach { ch ->
                     val active = ch.id in selectedIds
                     FilterChip(
                         selected = active,
                         onClick = { onToggleChannel(ch.id) },
-                        label = { Text(ch.localizedName(strings), fontSize = 10.sp, maxLines = 1) }
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(ch.localizedName(strings), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("%.1f %s".format(ch.currentValue, ch.unit), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            }
+                        }
                     )
                 }
             }

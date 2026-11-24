@@ -706,7 +706,7 @@ fun CodingScreen(
                                                 .background(theme.cardElevated)
                                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                         ) {
-                                            Text("${opt.code} • ${opt.description}", color = theme.textPrimary, fontSize = 11.sp)
+                                            Text("${opt.code} • ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(opt.description, strings.language)}", color = theme.textPrimary, fontSize = 11.sp)
                                         }
                                     }
                                 }
@@ -738,7 +738,13 @@ fun CodingScreen(
                                 }
                                 if (newVoCode.length >= 3) {
                                     val affectedNames = VoDependencyMapper.affectedEcusFor(newVoCode).joinToString(", ") { it.second }
-                                    Text("Etkilenecek ECU'lar: $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
+                                    val affectedPrefix = when (strings.language) {
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Affected ECUs:"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Təsir edilən ECU-lar:"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Затрагиваемые ЭБУ:"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Etkilenecek ECU'lar:"
+                        }
+                        Text("$affectedPrefix $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedButton(
@@ -1061,7 +1067,13 @@ private fun ExpertCafdCard(
                             .background(theme.primaryBright.copy(alpha = 0.2f))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text("SEÇİLDİ", color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        val stagedLabel = when (strings.language) {
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "STAGED"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "SEÇİLDİ"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "ВЫБРАНО"
+                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "SEÇİLDİ"
+                        }
+                        Text(stagedLabel, color = theme.primaryBright, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

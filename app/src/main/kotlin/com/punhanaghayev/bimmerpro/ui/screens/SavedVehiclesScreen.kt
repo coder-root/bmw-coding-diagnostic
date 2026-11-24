@@ -122,8 +122,14 @@ fun SavedVehiclesScreen(
                             Text("${saved.chassisCode} • ${saved.lastConnected} • %,d km".format(saved.odometerKm), color = theme.textSecondary, fontSize = 11.sp)
                             val latestSnap = saved.scanSnapshots.firstOrNull()
                             if (latestSnap != null) {
+                                val snapSummary = when (strings.language) {
+                                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "${saved.scanSnapshots.size} scan(s) • Last Score: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)"
+                                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "${saved.scanSnapshots.size} skan tarixçəsi • Son Bal: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)"
+                                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "${saved.scanSnapshots.size} скан. • Последний балл: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)"
+                                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "${saved.scanSnapshots.size} tarama geçmişi • Son Skor: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)"
+                                }
                                 Text(
-                                    text = "${saved.scanSnapshots.size} tarama geçmişi • Son Skor: ${latestSnap.healthScorePercent}/100 (${latestSnap.dtcCodes.size} DTC)",
+                                    text = snapSummary,
                                     color = theme.primaryBright,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Medium

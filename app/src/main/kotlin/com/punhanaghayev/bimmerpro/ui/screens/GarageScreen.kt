@@ -403,9 +403,10 @@ fun GarageScreen(
             }
         }
 
-        // Adapter or Simulator Selection Hub
-        item {
-            Card(
+        // Adapter or Simulator Selection Hub (hidden while connected; reappears on Disconnect)
+        if (session.connectionState !is ConnectionState.Connected) {
+            item {
+                Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(16.dp)
@@ -658,6 +659,7 @@ fun GarageScreen(
                         }
                     }
                 }
+            }
             }
         }
 

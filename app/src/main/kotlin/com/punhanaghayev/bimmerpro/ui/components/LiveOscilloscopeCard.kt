@@ -81,12 +81,20 @@ fun LiveOscilloscopeCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
                 Text(
-                    text = "${maxSamples} pts",
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = theme.textPrimary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "$maxSamples pts",
                     color = theme.textSecondary,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Monospace,
+                    softWrap = false,
+                    maxLines = 1
                 )
             }
 

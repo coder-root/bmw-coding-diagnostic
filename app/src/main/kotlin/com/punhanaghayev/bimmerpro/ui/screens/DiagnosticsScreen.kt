@@ -397,31 +397,58 @@ fun DiagnosticsScreen(
             val errCount = session.dtcs.count { it.memoryType == DtcMemoryType.ERROR_MEMORY }
             val infoCount = session.dtcs.count { it.memoryType == DtcMemoryType.INFO_MEMORY }
             val permCount = session.dtcs.count { it.memoryType == DtcMemoryType.PERMANENT_MEMORY }
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                FilterChip(
-                    selected = selectedMemoryTab == null,
-                    onClick = { selectedMemoryTab = null },
-                    label = { Text("${strings.filterAll} (${session.dtcs.size})", fontSize = 11.sp, maxLines = 1) }
-                )
-                FilterChip(
-                    selected = selectedMemoryTab == DtcMemoryType.ERROR_MEMORY,
-                    onClick = { selectedMemoryTab = DtcMemoryType.ERROR_MEMORY },
-                    label = { Text("${strings.dtcMemoryErrorLabel} ($errCount)", fontSize = 11.sp, maxLines = 1) }
-                )
-                FilterChip(
-                    selected = selectedMemoryTab == DtcMemoryType.INFO_MEMORY,
-                    onClick = { selectedMemoryTab = DtcMemoryType.INFO_MEMORY },
-                    label = { Text("${strings.dtcMemoryInfoLabel} ($infoCount)", fontSize = 11.sp, maxLines = 1) }
-                )
-                FilterChip(
-                    selected = selectedMemoryTab == DtcMemoryType.PERMANENT_MEMORY,
-                    onClick = { selectedMemoryTab = DtcMemoryType.PERMANENT_MEMORY },
-                    label = { Text("${strings.dtcMemoryPermanentLabel} ($permCount)", fontSize = 11.sp, maxLines = 1) }
-                )
+            var memoryDropdownExpanded by remember { mutableStateOf(false) }
+            val currentMemoryLabel = when (selectedMemoryTab) {
+                null -> "${strings.filterAll} (${session.dtcs.size})"
+                DtcMemoryType.ERROR_MEMORY -> "${strings.dtcMemoryErrorLabel} ($errCount)"
+                DtcMemoryType.INFO_MEMORY -> "${strings.dtcMemoryInfoLabel} ($infoCount)"
+                DtcMemoryType.PERMANENT_MEMORY -> "${strings.dtcMemoryPermanentLabel} ($permCount)"
+            }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { memoryDropdownExpanded = true },
+                    modifier = Modifier.fillMaxWidth().height(40.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(currentMemoryLabel, fontSize = 12.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+                DropdownMenu(
+                    expanded = memoryDropdownExpanded,
+                    onDismissRequest = { memoryDropdownExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("${strings.filterAll} (${session.dtcs.size})", fontSize = 12.sp) },
+                        onClick = {
+                            selectedMemoryTab = null
+                            memoryDropdownExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("${strings.dtcMemoryErrorLabel} ($errCount)", fontSize = 12.sp) },
+                        onClick = {
+                            selectedMemoryTab = DtcMemoryType.ERROR_MEMORY
+                            memoryDropdownExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("${strings.dtcMemoryInfoLabel} ($infoCount)", fontSize = 12.sp) },
+                        onClick = {
+                            selectedMemoryTab = DtcMemoryType.INFO_MEMORY
+                            memoryDropdownExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("${strings.dtcMemoryPermanentLabel} ($permCount)", fontSize = 12.sp) },
+                        onClick = {
+                            selectedMemoryTab = DtcMemoryType.PERMANENT_MEMORY
+                            memoryDropdownExpanded = false
+                        }
+                    )
+                }
             }
         }
 

@@ -22,9 +22,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
@@ -116,7 +119,9 @@ enum class BimmerTab(val icon: ImageVector) {
 
 private enum class OverlayRoute {
     SAVED_VEHICLES,
-    PACKET_INSPECTOR
+    PACKET_INSPECTOR,
+    SUPPORTED_BMW,
+    WORKSHOP_BRANDING
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -356,51 +361,110 @@ fun MainNavigation(
                                 }
                             },
                             actions = {
-                                IconButton(
-                                    onClick = {
-                                        activeOverlay = if (activeOverlay == OverlayRoute.SAVED_VEHICLES) null else OverlayRoute.SAVED_VEHICLES
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.History,
-                                        contentDescription = strings.savedVehiclesTitle,
-                                        tint = if (activeOverlay == OverlayRoute.SAVED_VEHICLES) theme.accentRed else theme.primaryBright
+                                var topMenuExpanded by remember { mutableStateOf(false) }
+                                var showLanguagePickerDialog by remember { mutableStateOf(false) }
+
+                                if (showLanguagePickerDialog) {
+                                    AlertDialog(
+                                        onDismissRequest = { showLanguagePickerDialog = false },
+                                        title = { Text(strings.languageTitle, fontWeight = FontWeight.Bold) },
+                                        text = {
+                                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                AppLanguage.entries.forEach { lang ->
+                                                    TextButton(
+                                                        onClick = {
+                                                            viewModel.setAppLanguage(lang)
+                                                            showLanguagePickerDialog = false
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text(
+                                                            text = "${lang.flagCode}  •  ${lang.nativeName}",
+                                                            fontWeight = if (lang == appLanguage) FontWeight.ExtraBold else FontWeight.Normal,
+                                                            color = if (lang == appLanguage) theme.primaryBright else theme.textPrimary
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        confirmButton = {
+                                            TextButton(onClick = { showLanguagePickerDialog = false }) {
+                                                Text(strings.cancelBtn)
+                                            }
+                                        }
                                     )
                                 }
-                                IconButton(
-                                    onClick = {
-                                        activeOverlay = if (activeOverlay == OverlayRoute.PACKET_INSPECTOR) null else OverlayRoute.PACKET_INSPECTOR
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Code,
-                                        contentDescription = strings.packetInspectorTitle,
-                                        tint = if (activeOverlay == OverlayRoute.PACKET_INSPECTOR) theme.accentRed else theme.primaryBright
-                                    )
-                                }
+
                                 Box {
-                                    IconButton(onClick = { langMenuExpanded = true }) {
-                                        Icon(Icons.Default.Language, contentDescription = strings.languageTitle, tint = theme.primaryBright)
+                                    IconButton(onClick = { topMenuExpanded = true }) {
+                                        Icon(
+                                            Icons.Default.Menu,
+                                            contentDescription = "Menu",
+                                            tint = theme.primaryBright
+                                        )
                                     }
                                     DropdownMenu(
-                                        expanded = langMenuExpanded,
-                                        onDismissRequest = { langMenuExpanded = false }
+                                        expanded = topMenuExpanded,
+                                        onDismissRequest = { topMenuExpanded = false }
                                     ) {
-                                        AppLanguage.entries.forEach { lang ->
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        text = "${lang.flagCode} • ${lang.nativeName}",
-                                                        fontWeight = if (lang == appLanguage) FontWeight.Bold else FontWeight.Normal,
-                                                        color = if (lang == appLanguage) theme.primaryBright else theme.textPrimary
-                                                    )
-                                                },
-                                                onClick = {
-                                                    viewModel.setAppLanguage(lang)
-                                                    langMenuExpanded = false
-                                                }
-                                            )
-                                        }
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = theme.primaryBright) },
+                                            text = { Text("${strings.languageTitle} (${appLanguage.flagCode})") },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                showLanguagePickerDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.Code, contentDescription = null, tint = theme.primaryBright) },
+                                            text = { Text("Live HSFZ") },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.PACKET_INSPECTOR
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.History, contentDescription = null, tint = theme.primaryBright) },
+                                            text = { Text(strings.savedVehiclesTitle) },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.SAVED_VEHICLES
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = theme.primaryBright) },
+                                            text = {
+                                                Text(
+                                                    when (strings.language) {
+                                                        AppLanguage.EN -> "Supported BMW"
+                                                        AppLanguage.AZ -> "Dəstəklənən BMW"
+                                                        AppLanguage.RU -> "Поддерживаемые BMW"
+                                                        AppLanguage.TR -> "Desteklenen BMW"
+                                                    }
+                                                )
+                                            },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.SUPPORTED_BMW
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            leadingIcon = { Icon(Icons.Default.Business, contentDescription = null, tint = theme.primaryBright) },
+                                            text = {
+                                                Text(
+                                                    when (strings.language) {
+                                                        AppLanguage.EN -> "Workshop & PDF Branding"
+                                                        AppLanguage.AZ -> "Servis & PDF Markalama"
+                                                        AppLanguage.RU -> "Брендинг сервиса и PDF"
+                                                        AppLanguage.TR -> "Servis & PDF Markalama"
+                                                    }
+                                                )
+                                            },
+                                            onClick = {
+                                                topMenuExpanded = false
+                                                activeOverlay = OverlayRoute.WORKSHOP_BRANDING
+                                            }
+                                        )
                                     }
                                 }
                             }
@@ -452,6 +516,16 @@ fun MainNavigation(
                             onExportTrace = { viewModel.exportSessionTrace(context) },
                             onImportAndReplayTrace = { importTraceLauncher.launch(arrayOf("text/*", "*/*")) },
                             onClearLogs = viewModel::clearProtocolLogs,
+                            onBack = { activeOverlay = null }
+                        )
+
+                        OverlayRoute.SUPPORTED_BMW -> com.punhanaghayev.bimmerpro.ui.screens.SupportedBmwScreen(
+                            onBack = { activeOverlay = null }
+                        )
+
+                        OverlayRoute.WORKSHOP_BRANDING -> com.punhanaghayev.bimmerpro.ui.screens.WorkshopBrandingScreen(
+                            workshopProfile = workshopProfile,
+                            onSaveWorkshopProfile = viewModel::saveWorkshopProfile,
                             onBack = { activeOverlay = null }
                         )
 
