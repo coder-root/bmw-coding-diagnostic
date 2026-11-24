@@ -315,49 +315,6 @@ fun DeveloperScreen(
                     HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "${strings.dataPackTitle} ($dtcDictionaryCount)",
-                            color = theme.textPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        BmwOutlinedButton(
-                            text = strings.dataPackDownloadBtn,
-                            onClick = onDownloadDataPack,
-                            icon = Icons.Default.CloudDownload,
-                            enabled = dataPackStatus !is DataPackStatus.Downloading,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        val (statusText, statusColor) = when (dataPackStatus) {
-                            DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
-                            DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
-                            is DataPackStatus.Applied -> {
-                                val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
-                                strings.dataPackApplied.format(dataPackStatus.packVersion, dataPackStatus.addedCount, dateClean) to StatusGreen
-                            }
-                            is DataPackStatus.UpToDate -> {
-                                val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
-                                strings.dataPackUpToDate.format(dataPackStatus.packVersion, dateClean, dataPackStatus.totalCount) to StatusGreen
-                            }
-                            is DataPackStatus.Error -> dataPackStatus.message to StatusRed
-                        }
-                        Text(
-                            text = statusText,
-                            color = statusColor,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    HorizontalDivider(color = theme.outline.copy(alpha = 0.4f))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(strings.supportBundleTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         Text(strings.supportBundleSub, color = theme.textSecondary, fontSize = 11.sp)
                         BmwOutlinedButton(
@@ -367,30 +324,6 @@ fun DeveloperScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                }
-            }
-        }
-
-        // Quick Links to dedicated Update & Releases and Developer screens
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = theme.card),
-                border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    BmwOutlinedButton(
-                        text = GlobalTextLocalizer.localize("Güncelleme ve Sürümler", strings.language),
-                        onClick = onOpenUpdatesAndReleases,
-                        icon = Icons.Default.SystemUpdate,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    BmwOutlinedButton(
-                        text = GlobalTextLocalizer.localize("Geliştirici Bilgileri", strings.language),
-                        onClick = onOpenDeveloperInfo,
-                        icon = Icons.Default.Code,
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             }
         }

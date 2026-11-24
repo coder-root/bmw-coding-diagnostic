@@ -49,6 +49,7 @@ import com.punhanaghayev.bimmerpro.BuildConfig
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.core.update.AppReleaseInfo
+import com.punhanaghayev.bimmerpro.core.update.DataPackStatus
 import com.punhanaghayev.bimmerpro.core.update.OtaCheckState
 import com.punhanaghayev.bimmerpro.core.update.OtaUpdateManager
 import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
@@ -61,8 +62,11 @@ import com.punhanaghayev.bimmerpro.ui.theme.StatusRed
 @Composable
 fun UpdatesAndReleasesScreen(
     otaState: OtaCheckState,
+    dataPackStatus: DataPackStatus = DataPackStatus.NotInstalled,
+    dtcDictionaryCount: Int = 0,
     onCheckOta: () -> Unit,
     onDownloadOta: (AppReleaseInfo) -> Unit,
+    onDownloadDataPack: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val strings = LocalAppStrings.current
@@ -169,6 +173,53 @@ fun UpdatesAndReleasesScreen(
                         enabled = otaState !is OtaCheckState.Checking && otaState !is OtaCheckState.Downloading,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onCheckOta
+                    )
+                }
+            }
+        }
+
+        // Offline DTC Data Pack Card (moved from Settings)
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "${strings.dataPackTitle} ($dtcDictionaryCount)",
+                        color = theme.textPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    BmwOutlinedButton(
+                        text = strings.dataPackDownloadBtn,
+                        onClick = onDownloadDataPack,
+                        icon = Icons.Default.CloudDownload,
+                        enabled = dataPackStatus !is DataPackStatus.Downloading,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    val (statusText, statusColor) = when (dataPackStatus) {
+                        DataPackStatus.NotInstalled -> strings.dataPackDownloadBtn to theme.textSecondary
+                        DataPackStatus.Downloading -> strings.dataPackDownloading to theme.primaryBright
+                        is DataPackStatus.Applied -> {
+                            val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
+                            strings.dataPackApplied.format(dataPackStatus.packVersion, dataPackStatus.addedCount, dateClean) to StatusGreen
+                        }
+                        is DataPackStatus.UpToDate -> {
+                            val dateClean = dataPackStatus.updatedAt.substringBefore(" ")
+                            strings.dataPackUpToDate.format(dataPackStatus.packVersion, dateClean, dataPackStatus.totalCount) to StatusGreen
+                        }
+                        is DataPackStatus.Error -> dataPackStatus.message to StatusRed
+                    }
+                    Text(
+                        text = statusText,
+                        color = statusColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }

@@ -2,6 +2,7 @@ package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,11 +23,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Memory
@@ -40,15 +45,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -62,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -74,9 +77,13 @@ import com.punhanaghayev.bimmerpro.core.bmw.CodingPreset
 import com.punhanaghayev.bimmerpro.core.bmw.FscCertificateStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VoCodingPlan
 import com.punhanaghayev.bimmerpro.core.bmw.VoDependencyMapper
+import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
+import com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer
 import com.punhanaghayev.bimmerpro.core.i18n.LocalAppStrings
 import com.punhanaghayev.bimmerpro.data.BimmerRepository
 import com.punhanaghayev.bimmerpro.data.BimmerSessionState
+import com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton
+import com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton
 import com.punhanaghayev.bimmerpro.ui.theme.LocalThemeStyle
 import com.punhanaghayev.bimmerpro.ui.theme.StatusAmber
 import com.punhanaghayev.bimmerpro.ui.theme.StatusGreen
@@ -505,6 +512,90 @@ fun CodingScreen(
             Tab(selected = selectedMode == 2, onClick = { selectedMode = 2 }, text = { Text(strings.codingFaVoBackup, fontSize = 12.sp, maxLines = 1) })
         }
 
+        // Pinned / Sticky Compact Search & Filter Bar at the top (never scrolls away)
+        if (selectedMode == 0) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(theme.surface)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                CompactSearchInput(
+                    value = easySearchQuery,
+                    onValueChange = { easySearchQuery = it },
+                    placeholder = strings.searchCodingHint
+                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(theme.card)
+                            .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+                            .clickable { categoryDropdownExpanded = true }
+                            .padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.FilterList, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(15.dp))
+                            Text(
+                                text = "${strings.categoryFilterLabel}: ${
+                                    selectedCategory?.let { GlobalTextLocalizer.localize(it.label, strings.language) } ?: strings.filterAll
+                                }",
+                                color = theme.textPrimary,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = theme.textSecondary, modifier = Modifier.size(18.dp))
+                    }
+                    DropdownMenu(
+                        expanded = categoryDropdownExpanded,
+                        onDismissRequest = { categoryDropdownExpanded = false },
+                        modifier = Modifier.background(theme.cardElevated)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(strings.filterAll, color = theme.textPrimary, fontSize = 12.sp) },
+                            onClick = {
+                                selectedCategory = null
+                                categoryDropdownExpanded = false
+                            }
+                        )
+                        CodingCategory.entries.forEach { cat ->
+                            DropdownMenuItem(
+                                text = { Text(GlobalTextLocalizer.localize(cat.label, strings.language), color = theme.textPrimary, fontSize = 12.sp) },
+                                onClick = {
+                                    selectedCategory = cat
+                                    categoryDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (selectedMode == 1) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(theme.surface)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                CompactSearchInput(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = strings.searchCafdHint
+                )
+            }
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(16.dp),
@@ -512,59 +603,6 @@ fun CodingScreen(
         ) {
             when (selectedMode) {
                 0 -> {
-                    item {
-                        OutlinedTextField(
-                            value = easySearchQuery,
-                            onValueChange = { easySearchQuery = it },
-                            placeholder = { Text(strings.searchCodingHint, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            textStyle = TextStyle(fontSize = 13.sp),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    item {
-                        ExposedDropdownMenuBox(
-                            expanded = categoryDropdownExpanded,
-                            onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
-                        ) {
-                            OutlinedTextField(
-                                value = selectedCategory?.label ?: strings.filterAll,
-                                onValueChange = {},
-                                readOnly = true,
-                                singleLine = true,
-                                label = { Text(strings.categoryFilterLabel, fontSize = 11.sp) },
-                                textStyle = TextStyle(fontSize = 13.sp),
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
-                                modifier = Modifier
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                    .fillMaxWidth()
-                            )
-                            ExposedDropdownMenu(
-                                expanded = categoryDropdownExpanded,
-                                onDismissRequest = { categoryDropdownExpanded = false },
-                                modifier = Modifier.background(theme.cardElevated)
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(strings.filterAll, color = theme.textPrimary) },
-                                    onClick = {
-                                        selectedCategory = null
-                                        categoryDropdownExpanded = false
-                                    }
-                                )
-                                CodingCategory.entries.forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = { Text(cat.label, color = theme.textPrimary) },
-                                        onClick = {
-                                            selectedCategory = cat
-                                            categoryDropdownExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     val showModuleList = selectedEasyModule == null && easySearchQuery.isBlank() && selectedCategory == null
                     if (showModuleList) {
                         val easyModules = session.presets.groupBy { it.targetEcu }
@@ -600,7 +638,9 @@ fun CodingScreen(
                                 (selectedCategory == null || preset.category == selectedCategory) &&
                                 (easySearchQuery.isBlank() ||
                                     preset.title.contains(easySearchQuery, ignoreCase = true) ||
+                                    GlobalTextLocalizer.localize(preset.title, strings.language).contains(easySearchQuery, ignoreCase = true) ||
                                     preset.description.contains(easySearchQuery, ignoreCase = true) ||
+                                    GlobalTextLocalizer.localize(preset.description, strings.language).contains(easySearchQuery, ignoreCase = true) ||
                                     preset.targetEcu.contains(easySearchQuery, ignoreCase = true))
                         }
                         items(filteredPresets, key = { it.id }) { preset ->
@@ -621,17 +661,6 @@ fun CodingScreen(
                 }
 
                 1 -> {
-                    item {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            placeholder = { Text(strings.searchCafdHint, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            textStyle = TextStyle(fontSize = 13.sp),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
                     val showCafdModules = selectedCafdModule == null && searchQuery.isBlank()
                     if (showCafdModules) {
                         val cafdModules = session.cafdParameters.groupBy { it.ecuName }
@@ -710,66 +739,61 @@ fun CodingScreen(
                                         }
                                     }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CompactLabeledInput(
+                                        label = strings.codeLabel,
                                         value = newVoCode,
                                         onValueChange = { input ->
                                             newVoCode = input.uppercase().take(6)
                                             val autoDesc = VoDependencyMapper.lookupOptionDescription(newVoCode)
                                             if (!autoDesc.startsWith("BMW Fabrika Opsiyonu") && autoDesc.isNotBlank()) {
-                                                newVoDesc = autoDesc
+                                                newVoDesc = GlobalTextLocalizer.localize(autoDesc, strings.language)
                                             }
                                         },
-                                        label = { Text(strings.codeLabel, fontSize = 12.sp, maxLines = 1) },
-                                        placeholder = { Text("6NS", fontSize = 12.sp) },
-                                        textStyle = TextStyle(fontSize = 13.sp),
-                                        singleLine = true,
-                                        modifier = Modifier.weight(0.36f)
+                                        placeholder = "6NS / 2TB / 6WB"
                                     )
-                                    OutlinedTextField(
+                                    CompactLabeledInput(
+                                        label = strings.descLabel,
                                         value = newVoDesc,
                                         onValueChange = { newVoDesc = it },
-                                        label = { Text(strings.descLabel, fontSize = 12.sp, maxLines = 1) },
-                                        placeholder = { Text("Enhanced BT", fontSize = 12.sp) },
-                                        textStyle = TextStyle(fontSize = 13.sp),
-                                        singleLine = true,
-                                        modifier = Modifier.weight(0.64f)
+                                        placeholder = when (strings.language) {
+                                            AppLanguage.EN -> "e.g. Enhanced Bluetooth / Sport Automatic"
+                                            AppLanguage.AZ -> "məs. Təkmil Bluetooth / İdman Avtomat"
+                                            AppLanguage.RU -> "напр. Расширенный Bluetooth / Спорт АКПП"
+                                            AppLanguage.TR -> "örn. Gelişmiş Bluetooth / Sport Şanzıman"
+                                        }
                                     )
                                 }
                                 if (newVoCode.length >= 3) {
-                                    val affectedNames = VoDependencyMapper.affectedEcusFor(newVoCode).joinToString(", ") { it.second }
+                                    val affectedNames = VoDependencyMapper.affectedEcusFor(newVoCode).joinToString(", ") {
+                                        GlobalTextLocalizer.localize(it.second, strings.language)
+                                    }
                                     val affectedPrefix = when (strings.language) {
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Affected ECUs:"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Təsir edilən ECU-lar:"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Затрагиваемые ЭБУ:"
-                            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Etkilenecek ECU'lar:"
-                        }
-                        Text("$affectedPrefix $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
+                                        AppLanguage.EN -> "Affected ECUs:"
+                                        AppLanguage.AZ -> "Təsir edilən ECU-lar:"
+                                        AppLanguage.RU -> "Затрагиваемые ЭБУ:"
+                                        AppLanguage.TR -> "Etkilenecek ECU'lar:"
+                                    }
+                                    Text("$affectedPrefix $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(
+                                    BmwOutlinedButton(
+                                        text = strings.voPreviewCalcBtn,
                                         onClick = { onPreviewVoCoding(newVoCode, newVoDesc) },
                                         enabled = newVoCode.length >= 3,
-                                        modifier = Modifier.weight(1f).height(44.dp),
-                                        contentPadding = PaddingValues(horizontal = 8.dp)
-                                    ) {
-                                        Text(strings.voPreviewCalcBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
-                                    }
-                                    Button(
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    BmwPrimaryButton(
+                                        text = strings.addVoBtn,
+                                        icon = Icons.Default.Add,
                                         onClick = {
                                             onAddVoOption(newVoCode, newVoDesc)
                                             newVoCode = ""
                                             newVoDesc = ""
                                         },
                                         enabled = voltageSafe && newVoCode.isNotBlank(),
-                                        modifier = Modifier.weight(1f).height(44.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = theme.primary),
-                                        contentPadding = PaddingValues(horizontal = 8.dp)
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(strings.addVoBtn, fontSize = 11.sp, maxLines = 1, softWrap = false)
-                                    }
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
                             }
                         }
@@ -808,10 +832,10 @@ fun CodingScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(cert.title, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                            Text(GlobalTextLocalizer.localize(cert.title, strings.language), color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                             Text("${cert.ecuName} • App ${cert.appIdHex} (${cert.upgradeIndex})", color = theme.textSecondary, fontSize = 10.sp)
                                         }
-                                        Text(cert.status.label, color = stColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text(GlobalTextLocalizer.localize(cert.status.label, strings.language), color = stColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -819,15 +843,18 @@ fun CodingScreen(
                     }
 
                     item {
-                        Button(
-                            onClick = onCreateFullNcdSnapshot,
-                            modifier = Modifier.fillMaxWidth().height(44.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = theme.primary)
-                        ) {
-                            Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Tam ECU NCD Snapshot Al", fontSize = 12.sp, maxLines = 1, softWrap = false)
+                        val ncdSnapshotBtnText = when (strings.language) {
+                            AppLanguage.EN -> "Create Full ECU NCD Snapshot"
+                            AppLanguage.AZ -> "Tam ECU NCD Snapshot Al"
+                            AppLanguage.RU -> "Создать полный снимок ECU NCD"
+                            AppLanguage.TR -> "Tam ECU NCD Snapshot Al"
                         }
+                        BmwPrimaryButton(
+                            text = ncdSnapshotBtnText,
+                            icon = Icons.Default.Security,
+                            onClick = onCreateFullNcdSnapshot,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     item {
@@ -835,23 +862,19 @@ fun CodingScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            OutlinedButton(
+                            BmwOutlinedButton(
+                                text = strings.exportJsonBtn,
+                                icon = Icons.Default.Download,
                                 onClick = onExportBackupsJson,
                                 enabled = session.backups.isNotEmpty(),
-                                modifier = Modifier.weight(1f).height(42.dp)
-                            ) {
-                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text(strings.exportJsonBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
-                            }
-                            OutlinedButton(
+                                modifier = Modifier.weight(1f)
+                            )
+                            BmwOutlinedButton(
+                                text = strings.importJsonBtn,
+                                icon = Icons.Default.Upload,
                                 onClick = onImportBackupsJson,
-                                modifier = Modifier.weight(1f).height(42.dp)
-                            ) {
-                                Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text(strings.importJsonBtn, fontSize = 12.sp, maxLines = 1, softWrap = false)
-                            }
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
 
@@ -878,7 +901,7 @@ fun CodingScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text("${backup.ecuName} • ${backup.timestamp}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                        Text(backup.summary, color = theme.textPrimary, fontSize = 12.sp)
+                                        Text(GlobalTextLocalizer.localize(backup.summary, strings.language), color = theme.textPrimary, fontSize = 12.sp)
                                     }
                                     TextButton(onClick = { onRestoreBackup(backup.id) }) {
                                         Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -981,7 +1004,7 @@ private fun PresetCodingCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("${preset.targetEcu} • ${preset.category.label}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("${preset.targetEcu} • ${GlobalTextLocalizer.localize(preset.category.label, strings.language)}", color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 if (isStaged) {
                     Box(
                         modifier = Modifier
@@ -1146,6 +1169,110 @@ private fun CodingModuleSelectorCard(
             ) {
                 Text("$itemCount", color = theme.primaryBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
+        }
+    }
+}
+
+@Composable
+private fun CompactSearchInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalThemeStyle.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(38.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(theme.card)
+            .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = null,
+            tint = theme.textSecondary,
+            modifier = Modifier.size(16.dp)
+        )
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    color = theme.textSecondary,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(color = theme.textPrimary, fontSize = 12.sp),
+                cursorBrush = SolidColor(theme.primaryBright),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (value.isNotEmpty()) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = null,
+                tint = theme.textSecondary,
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { onValueChange("") }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactLabeledInput(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalThemeStyle.current
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            color = theme.textSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(theme.cardElevated)
+                .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    color = theme.textSecondary.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(color = theme.textPrimary, fontSize = 12.sp),
+                cursorBrush = SolidColor(theme.primaryBright),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

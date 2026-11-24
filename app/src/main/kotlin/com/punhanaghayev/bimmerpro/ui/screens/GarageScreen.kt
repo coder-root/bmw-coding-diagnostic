@@ -232,33 +232,43 @@ fun GarageScreen(
                                 )
                             }
                             if (showVehicleInfo) {
-                                Row(
+                                Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    VehicleStatChip(strings.chassisLabel, "${profile.chassis.code} (${profile.chassis.family.label})", Modifier.weight(1f))
-                                    VehicleStatChip(strings.engineLabel, profile.engineCode, Modifier.weight(1f))
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    VehicleStatChip(strings.currentILevelLabel, profile.iLevel, Modifier.weight(1f))
-                                    VehicleStatChip(strings.mileageLabel, "%,d km".format(profile.odometerKm), Modifier.weight(1f))
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    VehicleStatChip(strings.factoryILevelLabel, profile.factoryILevel, Modifier.weight(1f))
-                                    VehicleStatChip(strings.typeProdLabel, "${profile.typeCode} • ${profile.productionDate}", Modifier.weight(1f))
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    VehicleStatChip(strings.paintLabel, profile.paintCode, Modifier.weight(1f))
-                                    VehicleStatChip(strings.upholsteryLabel, profile.upholsteryCode, Modifier.weight(1f))
+                                    val techRows = listOf(
+                                        strings.chassisLabel to "${profile.chassis.code} (${profile.chassis.family.label})",
+                                        strings.engineLabel to profile.engineCode,
+                                        strings.currentILevelLabel to profile.iLevel,
+                                        strings.factoryILevelLabel to profile.factoryILevel,
+                                        strings.mileageLabel to "%,d km".format(profile.odometerKm),
+                                        strings.typeProdLabel to "${profile.typeCode} • ${profile.productionDate}",
+                                        strings.paintLabel to profile.paintCode,
+                                        strings.upholsteryLabel to profile.upholsteryCode
+                                    )
+                                    techRows.forEach { (label, value) ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(theme.card)
+                                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                color = theme.textSecondary,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = value,
+                                                color = theme.textPrimary,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -300,19 +310,19 @@ fun GarageScreen(
                             if (showEquipment) {
                                 profile.faOptions.forEach { opt ->
                                     Text(
-                                        text = "• ${opt.code} — ${opt.description}",
+                                        text = "• ${opt.code} — ${com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(opt.description, strings.language)}",
                                         color = theme.textPrimary,
                                         fontSize = 11.sp
                                     )
                                 }
                                 if (session.connectionPurpose == ConnectionPurpose.CODING) {
-                                    OutlinedButton(
+                                    Spacer(Modifier.height(4.dp))
+                                    com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton(
+                                        text = strings.codeEquipmentBtn,
+                                        icon = Icons.Default.Memory,
                                         onClick = { onNavigateToTab(2) },
-                                        modifier = Modifier.fillMaxWidth().height(36.dp),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(strings.codeEquipmentBtn, fontSize = 11.sp, color = theme.primaryBright, maxLines = 1, softWrap = false)
-                                    }
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                             }
                         }
@@ -325,7 +335,11 @@ fun GarageScreen(
                                     .background(StatusAmber.copy(alpha = 0.14f))
                                     .padding(10.dp)
                             ) {
-                                Text(text = notice, color = StatusAmber, fontSize = 12.sp)
+                                Text(
+                                    text = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(notice, strings.language),
+                                    color = StatusAmber,
+                                    fontSize = 12.sp
+                                )
                             }
                         }
 

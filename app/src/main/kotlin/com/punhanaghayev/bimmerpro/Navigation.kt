@@ -210,8 +210,12 @@ fun MainNavigation(
         viewModel.uiEvents.collect { event ->
             when (event) {
                 is UiEvent.Snackbar -> {
+                    val localizedMsg = com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(
+                        event.message,
+                        viewModel.appLanguage.value
+                    )
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(event.message)
+                    snackbarHostState.showSnackbar(localizedMsg)
                 }
                 is UiEvent.ShareFile -> {
                     runCatching {
@@ -674,8 +678,11 @@ fun MainNavigation(
 
                         OverlayRoute.UPDATES_RELEASES -> UpdatesAndReleasesScreen(
                             otaState = otaState,
+                            dataPackStatus = session.dataPackStatus,
+                            dtcDictionaryCount = session.dtcDictionaryCount,
                             onCheckOta = { viewModel.checkForOtaUpdates(silent = false) },
                             onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
+                            onDownloadDataPack = viewModel::downloadDataPack,
                             onBack = { activeOverlay = null }
                         )
 

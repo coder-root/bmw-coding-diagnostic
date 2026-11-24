@@ -262,7 +262,7 @@ fun ServiceScreen(
                                 onClick = {
                                     selectedItems = if (isSel) selectedItems - item else selectedItems + item
                                 },
-                                label = { Text(item, fontSize = 11.sp) }
+                                label = { Text(GlobalTextLocalizer.localize(item, strings.language), fontSize = 11.sp) }
                             )
                         }
                     }
@@ -607,44 +607,6 @@ fun ServiceScreen(
             )
         }
 
-        session.lastServiceResult?.let { res ->
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = (if (res.success) StatusGreen else StatusRed).copy(alpha = 0.15f)),
-                    border = BorderStroke(1.dp, if (res.success) StatusGreen else StatusRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (res.success) Icons.Default.CheckCircle else Icons.Default.Close,
-                            contentDescription = null,
-                            tint = if (res.success) StatusGreen else StatusRed,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${GlobalTextLocalizer.localize(res.title, strings.language)} • ${res.timestamp}",
-                                fontWeight = FontWeight.Bold,
-                                color = theme.textPrimary,
-                                fontSize = 12.sp
-                            )
-                            Text(
-                                text = GlobalTextLocalizer.localize(res.message, strings.language),
-                                color = if (res.success) StatusGreen else StatusRed,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
         items(session.serviceRoutines) { routine ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
@@ -695,9 +657,17 @@ fun ServiceScreen(
             }
         }
 
-        // Diesel Particulate Filter (DPF) Live Monitor (BimmerLink / BimmerTool style)
-        session.dpfHealth?.let { dpf ->
-            item {
+        // Diesel Particulate Filter (DPF) Live Monitor — Only shown for Diesel engines (DDE / N47 / B47 / N57 / B57 / M57)
+        val isDieselVehicle = run {
+            val e = "${profile.engineCode} ${profile.modelDisplayName}".uppercase()
+            e.contains("DDE") || e.contains("DIESEL") || e.contains("N47") || e.contains("B47") ||
+                e.contains("N57") || e.contains("B57") || e.contains("M47") || e.contains("M57") ||
+                Regex("\\b[1-8][0-9]{2}D\\b").containsMatchIn(e) ||
+                session.ecus.any { it.shortName.contains("DDE", ignoreCase = true) && !it.shortName.contains("DME", ignoreCase = true) }
+        }
+        if (isDieselVehicle) {
+            session.dpfHealth?.let { dpf ->
+                item {
                 val sootColor = when {
                     dpf.sootMassGrams > 35.0 -> StatusRed
                     dpf.sootMassGrams > 22.0 -> StatusAmber
@@ -832,6 +802,7 @@ fun ServiceScreen(
                     }
                 }
             }
+        }
         }
 
         // EPB Two-Step Service Mode Card (Retract / Clamp & Calibrate)
@@ -1121,7 +1092,21 @@ fun ServiceScreen(
             }
         }
 
-        // Injector IMA Calibration
+        // Injector IMA Calibration (dynamic cylinder count based on BMW engine code: 3/4/6/8/12 cyl)
+        val engineCylinders = run {
+            val e = "${profile.engineCode} ${profile.modelDisplayName}".uppercase()
+            when {
+                e.contains("N74") || e.contains("N73") || e.contains("M73") || e.contains("760") -> 12
+                e.contains("N63") || e.contains("S63") || e.contains("S68") || e.contains("N62") || e.contains("S65") || e.contains("550") || e.contains("M5") || e.contains("M8") -> 8
+                e.contains("N55") || e.contains("B58") || e.contains("N54") || e.contains("S55") || e.contains("S58") || e.contains("N57") || e.contains("B57") || e.contains("N52") || e.contains("N53") || e.contains("M54") || e.contains("M57") || e.contains("335") || e.contains("340") || e.contains("535") || e.contains("540") || e.contains("M3") || e.contains("M4") -> 6
+                e.contains("B38") || e.contains("B37") || e.contains("118") || e.contains("218") -> 3
+                else -> 4
+            }
+        }
+        val effectiveInjectors = (1..engineCylinders).map { cyl ->
+            session.injectorCodes.firstOrNull { it.cylinder == cyl }
+                ?: com.punhanaghayev.bimmerpro.core.bmw.InjectorCalibration(cyl, "${575 + cyl * 3}${210 + cyl * 7}")
+        }
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
@@ -1129,8 +1114,8 @@ fun ServiceScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(strings.injectorTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
-                    session.injectorCodes.forEach { inj ->
+                    Text("${strings.injectorTitle} ($engineCylinders Cyl)", fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    effectiveInjectors.forEach { inj ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
