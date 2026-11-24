@@ -156,12 +156,31 @@ fun WorkshopBrandingScreen(
 
                     val draft = WorkshopProfile(wName, wPhone, wAddress, wTech)
                     if (draft.isConfigured) {
-                        Text(
-                            text = "PDF Header: ${draft.headerLine()}",
-                            color = StatusGreen,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = "PDF Header:",
+                                color = StatusGreen,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (wName.isNotBlank()) {
+                                Text(text = wName.trim(), color = theme.textPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            if (wPhone.isNotBlank()) {
+                                Text(text = wPhone.trim(), color = theme.textSecondary, fontSize = 11.sp)
+                            }
+                            if (wAddress.isNotBlank()) {
+                                Text(text = wAddress.trim(), color = theme.textSecondary, fontSize = 11.sp)
+                            }
+                            if (wTech.isNotBlank()) {
+                                Text(text = wTech.trim(), color = theme.primaryBright, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
                     }
 
                     BmwPrimaryButton(

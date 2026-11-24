@@ -30,7 +30,7 @@ object StringsRu {
         scannedEcusTitle = "Просканированные ЭБУ",
         codingEasyMode = "Простой режим",
         codingExpertCafd = "Эксперт CAFD",
-        codingFaVoBackup = "FA/VO и бэкап",
+        codingFaVoBackup = "FA/VO",
         batterySafeBanner = "АКБ %.1f V (Безопасно) • Автобэкап CAFD перед записью.",
         batteryLockedBanner = "КОДИРОВАНИЕ ЗАБЛОКИРОВАНО: АКБ %.1f V (< 12.2 V)!",
         liveTelemetryTitle = "Живая телеметрия датчиков",

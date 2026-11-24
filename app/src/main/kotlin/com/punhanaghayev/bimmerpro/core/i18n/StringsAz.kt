@@ -30,7 +30,7 @@ object StringsAz {
         scannedEcusTitle = "Skan Edilən ECU Modulları",
         codingEasyMode = "Sadə Rejim",
         codingExpertCafd = "Expert CAFD",
-        codingFaVoBackup = "FA/VO & Ehtiyat",
+        codingFaVoBackup = "FA/VO",
         batterySafeBanner = "Akkumulyator %.1f V (Təhlükəsiz) • Yazmadan əvvəl avtomatik CAFD ehtiyat nüsxəsi alınır.",
         batteryLockedBanner = "KODLAMA KİLİDLİ: Akkumulyator %.1f V (< 12.2 V)! Şarj cihazı qoşun.",
         liveTelemetryTitle = "Canlı Sensor Telemetriyası",

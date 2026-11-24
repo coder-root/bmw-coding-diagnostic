@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Code
@@ -28,15 +30,12 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -214,31 +213,51 @@ fun DeveloperScreen(
             }
         }
 
-        // Theme Selector Card
+        // Compact App Theme Selector Card
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ExposedDropdownMenuBox(
-                        expanded = themeExpanded,
-                        onExpandedChange = { themeExpanded = !themeExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = currentTheme.displayName,
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(strings.themeTitle) },
-                            leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null, tint = theme.primaryBright) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = themeExpanded) },
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = strings.themeTitle,
+                        color = theme.textSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Row(
                             modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(theme.cardElevated)
+                                .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+                                .clickable { themeExpanded = true }
+                                .padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Palette, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(16.dp))
+                                Text(
+                                    text = currentTheme.displayName,
+                                    color = theme.textPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = theme.textSecondary, modifier = Modifier.size(18.dp))
+                        }
+                        DropdownMenu(
                             expanded = themeExpanded,
                             onDismissRequest = { themeExpanded = false },
                             modifier = Modifier.background(theme.cardElevated)
@@ -253,7 +272,7 @@ fun DeveloperScreen(
                                                     .clip(CircleShape)
                                                     .background(style.primaryBright)
                                             )
-                                            Text(style.displayName, color = theme.textPrimary)
+                                            Text(style.displayName, color = theme.textPrimary, fontSize = 13.sp)
                                         }
                                     },
                                     onClick = {

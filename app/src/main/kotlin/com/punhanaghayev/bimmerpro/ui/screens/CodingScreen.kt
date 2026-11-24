@@ -776,12 +776,12 @@ fun CodingScreen(
                                     }
                                     Text("$affectedPrefix $affectedNames", color = theme.primaryBright, fontSize = 11.sp)
                                 }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     BmwOutlinedButton(
                                         text = strings.voPreviewCalcBtn,
                                         onClick = { onPreviewVoCoding(newVoCode, newVoDesc) },
                                         enabled = newVoCode.length >= 3,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                     BmwPrimaryButton(
                                         text = strings.addVoBtn,
@@ -792,7 +792,7 @@ fun CodingScreen(
                                             newVoDesc = ""
                                         },
                                         enabled = voltageSafe && newVoCode.isNotBlank(),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                             }
@@ -806,36 +806,56 @@ fun CodingScreen(
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(strings.fscTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                                    TextButton(onClick = onReadFsc) {
-                                        Text(strings.fscRefreshBtn, color = theme.primaryBright, fontSize = 11.sp)
-                                    }
-                                }
+                                Text(strings.fscTitle, color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                BmwOutlinedButton(
+                                    text = strings.fscRefreshBtn,
+                                    onClick = onReadFsc,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                                 session.fscCertificates.forEach { cert ->
                                     val stColor = when (cert.status) {
                                         FscCertificateStatus.ACCEPTED -> StatusGreen
                                         FscCertificateStatus.REJECTED, FscCertificateStatus.EXPIRED -> StatusRed
                                         FscCertificateStatus.NOT_LOADED -> StatusAmber
                                     }
-                                    Row(
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(8.dp))
                                             .background(theme.cardElevated)
-                                            .padding(horizontal = 10.dp, vertical = 7.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(GlobalTextLocalizer.localize(cert.title, strings.language), color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                            Text("${cert.ecuName} • App ${cert.appIdHex} (${cert.upgradeIndex})", color = theme.textSecondary, fontSize = 10.sp)
+                                        Text(
+                                            text = GlobalTextLocalizer.localize(cert.title, strings.language),
+                                            color = theme.textPrimary,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(stColor.copy(alpha = 0.16f))
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = GlobalTextLocalizer.localize(cert.status.label, strings.language),
+                                                    color = stColor,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                            Text(
+                                                text = "${cert.ecuName} • App ${cert.appIdHex} (${cert.upgradeIndex})",
+                                                color = theme.textSecondary,
+                                                fontSize = 10.sp
+                                            )
                                         }
-                                        Text(GlobalTextLocalizer.localize(cert.status.label, strings.language), color = stColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }

@@ -30,7 +30,7 @@ object StringsTr {
         scannedEcusTitle = "Tarama Yapılan ECU Modülleri",
         codingEasyMode = "Easy Mode",
         codingExpertCafd = "Expert CAFD",
-        codingFaVoBackup = "FA/VO & Yedek",
+        codingFaVoBackup = "FA/VO",
         batterySafeBanner = "Akü %.1f V (Güvenli) • Her kodlama öncesi otomatik CAFD yedeği alınır.",
         batteryLockedBanner = "KODLAMA KİLİTLİ: Akü %.1f V (< 12.2 V)! Şarj cihazı bağlayın.",
         liveTelemetryTitle = "Canlı Sensör Telemetrisi",

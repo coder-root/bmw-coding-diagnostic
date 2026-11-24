@@ -439,14 +439,14 @@ fun LiveScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     BmwOutlinedButton(
                         text = strings.androidAutoSensorsBtn,
                         icon = Icons.Default.DirectionsCar,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             draftAutoPids = session.androidAutoPidIds
                             showAndroidAutoDialog = true
@@ -455,7 +455,7 @@ fun LiveScreen(
                     BmwOutlinedButton(
                         text = strings.customizeSensorsBtn,
                         icon = Icons.Default.DashboardCustomize,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             draftSelectedPids = session.liveChannels.map { it.id }.toSet()
                             showCustomizeSensorsDialog = true

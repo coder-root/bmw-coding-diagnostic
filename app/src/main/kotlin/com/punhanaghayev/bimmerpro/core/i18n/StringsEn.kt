@@ -30,7 +30,7 @@ object StringsEn {
         scannedEcusTitle = "Scanned ECU Modules",
         codingEasyMode = "Easy Mode",
         codingExpertCafd = "Expert CAFD",
-        codingFaVoBackup = "FA/VO & Backups",
+        codingFaVoBackup = "FA/VO",
         batterySafeBanner = "Battery %.1f V (Safe) • Auto CAFD backup enabled before write.",
         batteryLockedBanner = "CODING LOCKED: Battery %.1f V (< 12.2 V)! Connect a charger.",
         liveTelemetryTitle = "Live Sensor Telemetry",
