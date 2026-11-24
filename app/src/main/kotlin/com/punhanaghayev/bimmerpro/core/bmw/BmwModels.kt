@@ -144,7 +144,25 @@ data class MileageModuleReading(
         moduleName.contains("DME", ignoreCase = true) || moduleName.contains("Benzin", ignoreCase = true) -> strings.moduleDmePetrol
         moduleName.contains("DDE", ignoreCase = true) || moduleName.contains("Dizel", ignoreCase = true) -> strings.moduleDdeDiesel
         moduleName.contains("EGS", ignoreCase = true) || moduleName.contains("ZF", ignoreCase = true) -> strings.moduleZf8
-        else -> moduleName
+        moduleName.contains("CAS", ignoreCase = true) -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "CAS4 (Key / Immobilizer)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "CAS4 (Açar / İmmobilayzer)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "CAS4 (Ключ / Иммобилайзер)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> moduleName
+        }
+        moduleName.contains("FEM", ignoreCase = true) -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "FEM (Front Electronic / Key)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "FEM (Ön Elektron / Açar)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "FEM (Передний электронный модуль)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> moduleName
+        }
+        moduleName.contains("BDC", ignoreCase = true) -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "BDC (Body Domain Controller)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "BDC (Kuzov İdarəetmə Modulu)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "BDC (Контроллер кузова)"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> moduleName
+        }
+        else -> com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(moduleName, strings.language)
     }
 }
 
@@ -161,7 +179,18 @@ data class MileageVerificationResult(
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Все ${readings.size} блока управления согласованы (±$maxDifferenceKm км)"
             com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> summary
         }
-        else -> summary
+        TamperStatus.SUSPICIOUS_MISMATCH -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Odometer mismatch detected across ECUs (Δ $maxDifferenceKm km)!"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "ECU-lar arasında yürüş uyğunsuzluğu aşkarlandı (Δ $maxDifferenceKm km)!"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Обнаружено расхождение пробега между ЭБУ (Δ $maxDifferenceKm км)!"
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> summary
+        }
+        TamperStatus.MINOR_DRIFT -> when (strings.language) {
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Minor odometer drift across ECUs (±$maxDifferenceKm km, within normal tolerance)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "ECU-lar arasında kiçik yürüş fərqi (±$maxDifferenceKm km, normal hədd daxilində)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Незначительное расхождение пробега между ЭБУ (±$maxDifferenceKm км, в пределах нормы)."
+            com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> summary
+        }
     }
 }
 

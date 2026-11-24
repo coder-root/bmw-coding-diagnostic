@@ -62,11 +62,17 @@ fun LiveOscilloscopeCard(
     var cursorFraction by remember { mutableFloatStateOf(1f) }
     val cursorIndex = if (maxSamples > 1) ((maxSamples - 1) * cursorFraction).toInt().coerceIn(0, maxSamples - 1) else 0
 
-    val title = when (strings.language) {
-        AppLanguage.EN -> "Multi-Channel Oscilloscope (4x Overlay)"
-        AppLanguage.AZ -> "Çoxkanallı Osiloskop (4x Qrafik)"
-        AppLanguage.RU -> "Многоканальный осциллограф (4 канала)"
-        AppLanguage.TR -> "Çoklu Sensör Osiloskop Grafiği (4x)"
+    val mainTitle = when (strings.language) {
+        AppLanguage.EN -> "Multi-Channel Oscilloscope"
+        AppLanguage.AZ -> "Çoxkanallı Osiloskop"
+        AppLanguage.RU -> "Многоканальный осциллограф"
+        AppLanguage.TR -> "Çoklu Sensör Osiloskop Grafiği"
+    }
+    val subOverlayLabel = when (strings.language) {
+        AppLanguage.EN -> "4x Overlay"
+        AppLanguage.AZ -> "4x Qrafik"
+        AppLanguage.RU -> "4 канала"
+        AppLanguage.TR -> "4x Overlay"
     }
 
     Card(
@@ -79,15 +85,22 @@ fun LiveOscilloscopeCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    color = theme.textPrimary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = mainTitle,
+                        fontWeight = FontWeight.Bold,
+                        color = theme.textPrimary,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = subOverlayLabel,
+                        fontWeight = FontWeight.SemiBold,
+                        color = theme.primaryBright,
+                        fontSize = 11.sp
+                    )
+                }
                 Text(
                     text = "$maxSamples pts",
                     color = theme.textSecondary,
@@ -159,18 +172,20 @@ fun LiveOscilloscopeCard(
                 )
             }
 
-            // Color-coded legend showing value at cursor + peak
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Color-coded legend showing channel name on top and value + peak cleanly underneath
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 active.forEachIndexed { idx, ch ->
                     val valueAtCursor = ch.history.getOrNull(cursorIndex)?.toDouble() ?: ch.currentValue
                     val peak = ch.history.maxOrNull()?.toDouble() ?: ch.currentValue
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(theme.cardElevated)
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Row(
-                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -184,8 +199,7 @@ fun LiveOscilloscopeCard(
                                 text = ch.localizedName(strings),
                                 color = theme.textPrimary,
                                 fontSize = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                fontWeight = FontWeight.Medium
                             )
                         }
                         Text(
@@ -194,7 +208,7 @@ fun LiveOscilloscopeCard(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
-                            softWrap = false
+                            modifier = Modifier.padding(start = 14.dp)
                         )
                     }
                 }

@@ -1,5 +1,6 @@
 package com.punhanaghayev.bimmerpro.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lightbulb
@@ -124,6 +127,20 @@ fun ServiceScreen(
     var showHistoryDialog by remember { mutableStateOf(false) }
     var editingInjectorCyl by remember { mutableStateOf<Pair<Int, String>?>(null) }
     var showZfResetConfirm by remember { mutableStateOf(false) }
+    var showIbsDetails by remember { mutableStateOf(true) }
+    var showHvDetails by remember { mutableStateOf(true) }
+    val showLabel = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Show"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Göstər"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Показать"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Göster"
+    }
+    val hideLabel = when (strings.language) {
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Hide"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Gizlət"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Скрыть"
+        com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Gizle"
+    }
 
     pendingRoutineToExecute?.let { (routine, optionByte) ->
         AlertDialog(
@@ -372,101 +389,136 @@ fun ServiceScreen(
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = socColor, modifier = Modifier.size(18.dp))
-                        Text(
-                            text = strings.ibsHealthTitle,
-                            fontWeight = FontWeight.Bold,
-                            color = theme.textPrimary,
-                            fontSize = 13.sp
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(theme.primaryBright.copy(alpha = 0.16f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "$capacity Ah ${if (isAgm) "AGM" else strings.leadAcidLabel}",
-                            color = theme.primaryBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            softWrap = false
-                        )
-                    }
-                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(theme.cardElevated)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                            .clickable { showIbsDetails = !showIbsDetails },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Text(strings.socLabel, color = theme.textSecondary, fontSize = 12.sp)
-                            Text("$soc%", color = socColor, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                            Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = socColor, modifier = Modifier.size(18.dp))
+                            Text(
+                                text = strings.ibsHealthTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = theme.textPrimary,
+                                fontSize = 13.sp
+                            )
                         }
+                        Spacer(Modifier.width(6.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(theme.cardElevated)
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
                         ) {
-                            Text(strings.sohLabel, color = theme.textSecondary, fontSize = 12.sp)
-                            Text("$soh%", color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(strings.terminalVoltageLabel, color = theme.textSecondary, fontSize = 12.sp)
-                            Text("%.1f V".format(profile.batteryVoltage), color = theme.textPrimary, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                            Text(
+                                text = if (showIbsDetails) hideLabel else showLabel,
+                                color = theme.primaryBright,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                softWrap = false
+                            )
+                            Icon(
+                                imageVector = if (showIbsDetails) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                tint = theme.primaryBright,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
-
-                    // IBS 5-Day SoC History Mini Bar Chart
-                    val socHistory = ibs?.last5DaysSoc ?: listOf(86, 84, 79, 81, soc)
-                    if (socHistory.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(strings.ibs5DayHistoryLabel, color = theme.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
-                            Row(
+                    AnimatedVisibility(visible = showIbsDetails) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(theme.primaryBright.copy(alpha = 0.16f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "$capacity Ah ${if (isAgm) "AGM" else strings.leadAcidLabel}",
+                                    color = theme.primaryBright,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    softWrap = false
+                                )
+                            }
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(theme.cardElevated)
-                                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.Bottom
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                socHistory.forEachIndexed { idx, daySoc ->
-                                    val barColor = if (daySoc >= 75) StatusGreen else if (daySoc >= 60) StatusAmber else StatusRed
-                                    val barHeight = (12 + (daySoc / 100f) * 24).dp
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(strings.socLabel, color = theme.textSecondary, fontSize = 12.sp)
+                                    Text("$soc%", color = socColor, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(strings.sohLabel, color = theme.textSecondary, fontSize = 12.sp)
+                                    Text("$soh%", color = StatusGreen, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(strings.terminalVoltageLabel, color = theme.textSecondary, fontSize = 12.sp)
+                                    Text("%.1f V".format(profile.batteryVoltage), color = theme.textPrimary, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                                }
+                            }
+
+                            // IBS 5-Day SoC History Mini Bar Chart
+                            val socHistory = ibs?.last5DaysSoc ?: listOf(86, 84, 79, 81, soc)
+                            if (socHistory.isNotEmpty()) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(strings.ibs5DayHistoryLabel, color = theme.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(theme.cardElevated)
+                                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.Bottom
                                     ) {
-                                        Text("$daySoc%", color = barColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth(0.55f)
-                                                .height(barHeight)
-                                                .clip(RoundedCornerShape(3.dp))
-                                                .background(barColor.copy(alpha = 0.85f))
-                                        )
-                                        Text(
-                                            text = if (idx == socHistory.lastIndex) "D0" else "D-${socHistory.lastIndex - idx}",
-                                            color = theme.textSecondary,
-                                            fontSize = 8.sp
-                                        )
+                                        socHistory.forEachIndexed { idx, daySoc ->
+                                            val barColor = if (daySoc >= 75) StatusGreen else if (daySoc >= 60) StatusAmber else StatusRed
+                                            val barHeight = (12 + (daySoc / 100f) * 24).dp
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            ) {
+                                                Text("$daySoc%", color = barColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth(0.55f)
+                                                        .height(barHeight)
+                                                        .clip(RoundedCornerShape(3.dp))
+                                                        .background(barColor.copy(alpha = 0.85f))
+                                                )
+                                                Text(
+                                                    text = if (idx == socHistory.lastIndex) "D0" else "D-${socHistory.lastIndex - idx}",
+                                                    color = theme.textSecondary,
+                                                    fontSize = 8.sp
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -476,122 +528,167 @@ fun ServiceScreen(
             }
         }
 
-        // High-Voltage (HV) Battery Health (SME)
-        session.hvBatteryHealth?.let { hv ->
-            item {
-                val deltaColor = when {
-                    hv.cellDeltaMv < 25 -> StatusGreen
-                    hv.cellDeltaMv < 50 -> StatusAmber
-                    else -> StatusRed
-                }
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = theme.card),
-                    border = BorderStroke(1.dp, deltaColor.copy(alpha = 0.5f)),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                            Text(
-                                text = strings.hvBatteryTitle,
-                                fontWeight = FontWeight.Bold,
-                                color = theme.textPrimary,
-                                fontSize = 13.sp
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(StatusGreen.copy(alpha = 0.16f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "SOH ${hv.stateOfHealthPercent}%",
-                                color = StatusGreen,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                softWrap = false
-                            )
-                        }
-
-                        // Metrics clean vertical rows
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(theme.cardElevated)
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(strings.hvCapacityLabel, color = theme.textSecondary, fontSize = 11.sp)
-                                Text("${hv.netAvailableCapacityKwh} / ${hv.grossCapacityKwh} kWh", color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(strings.cellDeltaLabel, color = theme.textSecondary, fontSize = 11.sp)
-                                Text("${hv.cellDeltaMv} mV", color = deltaColor, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(strings.insulationResistanceLabel, color = theme.textSecondary, fontSize = 11.sp)
-                                Text("${hv.insulationResistanceKOhm} kΩ", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                        }
-
-                        // 96-Cell distribution sample visualization
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = strings.hvCellDistributionLabel.format(hv.minCellVoltageMv, hv.avgCellVoltageMv, hv.maxCellVoltageMv),
-                                color = theme.textSecondary,
-                                fontSize = 11.sp
-                            )
-                            Text("Delta: ${hv.cellDeltaMv} mV", color = deltaColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        // High-Voltage (HV) Battery Health (SME) — Only shown for Electric (i-Series) & Plug-in Hybrid (PHEV) BMWs
+        val isEvOrHybridVehicle = run {
+            val m = "${profile.chassis.code} ${profile.engineCode} ${profile.modelDisplayName}".uppercase()
+            profile.chassis.family == com.punhanaghayev.bimmerpro.core.bmw.SeriesFamily.I_SERIES ||
+                m.contains("HYBRID") || m.contains("PHEV") || m.contains("ELECTRIC") || m.contains("EDRV") ||
+                m.contains("I01") || m.contains("I20") || m.contains("G26E") || m.contains("G70E") ||
+                Regex("\\b(I3|I4|I5|I7|IX|IX1|IX2|IX3|XM|[1-8][0-9]{2}E)\\b").containsMatchIn(m) ||
+                session.ecus.any { it.shortName.equals("SME", ignoreCase = true) || it.shortName.contains("EME", ignoreCase = true) }
+        }
+        if (isEvOrHybridVehicle) {
+            session.hvBatteryHealth?.let { hv ->
+                item {
+                    val deltaColor = when {
+                        hv.cellDeltaMv < 25 -> StatusGreen
+                        hv.cellDeltaMv < 50 -> StatusAmber
+                        else -> StatusRed
+                    }
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = theme.card),
+                        border = BorderStroke(1.dp, deltaColor.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(18.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(theme.cardElevated)
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                verticalAlignment = Alignment.Bottom
+                                    .clickable { showHvDetails = !showHvDetails },
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                for (cell in hv.cellVoltages.take(24)) {
-                                    val hFrac = ((cell.voltageMv - (hv.minCellVoltageMv - 5)) / (hv.cellDeltaMv + 10f).coerceAtLeast(1f)).coerceIn(0.2f, 1f)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.BatteryChargingFull, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
+                                    Text(
+                                        text = strings.hvBatteryTitle,
+                                        fontWeight = FontWeight.Bold,
+                                        color = theme.textPrimary,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                                Spacer(Modifier.width(6.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(theme.cardElevated)
+                                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (showHvDetails) hideLabel else showLabel,
+                                        color = theme.primaryBright,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        softWrap = false
+                                    )
+                                    Icon(
+                                        imageVector = if (showHvDetails) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        tint = theme.primaryBright,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            AnimatedVisibility(visible = showHvDetails) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                     Box(
                                         modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight(hFrac)
-                                            .clip(RoundedCornerShape(1.dp))
-                                            .background(deltaColor.copy(alpha = 0.85f))
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(StatusGreen.copy(alpha = 0.16f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "SOH ${hv.stateOfHealthPercent}%",
+                                            color = StatusGreen,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            softWrap = false
+                                        )
+                                    }
+
+                                    // Metrics clean vertical rows
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(theme.cardElevated)
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text(strings.hvCapacityLabel, color = theme.textSecondary, fontSize = 11.sp)
+                                            Text("${hv.netAvailableCapacityKwh} / ${hv.grossCapacityKwh} kWh", color = theme.textPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text(strings.cellDeltaLabel, color = theme.textSecondary, fontSize = 11.sp)
+                                            Text("${hv.cellDeltaMv} mV", color = deltaColor, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                                        }
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text(strings.insulationResistanceLabel, color = theme.textSecondary, fontSize = 11.sp)
+                                            Text("${hv.insulationResistanceKOhm} kΩ", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
+                                    }
+
+                                    // 96-Cell distribution sample visualization
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = strings.hvCellDistributionLabel.format(hv.minCellVoltageMv, hv.avgCellVoltageMv, hv.maxCellVoltageMv),
+                                            color = theme.textSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                        Text("Delta: ${hv.cellDeltaMv} mV", color = deltaColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(18.dp)
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(theme.cardElevated)
+                                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                            verticalAlignment = Alignment.Bottom
+                                        ) {
+                                            for (cell in hv.cellVoltages.take(24)) {
+                                                val hFrac = ((cell.voltageMv - (hv.minCellVoltageMv - 5)) / (hv.cellDeltaMv + 10f).coerceAtLeast(1f)).coerceIn(0.2f, 1f)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .fillMaxHeight(hFrac)
+                                                        .clip(RoundedCornerShape(1.dp))
+                                                        .background(deltaColor.copy(alpha = 0.85f))
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Temp & Health Assessment (stacked cleanly)
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = strings.moduleTempsLabel.format(hv.minModuleTempC, hv.maxModuleTempC, hv.avgModuleTempC),
+                                            color = theme.textSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                        Text(
+                                            text = if (hv.contactorClosed) strings.contactorClosedLabel else strings.contactorOpenLabel,
+                                            color = if (hv.contactorClosed) StatusGreen else StatusAmber,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Text(
+                                        text = GlobalTextLocalizer.localize(hv.healthAssessment, strings.language),
+                                        color = theme.primaryBright,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
                         }
-
-                        // Temp & Health Assessment (stacked cleanly)
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = strings.moduleTempsLabel.format(hv.minModuleTempC, hv.maxModuleTempC, hv.avgModuleTempC),
-                                color = theme.textSecondary,
-                                fontSize = 11.sp
-                            )
-                            Text(
-                                text = if (hv.contactorClosed) strings.contactorClosedLabel else strings.contactorOpenLabel,
-                                color = if (hv.contactorClosed) StatusGreen else StatusAmber,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Text(
-                            text = GlobalTextLocalizer.localize(hv.healthAssessment, strings.language),
-                            color = theme.primaryBright,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
                     }
                 }
             }
@@ -1287,7 +1384,7 @@ fun ServiceScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(ch.channelName, color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                    Text(GlobalTextLocalizer.localize(ch.channelName, strings.language), color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                                     Text(
                                         text = "${ch.ecuName} • ${ch.faultCounter}/50 • ${if (ch.isLocked) strings.shortCircuitLockedLabel else strings.shortCircuitOkLabel}",
                                         color = statusColor,
@@ -1321,9 +1418,13 @@ fun ServiceScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.Build, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp))
-                        Text(strings.actuatorTestsTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Default.Build, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(18.dp).padding(top = 2.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                            val cleanActTitle = strings.actuatorTestsTitle.replace("(UDS 0x2F)", "").trim()
+                            Text(cleanActTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            Text("UDS 0x2F", fontWeight = FontWeight.SemiBold, color = theme.primaryBright, fontSize = 11.sp)
+                        }
                     }
                     session.actuatorTests.forEach { test ->
                         Row(

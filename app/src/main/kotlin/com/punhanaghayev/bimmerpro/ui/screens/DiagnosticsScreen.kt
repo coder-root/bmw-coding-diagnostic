@@ -564,8 +564,14 @@ fun DiagnosticsScreen(
                                 tint = badgeColor
                             )
                             Spacer(Modifier.width(8.dp))
-                            Column {
-                                Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                val titleParts = strings.mileageCheckTitle.split(" ", limit = 2)
+                                if (titleParts.size == 2 && titleParts[0].contains("ECU", ignoreCase = true)) {
+                                    Text(titleParts[0], fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                                    Text(titleParts[1], fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                                } else {
+                                    Text(strings.mileageCheckTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 14.sp)
+                                }
                                 Text(mv.status.localized(strings), color = badgeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                             }
                         }
