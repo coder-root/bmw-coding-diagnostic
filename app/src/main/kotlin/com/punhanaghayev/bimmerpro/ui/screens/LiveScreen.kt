@@ -400,6 +400,15 @@ fun LiveScreen(
             }
         }
 
+        // Multi-Channel Live Oscilloscope (Sprint C)
+        if (session.liveChannels.isNotEmpty()) {
+            item {
+                com.punhanaghayev.bimmerpro.ui.components.LiveOscilloscopeCard(
+                    channels = session.liveChannels
+                )
+            }
+        }
+
         // Extended Drag Performance Timer + Virtual Dyno (Pro-Tuner)
         item {
             val timer = session.performanceTimer
