@@ -295,6 +295,40 @@ fun CodingScreen(
                         color = theme.textSecondary,
                         fontSize = 12.sp
                     )
+                    val byteDiffs = remember(stagedPresets, stagedCafds, session.presets, session.cafdParameters) {
+                        com.punhanaghayev.bimmerpro.core.bmw.NcdDiffEngine.computeStagedDiff(
+                            presets = session.presets,
+                            cafds = session.cafdParameters,
+                            stagedPresets = stagedPresets,
+                            stagedCafds = stagedCafds
+                        )
+                    }
+                    if (byteDiffs.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(theme.cardElevated)
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "NCD Byte-Diff Preview (${byteDiffs.size})",
+                                color = theme.primaryBright,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                            byteDiffs.take(6).forEach { diff ->
+                                Text(
+                                    text = "${diff.ecuName} • ${diff.parameterName} [${diff.byteOffsetHex}&${diff.bitMaskHex}]: ${diff.beforeHex} → ${diff.afterHex}",
+                                    color = theme.textPrimary,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
