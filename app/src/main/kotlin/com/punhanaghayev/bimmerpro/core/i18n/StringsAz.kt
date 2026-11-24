@@ -159,7 +159,7 @@ object StringsAz {
         updateNowBtn = "İndi Yenilə",
         updateLaterBtn = "Sonra",
 
-        vehicleTechnicalDetailsTitle = "Avtomobil Texniki Məlumatları & I-Level",
+        vehicleTechnicalDetailsTitle = "Texniki Məlumatlar & I-Level",
         supportedBmwHeader = "Dəstəklənən BMW",
         architectureProtocolSubtitle = "Arxitekturası və Protokol Yığını",
         operationProgressTitle = "Əməliyyat İcra Olunur",

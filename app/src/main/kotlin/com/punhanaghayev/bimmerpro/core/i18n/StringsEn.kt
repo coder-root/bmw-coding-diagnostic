@@ -159,7 +159,7 @@ object StringsEn {
         updateNowBtn = "Update Now",
         updateLaterBtn = "Later",
 
-        vehicleTechnicalDetailsTitle = "Vehicle Technical Specifications & I-Level",
+        vehicleTechnicalDetailsTitle = "Technical Specifications & I-Level",
         supportedBmwHeader = "Supported BMW",
         architectureProtocolSubtitle = "Architecture & Protocol Stack",
         operationProgressTitle = "Operation in Progress",

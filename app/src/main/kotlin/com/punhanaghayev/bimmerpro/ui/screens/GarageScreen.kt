@@ -124,34 +124,46 @@ fun GarageScreen(
             GarageHeroHeader(connectionState = session.connectionState)
         }
 
-        // BimmerCode-style Connect vs Simulator Primary Mode Buttons
+        // Dynamic Connect vs Simulator Primary Mode Cards (hides inactive card & expands active card while connected)
         item {
+            val isConnectedNow = session.vehicleProfile != null && session.connectionState is ConnectionState.Connected
+            val connectedAsSimulator = isConnectedNow && session.selectedAdapter.isSimulator
+            val connectedAsPhysical = isConnectedNow && !session.selectedAdapter.isSimulator
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ModeSelectorCard(
-                    title = strings.connectModeLabel,
-                    subtitle = "vLinker / ENET / BLE",
-                    icon = Icons.Default.Wifi,
-                    selected = !isSimulatorMode,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        isSimulatorMode = false
-                        dropdownExpanded = false
-                    }
-                )
-                ModeSelectorCard(
-                    title = strings.simulatorModeLabel,
-                    subtitle = "F10 / F30 / G30 / E90",
-                    icon = Icons.Default.DirectionsCar,
-                    selected = isSimulatorMode,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        isSimulatorMode = true
-                        dropdownExpanded = false
-                    }
-                )
+                if (!connectedAsSimulator) {
+                    ModeSelectorCard(
+                        title = strings.connectModeLabel,
+                        subtitle = "vLinker / ENET / BLE",
+                        icon = Icons.Default.Wifi,
+                        selected = if (isConnectedNow) connectedAsPhysical else !isSimulatorMode,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (!isConnectedNow) {
+                                isSimulatorMode = false
+                                dropdownExpanded = false
+                            }
+                        }
+                    )
+                }
+                if (!connectedAsPhysical) {
+                    ModeSelectorCard(
+                        title = strings.simulatorModeLabel,
+                        subtitle = "F10 / F30 / G30 / E90",
+                        icon = Icons.Default.DirectionsCar,
+                        selected = if (isConnectedNow) connectedAsSimulator else isSimulatorMode,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (!isConnectedNow) {
+                                isSimulatorMode = true
+                                dropdownExpanded = false
+                            }
+                        }
+                    )
+                }
             }
         }
 
@@ -360,21 +372,6 @@ fun GarageScreen(
                                     value = profile.batteryVoltage.toFloat(),
                                     onValueChange = { onAdjustSimVoltage(((it * 10).toInt()) / 10.0) },
                                     valueRange = 11.4f..14.4f
-                                )
-                            }
-                        }
-
-                        if (session.connectionPurpose == ConnectionPurpose.CODING) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                QuickActionTile(
-                                    icon = Icons.Default.Memory,
-                                    title = strings.quickCoding,
-                                    badge = null,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onNavigateToTab(2) }
                                 )
                             }
                         }

@@ -159,7 +159,7 @@ object StringsTr {
         updateNowBtn = "Şimdi Güncelle",
         updateLaterBtn = "Daha Sonra",
 
-        vehicleTechnicalDetailsTitle = "Araç Teknik Bilgileri & I-Level",
+        vehicleTechnicalDetailsTitle = "Teknik Bilgiler & I-Level",
         supportedBmwHeader = "Desteklenen BMW",
         architectureProtocolSubtitle = "Mimarisi & Protokol Yığını",
         operationProgressTitle = "İşlem Yürütülüyor",

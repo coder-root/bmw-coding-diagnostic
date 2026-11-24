@@ -271,6 +271,8 @@ class BimmerViewModel(
     fun runActuatorTest(test: ActuatorTestItem) {
         viewModelScope.launch {
             repository.runActuatorTest(test)
+            val msg = repository.session.value.lastOperationMessage ?: "${test.targetEcu} aktüatör testi aktif edildi."
+            _uiEvents.emit(UiEvent.Snackbar("${test.title} — $msg"))
         }
     }
 

@@ -1,6 +1,7 @@
 package com.punhanaghayev.bimmerpro.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -1410,8 +1411,17 @@ fun ServiceScreen(
             }
         }
 
-        // Actuator Tests (UDS 0x2F)
+        // Actuator Tests (UDS 0x2F) with live per-button progress & completion visual feedback
         item {
+            val actScope = androidx.compose.runtime.rememberCoroutineScope()
+            var runningActuatorId by remember { mutableStateOf<String?>(null) }
+            var completedActuatorIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+            val testingLabel = when (strings.language) {
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Testing..."
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Test..."
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Тест..."
+                com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Test..."
+            }
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
@@ -1427,23 +1437,64 @@ fun ServiceScreen(
                         }
                     }
                     session.actuatorTests.forEach { test ->
+                        val isRunning = runningActuatorId == test.id
+                        val isDone = test.id in completedActuatorIds
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isRunning) theme.primary.copy(alpha = 0.14f)
+                                    else if (isDone) StatusGreen.copy(alpha = 0.08f)
+                                    else theme.cardElevated
+                                )
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text(test.localizedTitle(strings), color = theme.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                                 Text("${test.targetEcu} • DID 0x%04X".format(test.did), color = theme.textSecondary, fontSize = 10.sp)
                             }
                             OutlinedButton(
-                                onClick = { onRunActuatorTest(test) },
-                                modifier = Modifier.height(32.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                onClick = {
+                                    if (runningActuatorId == null) {
+                                        runningActuatorId = test.id
+                                        onRunActuatorTest(test)
+                                        actScope.launch {
+                                            kotlinx.coroutines.delay(900)
+                                            runningActuatorId = null
+                                            completedActuatorIds = completedActuatorIds + test.id
+                                        }
+                                    }
+                                },
+                                enabled = !isRunning,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isRunning) theme.primaryBright
+                                    else if (isDone) StatusGreen
+                                    else theme.outline
+                                ),
+                                modifier = Modifier.height(34.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
                             ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(12.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text(strings.testBtn, fontSize = 11.sp)
+                                if (isRunning) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        modifier = Modifier.size(12.dp),
+                                        strokeWidth = 2.dp,
+                                        color = theme.primaryBright
+                                    )
+                                    Spacer(Modifier.width(5.dp))
+                                    Text(testingLabel, fontSize = 10.sp, color = theme.primaryBright, fontWeight = FontWeight.Bold)
+                                } else if (isDone) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusGreen, modifier = Modifier.size(13.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("${strings.testBtn} ✓", fontSize = 10.sp, color = StatusGreen, fontWeight = FontWeight.Bold)
+                                } else {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(13.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(strings.testBtn, fontSize = 11.sp)
+                                }
                             }
                         }
                     }

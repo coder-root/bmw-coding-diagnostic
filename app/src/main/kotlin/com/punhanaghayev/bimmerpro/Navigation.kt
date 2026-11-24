@@ -483,6 +483,14 @@ fun MainNavigation(
                                     )
                                 }
 
+                                IconButton(onClick = { showLanguagePickerDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Language,
+                                        contentDescription = strings.languageTitle,
+                                        tint = theme.primaryBright
+                                    )
+                                }
+
                                 Box {
                                     IconButton(onClick = { topMenuExpanded = true }) {
                                         Icon(
@@ -597,14 +605,6 @@ fun MainNavigation(
                                             }
                                         )
                                     }
-                                }
-
-                                IconButton(onClick = { showLanguagePickerDialog = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Language,
-                                        contentDescription = strings.languageTitle,
-                                        tint = theme.primaryBright
-                                    )
                                 }
                             }
                         )

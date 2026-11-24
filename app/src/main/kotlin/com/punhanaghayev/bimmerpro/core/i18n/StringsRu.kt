@@ -159,7 +159,7 @@ object StringsRu {
         updateNowBtn = "Обновить сейчас",
         updateLaterBtn = "Позже",
 
-        vehicleTechnicalDetailsTitle = "Технические данные автомобиля & I-Level",
+        vehicleTechnicalDetailsTitle = "Технические данные & I-Level",
         supportedBmwHeader = "Поддерживаемые BMW",
         architectureProtocolSubtitle = "Архитектура и протоколы",
         operationProgressTitle = "Выполняется операция",
