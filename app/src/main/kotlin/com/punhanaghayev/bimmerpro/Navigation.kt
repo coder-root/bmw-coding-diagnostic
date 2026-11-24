@@ -130,6 +130,7 @@ fun MainNavigation(
     val otaState by viewModel.otaState.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val themeStyle by viewModel.themeStyle.collectAsStateWithLifecycle()
+    val workshopProfile by viewModel.workshopProfile.collectAsStateWithLifecycle()
     val isLanguageConfirmed by viewModel.isLanguageConfirmed.collectAsStateWithLifecycle()
     val isDisclaimerAccepted by viewModel.isDisclaimerAccepted.collectAsStateWithLifecycle()
     val otaPromptDismissed by viewModel.otaPromptDismissed.collectAsStateWithLifecycle()
@@ -560,7 +561,9 @@ fun MainNavigation(
                                 onDownloadOta = { release -> viewModel.downloadAndInstallOta(context, release) },
                                 onTogglePhysicalWriteUnlock = viewModel::setPhysicalWriteUnlocked,
                                 onDownloadDataPack = viewModel::downloadDataPack,
-                                onExportSupportBundle = { viewModel.exportSupportBundle(context) }
+                                onExportSupportBundle = { viewModel.exportSupportBundle(context) },
+                                workshopProfile = workshopProfile,
+                                onSaveWorkshopProfile = viewModel::saveWorkshopProfile
                             )
                         }
                     }

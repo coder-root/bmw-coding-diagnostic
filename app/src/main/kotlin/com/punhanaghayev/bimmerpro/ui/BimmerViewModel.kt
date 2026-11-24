@@ -67,6 +67,10 @@ class BimmerViewModel(
     val themeStyle: StateFlow<AppThemeStyle> = _themeStyle.asStateFlow()
 
     private val prefs = application.getSharedPreferences("bimmerpro_prefs", Context.MODE_PRIVATE)
+    private val workshopStorage = com.punhanaghayev.bimmerpro.data.WorkshopProfileStorage(application)
+
+    private val _workshopProfile = MutableStateFlow(workshopStorage.load())
+    val workshopProfile: StateFlow<com.punhanaghayev.bimmerpro.data.WorkshopProfile> = _workshopProfile.asStateFlow()
 
     private val _isDisclaimerAccepted = MutableStateFlow(prefs.getBoolean("disclaimer_accepted_v1", false))
     val isDisclaimerAccepted: StateFlow<Boolean> = _isDisclaimerAccepted.asStateFlow()
@@ -88,6 +92,14 @@ class BimmerViewModel(
         AppLocalization.saveLanguage(getApplication(), language, markConfirmed = true)
         _appLanguage.value = language
         _isLanguageConfirmed.value = true
+    }
+
+    fun saveWorkshopProfile(profile: com.punhanaghayev.bimmerpro.data.WorkshopProfile) {
+        workshopStorage.save(profile)
+        _workshopProfile.value = profile
+        viewModelScope.launch {
+            _uiEvents.emit(UiEvent.Snackbar("Workshop profile saved for PDF reports."))
+        }
     }
 
     fun dismissOtaPrompt() {
@@ -344,7 +356,8 @@ class BimmerViewModel(
                         offlineReport = state.offlineReport,
                         comparativeDiff = state.comparativeDiff,
                         fscCertificates = state.fscCertificates,
-                        language = appLanguage.value
+                        language = appLanguage.value,
+                        workshopProfile = workshopProfile.value
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "BMW Expert PRO PDF Report"))
@@ -373,7 +386,8 @@ class BimmerViewModel(
                         offlineReport = state.offlineReport,
                         comparativeDiff = state.comparativeDiff,
                         fscCertificates = state.fscCertificates,
-                        language = appLanguage.value
+                        language = appLanguage.value,
+                        workshopProfile = workshopProfile.value
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "BMW Expert PRO HTML Report"))

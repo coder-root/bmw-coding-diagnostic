@@ -20,6 +20,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
 import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.data.VehicleInspectionDiff
+import com.punhanaghayev.bimmerpro.data.WorkshopProfile
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -45,7 +46,8 @@ object InspectionReportGenerator {
         offlineReport: OfflineDiagnosticReport? = null,
         comparativeDiff: VehicleInspectionDiff? = null,
         fscCertificates: List<FscCertificateEntry> = emptyList(),
-        language: AppLanguage = AppLanguage.TR
+        language: AppLanguage = AppLanguage.TR,
+        workshopProfile: WorkshopProfile? = null
     ): File {
         val labels = ReportLocalization.labelsFor(language)
         val loc = { text: String -> ReportLocalization.loc(text, language) }
@@ -122,9 +124,17 @@ object InspectionReportGenerator {
         val qrVerificationPayload = "BMW-VERIFY:${profile.vin}:${profile.odometerKm}:$stamp"
         QrCodeGenerator.drawOnCanvas(canvas1, qrVerificationPayload, 512f, 14f, 50f, Color.rgb(11, 18, 31))
 
-        canvas1.drawText(labels.docTitle, 32f, 34f, titlePaint)
+        val headerTitle = if (workshopProfile?.workshopName?.isNotBlank() == true) {
+            "${workshopProfile.workshopName} — ${labels.docTitle.substringAfter("— ").ifBlank { labels.docTitle }}"
+        } else {
+            labels.docTitle
+        }
+        canvas1.drawText(headerTitle, 32f, 32f, titlePaint)
         val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
-        canvas1.drawText("VIN: ${profile.vin}  |  ${labels.dateLabel}: $dateStr  |  ${labels.systemLabel}: ISO 13400 DoIP & UDS", 32f, 54f, subtitlePaint)
+        canvas1.drawText("VIN: ${profile.vin}  |  ${labels.dateLabel}: $dateStr  |  ${labels.systemLabel}: ISO 13400 DoIP & UDS", 32f, 50f, subtitlePaint)
+        if (workshopProfile?.isConfigured == true) {
+            canvas1.drawText(workshopProfile.headerLine(), 32f, 64f, subtitlePaint)
+        }
 
         var y1 = 100f
 
@@ -233,7 +243,12 @@ object InspectionReportGenerator {
 
         // Footer page 1
         canvas1.drawLine(32f, 810f, 563f, 810f, mCyan)
-        canvas1.drawText("BMW Expert PRO — Sayfa 1/2 — Lead Developer: Punhan Aghayev", 32f, 825f, subtitlePaint)
+        val footer1 = if (workshopProfile?.isConfigured == true) {
+            "BMW Expert PRO — ${labels.pageLabel} 1/2 — ${workshopProfile.footerSignature()}"
+        } else {
+            "BMW Expert PRO — ${labels.pageLabel} 1/2 — Lead Developer: Punhan Aghayev"
+        }
+        canvas1.drawText(footer1, 32f, 825f, subtitlePaint)
         pdf.finishPage(page1)
 
         // ================= PAGE 2 =================
@@ -428,7 +443,8 @@ object InspectionReportGenerator {
         offlineReport: OfflineDiagnosticReport? = null,
         comparativeDiff: VehicleInspectionDiff? = null,
         fscCertificates: List<FscCertificateEntry> = emptyList(),
-        language: AppLanguage = AppLanguage.TR
+        language: AppLanguage = AppLanguage.TR,
+        workshopProfile: WorkshopProfile? = null
     ): File {
         val labels = ReportLocalization.labelsFor(language)
         val loc = { text: String -> ReportLocalization.loc(text, language) }

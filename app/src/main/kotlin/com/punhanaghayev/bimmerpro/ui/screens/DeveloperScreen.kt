@@ -96,7 +96,9 @@ fun DeveloperScreen(
     onDownloadOta: (AppReleaseInfo) -> Unit,
     onTogglePhysicalWriteUnlock: (Boolean) -> Unit,
     onDownloadDataPack: () -> Unit,
-    onExportSupportBundle: () -> Unit
+    onExportSupportBundle: () -> Unit,
+    workshopProfile: com.punhanaghayev.bimmerpro.data.WorkshopProfile = com.punhanaghayev.bimmerpro.data.WorkshopProfile(),
+    onSaveWorkshopProfile: (com.punhanaghayev.bimmerpro.data.WorkshopProfile) -> Unit = {}
 ) {
     val strings = LocalAppStrings.current
     val theme = LocalThemeStyle.current
@@ -584,6 +586,79 @@ fun DeveloperScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Workshop & Inspection Branding Card (Sprint D)
+        item {
+            var wName by remember(workshopProfile) { mutableStateOf(workshopProfile.workshopName) }
+            var wPhone by remember(workshopProfile) { mutableStateOf(workshopProfile.phoneNumber) }
+            var wAddress by remember(workshopProfile) { mutableStateOf(workshopProfile.address) }
+            var wTech by remember(workshopProfile) { mutableStateOf(workshopProfile.technicianName) }
+
+            val cardTitle = when (strings.language) {
+                AppLanguage.EN -> "Workshop & PDF Inspection Branding"
+                AppLanguage.AZ -> "Servis və PDF Ekspertiza Markalaması"
+                AppLanguage.RU -> "Брендинг автосервиса и PDF отчетов"
+                AppLanguage.TR -> "Servis / Ekspertiz PDF Markalama"
+            }
+            val saveLabel = when (strings.language) {
+                AppLanguage.EN -> "Save Workshop Profile"
+                AppLanguage.AZ -> "Servis Profilini Yadda Saxla"
+                AppLanguage.RU -> "Сохранить профиль сервиса"
+                AppLanguage.TR -> "Servis Bilgilerini Kaydet"
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = theme.card),
+                border = BorderStroke(1.dp, theme.outline),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(cardTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = theme.textPrimary)
+                    OutlinedTextField(
+                        value = wName,
+                        onValueChange = { wName = it },
+                        label = { Text(if (strings.language == AppLanguage.TR) "Servis / Firma Adı" else "Workshop / Company Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = wPhone,
+                        onValueChange = { wPhone = it },
+                        label = { Text(if (strings.language == AppLanguage.TR) "Telefon" else "Phone") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = wAddress,
+                        onValueChange = { wAddress = it },
+                        label = { Text(if (strings.language == AppLanguage.TR) "Adres / Şehir" else "Address / City") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = wTech,
+                        onValueChange = { wTech = it },
+                        label = { Text(if (strings.language == AppLanguage.TR) "Sertifikalı Teknisyen" else "Certified Technician") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    com.punhanaghayev.bimmerpro.ui.components.BmwPrimaryButton(
+                        text = saveLabel,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onSaveWorkshopProfile(
+                                com.punhanaghayev.bimmerpro.data.WorkshopProfile(
+                                    workshopName = wName,
+                                    phoneNumber = wPhone,
+                                    address = wAddress,
+                                    technicianName = wTech
+                                )
+                            )
+                        }
+                    )
                 }
             }
         }
