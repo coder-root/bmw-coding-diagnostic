@@ -125,33 +125,29 @@ fun WorkshopBrandingScreen(
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(subtitle, color = theme.textSecondary, fontSize = 12.sp)
 
-                    OutlinedTextField(
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                         value = wName,
                         onValueChange = { wName = it },
-                        label = { Text(nameLabel) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = nameLabel,
+                        showClearButton = false
                     )
-                    OutlinedTextField(
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                         value = wPhone,
                         onValueChange = { wPhone = it },
-                        label = { Text(phoneLabel) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = phoneLabel,
+                        showClearButton = false
                     )
-                    OutlinedTextField(
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                         value = wAddress,
                         onValueChange = { wAddress = it },
-                        label = { Text(addressLabel) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = addressLabel,
+                        showClearButton = false
                     )
-                    OutlinedTextField(
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                         value = wTech,
                         onValueChange = { wTech = it },
-                        label = { Text(techLabel) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = techLabel,
+                        showClearButton = false
                     )
 
                     val draft = WorkshopProfile(wName, wPhone, wAddress, wTech)

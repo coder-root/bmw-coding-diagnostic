@@ -364,33 +364,11 @@ fun GarageScreen(
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (session.connectionPurpose == ConnectionPurpose.DIAGNOSTICS) {
-                                QuickActionTile(
-                                    icon = Icons.Default.Build,
-                                    title = strings.quickDiagnostics,
-                                    badge = null,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onNavigateToTab(1) }
-                                )
-                                QuickActionTile(
-                                    icon = Icons.Default.Speed,
-                                    title = strings.quickLive,
-                                    badge = null,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onNavigateToTab(3) }
-                                )
-                                QuickActionTile(
-                                    icon = Icons.Default.Tune,
-                                    title = strings.quickService,
-                                    badge = null,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onNavigateToTab(4) }
-                                )
-                            } else {
+                        if (session.connectionPurpose == ConnectionPurpose.CODING) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 QuickActionTile(
                                     icon = Icons.Default.Memory,
                                     title = strings.quickCoding,
@@ -461,85 +439,49 @@ fun GarageScreen(
                         )
                     }
 
-                    ExposedDropdownMenuBox(
-                        expanded = dropdownExpanded,
-                        onExpandedChange = { dropdownExpanded = !dropdownExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = strings.adapterTitle(activeAdapter),
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(strings.adapterDropdownLabel, maxLines = 1) },
-                            supportingText = {
-                                Text(strings.adapterDesc(activeAdapter), color = theme.primaryBright, fontSize = 11.sp)
-                            },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = when {
-                                        activeAdapter == AdapterType.VLINKER_BM_WIFI -> Icons.Default.Wifi
-                                        activeAdapter.isSimulator -> Icons.Default.DirectionsCar
-                                        else -> Icons.Default.Cable
-                                    },
-                                    contentDescription = null,
-                                    tint = theme.primaryBright
-                                )
-                            },
-                            modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = dropdownExpanded,
-                            onDismissRequest = { dropdownExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            activeChoices.forEach { adapter ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(strings.adapterTitle(adapter), color = theme.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                            Text(strings.adapterDesc(adapter), color = theme.textSecondary, fontSize = 11.sp)
-                                        }
-                                    },
-                                    onClick = {
-                                        if (isSimulatorMode) selectedSimulator = adapter else selectedPhysical = adapter
-                                        dropdownExpanded = false
-                                    }
-                                )
-                            }
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactDropdown(
+                        label = strings.adapterDropdownLabel,
+                        selectedLabel = strings.adapterTitle(activeAdapter),
+                        supportingText = strings.adapterDesc(activeAdapter),
+                        leadingIcon = when {
+                            activeAdapter == AdapterType.VLINKER_BM_WIFI -> Icons.Default.Wifi
+                            activeAdapter.isSimulator -> Icons.Default.DirectionsCar
+                            else -> Icons.Default.Cable
+                        },
+                        items = activeChoices,
+                        itemLabel = { strings.adapterTitle(it) },
+                        onSelect = { adapter ->
+                            if (isSimulatorMode) selectedSimulator = adapter else selectedPhysical = adapter
                         }
-                    }
+                    )
 
                     if (!isSimulatorMode) {
                         when (activeAdapter.transportKind) {
                             com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.WIFI_ELM_STN -> {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(
+                                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                                         value = vlinkerHost,
                                         onValueChange = { vlinkerHost = it },
-                                        label = { Text("IP") },
-                                        singleLine = true,
+                                        label = "IP",
+                                        showClearButton = false,
                                         modifier = Modifier.weight(0.65f)
                                     )
-                                    OutlinedTextField(
+                                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                                         value = vlinkerPort,
                                         onValueChange = { vlinkerPort = it.filter { c -> c.isDigit() } },
-                                        label = { Text("Port") },
-                                        singleLine = true,
+                                        label = "Port",
+                                        showClearButton = false,
                                         modifier = Modifier.weight(0.35f)
                                     )
                                 }
                             }
 
                             com.punhanaghayev.bimmerpro.core.protocol.AdapterTransportKind.ENET_TCP -> {
-                                OutlinedTextField(
+                                com.punhanaghayev.bimmerpro.ui.components.BmwCompactTextField(
                                     value = enetHost,
                                     onValueChange = { enetHost = it },
-                                    label = { Text("Gateway IP (169.254.0.1)") },
-                                    singleLine = true,
+                                    label = "Gateway IP (169.254.0.1)",
+                                    showClearButton = false,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }

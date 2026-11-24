@@ -3,6 +3,8 @@ package com.punhanaghayev.bimmerpro.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
@@ -24,12 +28,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,10 +48,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -498,6 +511,189 @@ fun BmwSwitchRow(
                     uncheckedTrackColor = theme.cardElevated
                 )
             )
+        }
+    }
+}
+
+/**
+ * Standardized 38.dp slim compact dropdown selector template used app-wide
+ * (matches Settings App Theme selector proportions).
+ */
+@Composable
+fun <T> BmwCompactDropdown(
+    selectedLabel: String,
+    items: List<T>,
+    itemLabel: (T) -> String,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    supportingText: String? = null,
+    leadingIcon: ImageVector? = null,
+    itemLeadingContent: (@Composable (T) -> Unit)? = null
+) {
+    val theme = LocalThemeStyle.current
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (!label.isNullOrBlank()) {
+            Text(
+                text = label,
+                color = theme.textSecondary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(theme.cardElevated)
+                    .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (leadingIcon != null) {
+                        Icon(
+                            imageVector = leadingIcon,
+                            contentDescription = null,
+                            tint = theme.primaryBright,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        text = selectedLabel,
+                        color = theme.textPrimary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = theme.textSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(theme.cardElevated)
+            ) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                itemLeadingContent?.invoke(item)
+                                Text(
+                                    text = itemLabel(item),
+                                    color = theme.textPrimary,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        },
+                        onClick = {
+                            onSelect(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+        if (!supportingText.isNullOrBlank()) {
+            Text(
+                text = supportingText,
+                color = theme.primaryBright,
+                fontSize = 11.sp
+            )
+        }
+    }
+}
+
+/**
+ * Standardized 38.dp slim compact text input template used app-wide.
+ */
+@Composable
+fun BmwCompactTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    placeholder: String = "",
+    leadingIcon: ImageVector? = null,
+    showClearButton: Boolean = true
+) {
+    val theme = LocalThemeStyle.current
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (!label.isNullOrBlank()) {
+            Text(
+                text = label,
+                color = theme.textSecondary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(theme.cardElevated)
+                .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (leadingIcon != null) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = theme.textSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty() && placeholder.isNotEmpty()) {
+                    Text(
+                        text = placeholder,
+                        color = theme.textSecondary.copy(alpha = 0.75f),
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = TextStyle(color = theme.textPrimary, fontSize = 12.sp),
+                    cursorBrush = SolidColor(theme.primaryBright),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (showClearButton && value.isNotEmpty()) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    tint = theme.textSecondary,
+                    modifier = Modifier
+                        .size(15.dp)
+                        .clickable { onValueChange("") }
+                )
+            }
         }
     }
 }

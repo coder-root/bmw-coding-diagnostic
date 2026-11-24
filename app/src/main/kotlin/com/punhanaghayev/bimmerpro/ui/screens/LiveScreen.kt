@@ -174,7 +174,12 @@ fun LiveScreen(
                                 }
                             )
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(def.name, fontSize = 12.sp, color = theme.textPrimary, fontWeight = FontWeight.Medium)
+                                Text(
+                                    com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(def.name, strings.language),
+                                    fontSize = 12.sp,
+                                    color = theme.textPrimary,
+                                    fontWeight = FontWeight.Medium
+                                )
                                 Text(def.unit, fontSize = 10.sp, color = theme.textSecondary)
                             }
                         }
@@ -306,7 +311,12 @@ fun LiveScreen(
                                         }
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(def.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = theme.textPrimary)
+                                        Text(
+                                            com.punhanaghayev.bimmerpro.core.i18n.GlobalTextLocalizer.localize(def.name, strings.language),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = theme.textPrimary
+                                        )
                                         Text("DID 0x%04X • %s".format(def.did, def.unit), fontSize = 10.sp, color = theme.textSecondary)
                                     }
                                 }

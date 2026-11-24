@@ -496,14 +496,6 @@ fun MainNavigation(
                                         onDismissRequest = { topMenuExpanded = false }
                                     ) {
                                         DropdownMenuItem(
-                                            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = theme.primaryBright) },
-                                            text = { Text("${strings.languageTitle} (${appLanguage.flagCode})") },
-                                            onClick = {
-                                                topMenuExpanded = false
-                                                showLanguagePickerDialog = true
-                                            }
-                                        )
-                                        DropdownMenuItem(
                                             leadingIcon = { Icon(Icons.Default.Speed, contentDescription = null, tint = theme.primaryBright) },
                                             text = {
                                                 Text(
@@ -605,6 +597,14 @@ fun MainNavigation(
                                             }
                                         )
                                     }
+                                }
+
+                                IconButton(onClick = { showLanguagePickerDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Language,
+                                        contentDescription = strings.languageTitle,
+                                        tint = theme.primaryBright
+                                    )
                                 }
                             }
                         )

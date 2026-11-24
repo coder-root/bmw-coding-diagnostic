@@ -136,37 +136,13 @@ fun SupportedBmwScreen(
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ExposedDropdownMenuBox(
-                        expanded = categoryExpanded,
-                        onExpandedChange = { categoryExpanded = !categoryExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = GlobalTextLocalizer.localize(selectedCategory, strings.language),
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(seriesLabel) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryExpanded,
-                            onDismissRequest = { categoryExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            BmwModelSupportCatalog.allCategories.forEach { cat ->
-                                DropdownMenuItem(
-                                    text = { Text(GlobalTextLocalizer.localize(cat, strings.language), fontSize = 13.sp, color = theme.textPrimary) },
-                                    onClick = {
-                                        selectedCategory = cat
-                                        categoryExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactDropdown(
+                        label = seriesLabel,
+                        selectedLabel = GlobalTextLocalizer.localize(selectedCategory, strings.language),
+                        items = BmwModelSupportCatalog.allCategories,
+                        itemLabel = { GlobalTextLocalizer.localize(it, strings.language) },
+                        onSelect = { selectedCategory = it }
+                    )
 
                     Text(modelsCountLabel, color = theme.primaryBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }

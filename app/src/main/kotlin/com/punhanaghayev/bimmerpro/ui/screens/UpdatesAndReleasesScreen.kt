@@ -239,37 +239,13 @@ fun UpdatesAndReleasesScreen(
                         fontWeight = FontWeight.Bold,
                         color = theme.textPrimary
                     )
-                    ExposedDropdownMenuBox(
-                        expanded = changelogExpanded,
-                        onExpandedChange = { changelogExpanded = !changelogExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = "${selectedRelease.tagName} • ${selectedRelease.publishedDate.substringBefore(" ")}",
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text(strings.selectVersionLabel) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = changelogExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = changelogExpanded,
-                            onDismissRequest = { changelogExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            changelogList.forEach { rel ->
-                                DropdownMenuItem(
-                                    text = { Text("${rel.tagName} • ${rel.publishedDate.substringBefore(" ")}", color = theme.textPrimary) },
-                                    onClick = {
-                                        selectedReleaseTag = rel.tagName
-                                        changelogExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactDropdown(
+                        label = strings.selectVersionLabel,
+                        selectedLabel = "${selectedRelease.tagName} • ${selectedRelease.publishedDate.substringBefore(" ")}",
+                        items = changelogList,
+                        itemLabel = { "${it.tagName} • ${it.publishedDate.substringBefore(" ")}" },
+                        onSelect = { selectedReleaseTag = it.tagName }
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

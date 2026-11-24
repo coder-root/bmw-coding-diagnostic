@@ -274,7 +274,7 @@ fun DiagnosticsScreen(
                     border = BorderStroke(1.dp, theme.outline)
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(session.scanStatusText, color = theme.textPrimary, fontSize = 12.sp)
+                        Text(GlobalTextLocalizer.localize(session.scanStatusText, strings.language), color = theme.textPrimary, fontSize = 12.sp)
                         LinearProgressIndicator(
                             progress = { session.scanProgress },
                             modifier = Modifier.fillMaxWidth(),

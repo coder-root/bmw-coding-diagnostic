@@ -213,76 +213,30 @@ fun DeveloperScreen(
             }
         }
 
-        // Compact App Theme Selector Card
+        // Compact App Theme Selector Card (Standard BmwCompactDropdown template)
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = theme.card),
                 border = BorderStroke(1.dp, theme.outline),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = strings.themeTitle,
-                        color = theme.textSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                Column(modifier = Modifier.padding(14.dp)) {
+                    com.punhanaghayev.bimmerpro.ui.components.BmwCompactDropdown(
+                        label = strings.themeTitle,
+                        selectedLabel = currentTheme.displayName,
+                        leadingIcon = Icons.Default.Palette,
+                        items = AppThemeStyle.entries,
+                        itemLabel = { it.displayName },
+                        itemLeadingContent = { style ->
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(CircleShape)
+                                    .background(style.primaryBright)
+                            )
+                        },
+                        onSelect = onSelectTheme
                     )
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(theme.cardElevated)
-                                .border(1.dp, theme.outline, RoundedCornerShape(10.dp))
-                                .clickable { themeExpanded = true }
-                                .padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.Palette, contentDescription = null, tint = theme.primaryBright, modifier = Modifier.size(16.dp))
-                                Text(
-                                    text = currentTheme.displayName,
-                                    color = theme.textPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = theme.textSecondary, modifier = Modifier.size(18.dp))
-                        }
-                        DropdownMenu(
-                            expanded = themeExpanded,
-                            onDismissRequest = { themeExpanded = false },
-                            modifier = Modifier.background(theme.cardElevated)
-                        ) {
-                            AppThemeStyle.entries.forEach { style ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clip(CircleShape)
-                                                    .background(style.primaryBright)
-                                            )
-                                            Text(style.displayName, color = theme.textPrimary, fontSize = 13.sp)
-                                        }
-                                    },
-                                    onClick = {
-                                        onSelectTheme(style)
-                                        themeExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
