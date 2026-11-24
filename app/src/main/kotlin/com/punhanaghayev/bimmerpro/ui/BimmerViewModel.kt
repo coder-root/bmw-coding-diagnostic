@@ -343,7 +343,8 @@ class BimmerViewModel(
                         hvBatteryHealth = state.hvBatteryHealth,
                         offlineReport = state.offlineReport,
                         comparativeDiff = state.comparativeDiff,
-                        fscCertificates = state.fscCertificates
+                        fscCertificates = state.fscCertificates,
+                        language = appLanguage.value
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "application/pdf", "BMW Expert PRO PDF Report"))
@@ -371,12 +372,28 @@ class BimmerViewModel(
                         hvBatteryHealth = state.hvBatteryHealth,
                         offlineReport = state.offlineReport,
                         comparativeDiff = state.comparativeDiff,
-                        fscCertificates = state.fscCertificates
+                        fscCertificates = state.fscCertificates,
+                        language = appLanguage.value
                     )
                 }
                 _uiEvents.emit(UiEvent.ShareFile(file, "text/html", "BMW Expert PRO HTML Report"))
             }.onFailure { err ->
                 _uiEvents.emit(UiEvent.Snackbar("HTML Error: ${err.message ?: "Unknown"}"))
+            }
+        }
+    }
+
+    fun runAdapterHealthCheck() {
+        viewModelScope.launch {
+            runCatching {
+                val report = repository.runAdapterHealthCheck()
+                _uiEvents.emit(
+                    UiEvent.Snackbar(
+                        "Ping: ${report.avgLatencyMs}ms (${report.minLatencyMs}-${report.maxLatencyMs}ms) • Loss: ${report.packetLossPercent}%"
+                    )
+                )
+            }.onFailure { err ->
+                _uiEvents.emit(UiEvent.Snackbar("Adapter Check Error: ${err.message ?: "Unknown"}"))
             }
         }
     }

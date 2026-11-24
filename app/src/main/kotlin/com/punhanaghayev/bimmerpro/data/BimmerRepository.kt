@@ -163,6 +163,7 @@ data class BimmerSessionState(
     val selectedBleAddress: String? = null,
     val performanceTimer: PerformanceTimerState = PerformanceTimerState(),
     val savedVehicles: List<SavedVehicleRecord> = emptyList(),
+    val adapterHealthReport: com.punhanaghayev.bimmerpro.core.protocol.AdapterHealthReport? = null,
     val activeOperation: ActiveOperationState? = null,
     val fscCertificates: List<FscCertificateEntry> = emptyList(),
     val virtualDyno: VirtualDynoResult? = null,
@@ -2399,6 +2400,19 @@ class BimmerRepository(
                 it.copy(dataPackStatus = DataPackStatus.Error(err.message ?: "İndirme başarısız"))
             }
         }
+    }
+
+    suspend fun runAdapterHealthCheck(): com.punhanaghayev.bimmerpro.core.protocol.AdapterHealthReport {
+        val state = _session.value
+        val voltage = state.vehicleProfile?.batteryVoltage ?: 12.6
+        val report = com.punhanaghayev.bimmerpro.core.protocol.AdapterHealthDiagnostics.runBenchmark(
+            udsClient = udsClient,
+            adapterType = state.selectedAdapter,
+            batteryVoltage = voltage,
+            pingCount = 5
+        )
+        _session.update { it.copy(adapterHealthReport = report) }
+        return report
     }
 
     companion object {

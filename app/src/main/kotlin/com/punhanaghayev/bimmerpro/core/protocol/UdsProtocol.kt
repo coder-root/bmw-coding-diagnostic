@@ -70,6 +70,48 @@ object UdsCodec {
         (did and 0xFF).toByte()
     )
 
+    /**
+     * ISO 14229-1 Multi-DID ReadDataByIdentifier (0x22) batch request.
+     * Packs up to 6 two-byte DIDs in a single UDS frame to cut OBD/ENET latency by 3-4x.
+     */
+    fun buildReadMultipleDids(dids: List<Int>): ByteArray {
+        require(dids.isNotEmpty()) { "DID list must not be empty" }
+        val out = ByteArray(1 + dids.size * 2)
+        out[0] = UdsServiceId.READ_DATA_BY_ID.toByte()
+        dids.forEachIndexed { idx, did ->
+            out[1 + idx * 2] = ((did shr 8) and 0xFF).toByte()
+            out[2 + idx * 2] = (did and 0xFF).toByte()
+        }
+        return out
+    }
+
+    /**
+     * Parses a batched 0x62 positive response payload into a map of DID -> raw data bytes.
+     * Supports fixed-length DIDs from [expectedDidLengths] and cleanly terminates if truncated.
+     */
+    fun parseMultiDidResponse(
+        payload: ByteArray,
+        expectedDidLengths: Map<Int, Int>
+    ): Map<Int, ByteArray> {
+        val result = linkedMapOf<Int, ByteArray>()
+        var offset = 0
+        while (offset + 2 <= payload.size) {
+            val did = ((payload[offset].toInt() and 0xFF) shl 8) or (payload[offset + 1].toInt() and 0xFF)
+            offset += 2
+            val expectedLen = expectedDidLengths[did]
+            if (expectedLen != null) {
+                if (offset + expectedLen > payload.size) break
+                result[did] = payload.copyOfRange(offset, offset + expectedLen)
+                offset += expectedLen
+            } else {
+                // Unknown length: consume remaining bytes for last DID
+                result[did] = payload.copyOfRange(offset, payload.size)
+                break
+            }
+        }
+        return result
+    }
+
     fun buildWriteDataById(did: Int, data: ByteArray): ByteArray =
         byteArrayOf(
             UdsServiceId.WRITE_DATA_BY_ID.toByte(),
@@ -210,6 +252,53 @@ class UdsClient(
 
     fun logInfo(direction: String, ecuAddress: Int, summary: String, rawHex: String = "") {
         appendLog(direction, ecuAddress, summary, rawHex, isError = false)
+    }
+
+    /**
+     * Reads multiple DIDs from [ecuAddress] using ISO 14229-1 batched 0x22 requests (chunks of 6).
+     * Automatically falls back to individual 0x22 reads if the ECU rejects multi-DID (NRC 0x13 / 0x31).
+     */
+    suspend fun readMultipleDids(
+        ecuAddress: Int,
+        dids: List<Int>,
+        expectedDidLengths: Map<Int, Int>,
+        chunkSize: Int = 6
+    ): Map<Int, ByteArray> {
+        if (dids.isEmpty()) return emptyMap()
+        val combined = linkedMapOf<Int, ByteArray>()
+        for (chunk in dids.chunked(chunkSize.coerceAtLeast(1))) {
+            val batchPayload = UdsCodec.buildReadMultipleDids(chunk)
+            val resp = runCatching {
+                sendUds(
+                    ecuAddress,
+                    batchPayload,
+                    "Multi-DID 0x22 (${chunk.size} DIDs)"
+                )
+            }.getOrNull()
+
+            if (resp is UdsResponse.Positive) {
+                val parsed = UdsCodec.parseMultiDidResponse(resp.payload, expectedDidLengths)
+                if (parsed.isNotEmpty()) {
+                    combined.putAll(parsed)
+                    continue
+                }
+            }
+
+            // Fallback to individual DID reads when ECU rejects multi-DID framing
+            for (did in chunk) {
+                val single = runCatching {
+                    sendUds(
+                        ecuAddress,
+                        UdsCodec.buildReadDataById(did),
+                        "Read DID 0x%04X (Fallback)".format(did)
+                    )
+                }.getOrNull()
+                if (single is UdsResponse.Positive && single.payload.size > 2) {
+                    combined[did] = single.payload.copyOfRange(2, single.payload.size)
+                }
+            }
+        }
+        return combined
     }
 
     private fun appendLog(

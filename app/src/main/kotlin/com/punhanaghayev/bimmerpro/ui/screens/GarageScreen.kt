@@ -89,7 +89,8 @@ fun GarageScreen(
     onAdjustSimVoltage: (Double) -> Unit,
     onScanHardware: () -> Unit,
     onSelectBleDevice: (String) -> Unit,
-    onNavigateToTab: (Int) -> Unit
+    onNavigateToTab: (Int) -> Unit,
+    onRunAdapterHealthCheck: () -> Unit = {}
 ) {
     val physicalAdapters = remember { AdapterType.entries.filter { !it.isSimulator } }
     val simulatorAdapters = remember { AdapterType.entries.filter { it.isSimulator } }
@@ -655,6 +656,78 @@ fun GarageScreen(
                                 softWrap = false
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // Adapter Health & Latency Diagnostics Card (Sprint A)
+        if (session.connectionState is ConnectionState.Connected) {
+            item {
+                val report = session.adapterHealthReport
+                val healthTitle = when (strings.language) {
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Adapter Health & Latency Test"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "Adapter Sağlamlığı və Gecikmə Testi"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Диагностика адаптера и задержка"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "Adaptör Sağlık & Gecikme Testi"
+                }
+                val runTestBtn = when (strings.language) {
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.EN -> "Run 5x Ping & Latency Test"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.AZ -> "5x Ping və Gecikmə Testini Başlat"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.RU -> "Запустить 5x Ping тест"
+                    com.punhanaghayev.bimmerpro.core.i18n.AppLanguage.TR -> "5x Ping & Gecikme Testi Başlat"
+                }
+                val gradeColor = when (report?.grade) {
+                    com.punhanaghayev.bimmerpro.core.protocol.AdapterReadinessGrade.EXCELLENT -> StatusGreen
+                    com.punhanaghayev.bimmerpro.core.protocol.AdapterReadinessGrade.GOOD -> theme.primaryBright
+                    com.punhanaghayev.bimmerpro.core.protocol.AdapterReadinessGrade.UNSTABLE -> StatusAmber
+                    com.punhanaghayev.bimmerpro.core.protocol.AdapterReadinessGrade.CRITICAL -> StatusRed
+                    null -> theme.outline
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = theme.card),
+                    border = BorderStroke(1.dp, gradeColor.copy(alpha = 0.6f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(healthTitle, fontWeight = FontWeight.Bold, color = theme.textPrimary, fontSize = 13.sp)
+                            if (report != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(gradeColor.copy(alpha = 0.18f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(report.grade.name, color = gradeColor, fontSize = 10.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                                }
+                            }
+                        }
+
+                        if (report != null) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                VehicleStatChip(label = "Avg RTT", value = "${report.avgLatencyMs} ms", modifier = Modifier.weight(1f))
+                                VehicleStatChip(label = "Min / Max", value = "${report.minLatencyMs}/${report.maxLatencyMs} ms", modifier = Modifier.weight(1f))
+                                VehicleStatChip(label = "Loss", value = "${report.packetLossPercent}%", modifier = Modifier.weight(1f))
+                            }
+                            Text(
+                                text = report.localizedSummary(strings.language),
+                                color = gradeColor,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        com.punhanaghayev.bimmerpro.ui.components.BmwOutlinedButton(
+                            text = runTestBtn,
+                            icon = Icons.Default.Wifi,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onRunAdapterHealthCheck
+                        )
                     }
                 }
             }

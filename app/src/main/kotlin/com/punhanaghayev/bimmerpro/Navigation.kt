@@ -484,7 +484,8 @@ fun MainNavigation(
                                         5 -> BimmerTab.DEVELOPER
                                         else -> BimmerTab.GARAGE
                                     }
-                                }
+                                },
+                                onRunAdapterHealthCheck = viewModel::runAdapterHealthCheck
                             )
 
                             BimmerTab.DIAGNOSTICS -> DiagnosticsScreen(

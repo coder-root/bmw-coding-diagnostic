@@ -18,6 +18,7 @@ import com.punhanaghayev.bimmerpro.core.bmw.ServiceHistoryRecord
 import com.punhanaghayev.bimmerpro.core.bmw.TamperStatus
 import com.punhanaghayev.bimmerpro.core.bmw.VehicleProfile
 import com.punhanaghayev.bimmerpro.core.bmw.ZfGearboxHealth
+import com.punhanaghayev.bimmerpro.core.i18n.AppLanguage
 import com.punhanaghayev.bimmerpro.data.VehicleInspectionDiff
 import java.io.File
 import java.io.FileOutputStream
@@ -43,8 +44,11 @@ object InspectionReportGenerator {
         hvBatteryHealth: HvBatteryHealth? = null,
         offlineReport: OfflineDiagnosticReport? = null,
         comparativeDiff: VehicleInspectionDiff? = null,
-        fscCertificates: List<FscCertificateEntry> = emptyList()
+        fscCertificates: List<FscCertificateEntry> = emptyList(),
+        language: AppLanguage = AppLanguage.TR
     ): File {
+        val labels = ReportLocalization.labelsFor(language)
+        val loc = { text: String -> ReportLocalization.loc(text, language) }
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val outFile = File(reportsDir, "BMW_Expert_Ekspertiz_${profile.chassis.code}_$stamp.pdf")
@@ -118,36 +122,36 @@ object InspectionReportGenerator {
         val qrVerificationPayload = "BMW-VERIFY:${profile.vin}:${profile.odometerKm}:$stamp"
         QrCodeGenerator.drawOnCanvas(canvas1, qrVerificationPayload, 512f, 14f, 50f, Color.rgb(11, 18, 31))
 
-        canvas1.drawText("BMW Expert PRO — Teknik Ekspertiz & Diagnostik Raporu", 32f, 34f, titlePaint)
+        canvas1.drawText(labels.docTitle, 32f, 34f, titlePaint)
         val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.US).format(Date())
-        canvas1.drawText("VIN: ${profile.vin}  |  Tarih: $dateStr  |  Sistem: ISO 13400 DoIP & UDS", 32f, 54f, subtitlePaint)
+        canvas1.drawText("VIN: ${profile.vin}  |  ${labels.dateLabel}: $dateStr  |  ${labels.systemLabel}: ISO 13400 DoIP & UDS", 32f, 54f, subtitlePaint)
 
         var y1 = 100f
 
         // 1. Vehicle Identity
-        canvas1.drawText("1. ARAÇ KİMLİK & TEKNİK ÖZELLİKLERİ", 32f, y1, sectionPaint)
+        canvas1.drawText(labels.sec1Identity, 32f, y1, sectionPaint)
         y1 += 16f
-        canvas1.drawText("Model / Seri: ${profile.modelDisplayName} (${profile.chassis.code})", 32f, y1, boldBodyPaint)
-        canvas1.drawText("Motor: ${profile.engineCode}", 330f, y1, bodyPaint)
+        canvas1.drawText("${labels.modelLabel}: ${profile.modelDisplayName} (${profile.chassis.code})", 32f, y1, boldBodyPaint)
+        canvas1.drawText("${labels.engineLabel}: ${profile.engineCode}", 330f, y1, bodyPaint)
         y1 += 14f
-        canvas1.drawText("I-Level (Güncel): ${profile.iLevel}", 32f, y1, bodyPaint)
-        canvas1.drawText("I-Level (Fabrika): ${profile.factoryILevel}", 330f, y1, bodyPaint)
+        canvas1.drawText("${labels.iLevelCurrentLabel}: ${profile.iLevel}", 32f, y1, bodyPaint)
+        canvas1.drawText("${labels.iLevelFactoryLabel}: ${profile.factoryILevel}", 330f, y1, bodyPaint)
         y1 += 14f
-        canvas1.drawText("Üretim: ${profile.typeCode} • ${profile.productionDate}", 32f, y1, bodyPaint)
-        canvas1.drawText("Akü Voltajı: %.1f V".format(profile.batteryVoltage), 330f, y1, bodyPaint)
+        canvas1.drawText("${labels.productionLabel}: ${profile.typeCode} • ${profile.productionDate}", 32f, y1, bodyPaint)
+        canvas1.drawText("${labels.batteryVoltageLabel}: %.1f V".format(profile.batteryVoltage), 330f, y1, bodyPaint)
         y1 += 14f
-        canvas1.drawText("Renk & Döşeme: ${profile.paintCode} / ${profile.upholsteryCode}", 32f, y1, bodyPaint)
-        canvas1.drawText("Kayıtlı Kilometre: %,d km".format(profile.odometerKm), 330f, y1, boldBodyPaint)
+        canvas1.drawText("${labels.paintUpholsteryLabel}: ${profile.paintCode} / ${profile.upholsteryCode}", 32f, y1, bodyPaint)
+        canvas1.drawText("${labels.odometerLabel}: %,d km".format(profile.odometerKm), 330f, y1, boldBodyPaint)
         y1 += 22f
 
         canvas1.drawLine(32f, y1 - 8f, 563f, y1 - 8f, dividerPaint)
 
         // 2. Anti-Tamper Mileage Check
-        canvas1.drawText("2. ÇOKLU MODÜL KİLOMETRE DOĞRULAMA (ANTI-TAMPER)", 32f, y1, sectionPaint)
+        canvas1.drawText(labels.sec2Mileage, 32f, y1, sectionPaint)
         y1 += 16f
-        canvas1.drawText("Durum: ${profile.mileageVerification.status.label}", 32f, y1, alertPaint)
+        canvas1.drawText("${labels.statusLabel}: ${loc(profile.mileageVerification.status.label)}", 32f, y1, alertPaint)
         y1 += 14f
-        canvas1.drawText(profile.mileageVerification.summary, 32f, y1, bodyPaint)
+        canvas1.drawText(loc(profile.mileageVerification.summary), 32f, y1, bodyPaint)
         y1 += 15f
         profile.mileageVerification.readings.forEach { r ->
             val hours = r.engineHours?.let { "  (Motor Çalışma Saati: $it h)" } ?: ""
@@ -159,7 +163,7 @@ object InspectionReportGenerator {
         canvas1.drawLine(32f, y1 - 8f, 563f, y1 - 8f, dividerPaint)
 
         // 3. IBS Battery Health
-        canvas1.drawText("3. AKÜ VE ENERJİ YÖNETİMİ (IBS)", 32f, y1, sectionPaint)
+        canvas1.drawText(labels.sec3Battery, 32f, y1, sectionPaint)
         y1 += 16f
         val ibs = ibsHealth
         if (ibs != null) {
@@ -182,7 +186,7 @@ object InspectionReportGenerator {
         canvas1.drawLine(32f, y1 - 8f, 563f, y1 - 8f, dividerPaint)
 
         // 4. DPF & Exhaust Monitor
-        canvas1.drawText("4. DİZEL PARTİKÜL FİLTRESİ (DPF) SAĞLIK RAPORU", 32f, y1, sectionPaint)
+        canvas1.drawText(labels.sec4Dpf, 32f, y1, sectionPaint)
         y1 += 16f
         if (dpfHealth != null) {
             canvas1.drawText(
@@ -211,7 +215,7 @@ object InspectionReportGenerator {
         canvas1.drawLine(32f, y1 - 8f, 563f, y1 - 8f, dividerPaint)
 
         // 5. ZF Transmission Adaptations
-        canvas1.drawText("5. ZF 8HP / 6HP ŞANZIMAN SAĞLIK VE AŞINMA ANALİZİ", 32f, y1, sectionPaint)
+        canvas1.drawText(labels.sec5Transmission, 32f, y1, sectionPaint)
         y1 += 16f
         if (zfHealth != null) {
             canvas1.drawText("Genel Şanzıman Durumu: ${zfHealth.overallHealthScorePercent}%   |   Yağ Sıcaklığı: ${zfHealth.oilTemperatureC}°C", 32f, y1, boldBodyPaint)
@@ -245,17 +249,17 @@ object InspectionReportGenerator {
         var y2 = 60f
 
         // 6. iDrive Digital Service History Records
-        canvas2.drawText("6. iDrive DİJİTAL SERVİS VE BAKIM GEÇMİŞİ (${serviceHistory.size} Kayıt)", 32f, y2, sectionPaint)
+        canvas2.drawText("${labels.sec6ServiceHistory} (${serviceHistory.size})", 32f, y2, sectionPaint)
         y2 += 15f
         if (serviceHistory.isEmpty()) {
-            canvas2.drawText("HU modülünde kayıtlı dijital servis geçmişi bulunamadı veya henüz işlenmedi.", 40f, y2, bodyPaint)
+            canvas2.drawText(labels.noServiceHistory, 40f, y2, bodyPaint)
             y2 += 14f
         } else {
             serviceHistory.take(4).forEach { rec ->
-                val line1 = "${rec.date} — %,d km  |  Bayi / Yetkili Servis: %s".format(rec.mileageKm, rec.dealerCode)
+                val line1 = "${rec.date} — %,d km  |  %s".format(rec.mileageKm, rec.dealerCode)
                 canvas2.drawText(line1, 40f, y2, boldBodyPaint)
                 y2 += 12f
-                val line2 = "   Yapılan Bakımlar: ${rec.performedItems.joinToString(", ")}"
+                val line2 = "   ${rec.performedItems.joinToString(", ") { loc(it) }}"
                 canvas2.drawText(line2, 40f, y2, bodyPaint)
                 y2 += 13f
             }
@@ -264,12 +268,12 @@ object InspectionReportGenerator {
         canvas2.drawLine(32f, y2 - 8f, 563f, y2 - 8f, dividerPaint)
 
         // 7. Scanned ECUs & Factory I-Level SW Version Analysis
-        canvas2.drawText("7. KONTROL ÜNİTELERİ (ECU) FABRİKA YAZILIM VERSİYON (I-LEVEL) ANALİZİ", 32f, y2, sectionPaint)
+        canvas2.drawText(labels.sec7EcuSw, 32f, y2, sectionPaint)
         y2 += 15f
         ecus.take(10).forEach { ecu ->
             val sw = ecu.softwareVersion.ifEmpty { "001.002.000" }
-            val statusTag = if (ecu.softwareVersion.isNotEmpty()) "[Orijinal / Güncel]" else "[Fabrika Referans]"
-            val line = "${ecu.shortName} (0x%02X) — SW: %s  %s | Hata: %d".format(ecu.address, sw, statusTag, ecu.activeDtcCount)
+            val statusTag = if (ecu.softwareVersion.isNotEmpty()) "[OK]" else "[REF]"
+            val line = "${ecu.shortName} (0x%02X) — SW: %s  %s | DTC: %d".format(ecu.address, sw, statusTag, ecu.activeDtcCount)
             canvas2.drawText(line, 40f, y2, bodyPaint)
             y2 += 12f
         }
@@ -277,10 +281,10 @@ object InspectionReportGenerator {
         canvas2.drawLine(32f, y2 - 8f, 563f, y2 - 8f, dividerPaint)
 
         // 8. Diagnostic Trouble Codes (DTCs) with Freeze Frame
-        canvas2.drawText("8. ARIZA KAYITLARI & FREEZE-FRAME (${dtcs.size} Kayıt)", 32f, y2, sectionPaint)
+        canvas2.drawText("${labels.sec8Dtcs} (${dtcs.size})", 32f, y2, sectionPaint)
         y2 += 16f
         if (dtcs.isEmpty()) {
-            canvas2.drawText("Sistemde aktif veya hafızaya alınmış arıza kodu tespit edilmedi (Mükemmel Durum).", 40f, y2, alertPaint)
+            canvas2.drawText(labels.noDtcsClean, 40f, y2, alertPaint)
             y2 += 16f
         } else {
             dtcs.take(8).forEach { dtc ->
@@ -291,7 +295,7 @@ object InspectionReportGenerator {
                     else -> Color.rgb(70, 70, 70)
                 }
                 val p = Paint(boldBodyPaint).apply { color = sevColor }
-                canvas2.drawText("[${dtc.severity.label}] ${dtc.ecuName} - ${dtc.code}: ${dtc.title}", 40f, y2, p)
+                canvas2.drawText("[${loc(dtc.severity.label)}] ${dtc.ecuName} - ${dtc.code}: ${loc(dtc.title)}", 40f, y2, p)
                 y2 += 12f
                 canvas2.drawText(
                     "   Freeze-Frame: %,d km | %.1f V | %d°C | %d rpm (Tekrar: %dx)".format(
@@ -388,7 +392,7 @@ object InspectionReportGenerator {
             y3 += 8f
             canvas3.drawLine(32f, y3 - 8f, 563f, y3 - 8f, dividerPaint)
 
-            canvas3.drawText("12. FSC AKTİVASYON SERTİFİKA DURUMLARI (${fscCertificates.size} Sertifika)", 32f, y3, sectionPaint)
+            canvas3.drawText("${labels.sec12Fsc} (${fscCertificates.size})", 32f, y3, sectionPaint)
             y3 += 16f
             fscCertificates.take(10).forEach { cert ->
                 val stColor = when (cert.status) {
@@ -423,15 +427,18 @@ object InspectionReportGenerator {
         hvBatteryHealth: HvBatteryHealth? = null,
         offlineReport: OfflineDiagnosticReport? = null,
         comparativeDiff: VehicleInspectionDiff? = null,
-        fscCertificates: List<FscCertificateEntry> = emptyList()
+        fscCertificates: List<FscCertificateEntry> = emptyList(),
+        language: AppLanguage = AppLanguage.TR
     ): File {
+        val labels = ReportLocalization.labelsFor(language)
+        val loc = { text: String -> ReportLocalization.loc(text, language) }
         val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val outFile = File(reportsDir, "BMW_Expert_Report_${profile.chassis.code}_$stamp.html")
 
         val html = buildString {
             appendLine("<!DOCTYPE html>")
-            appendLine("<html lang=\"tr\">")
+            appendLine("<html lang=\"${labels.langCode}\">")
             appendLine("<head>")
             appendLine("<meta charset=\"UTF-8\">")
             appendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
